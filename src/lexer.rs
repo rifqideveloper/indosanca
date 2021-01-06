@@ -47,6 +47,6 @@ fn token(buf:&mut String,/*log:&mut[bool; 2],*/_lex:& mut File,barir:&mut String
 }
 fn _str(kalimat:String,lex:& mut File){
     if kalimat.contains("\"") {
-        lex.write(format!("('c0')<=>('str',{})\n",kalimat).as_bytes()).expect("");
+        lex.write(format!("('c0')<=>('str')<=>({}))\n",kalimat).as_bytes()).expect("");
     }
 }

@@ -1,0 +1,4 @@
+#main funsi
+cpu main
+    #cetak string ke konsole
+    cetak "hello ,dunia."

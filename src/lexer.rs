@@ -27,12 +27,12 @@ fn token(buf:&mut String,/*log:&mut[bool; 2],*/_lex:& mut File,_baris:&mut Strin
         }
         match buf.as_str() {
             "cpu" => {
-                _lex.write(format!("('f0')<=>('{}')\n",_baris.replace("cpu", " ").trim()).as_bytes()).expect("");
+                _lex.write(format!("('f0')=>('{}')\n",_baris.replace("cpu", " ").trim()).as_bytes()).expect("");
                 buf.clear();
                 return
             }
             "gpu" => {
-                _lex.write(format!("('f1')<=>('{}')\n",_baris.replace("cpu", " ").trim()).as_bytes()).expect("");
+                _lex.write(format!("('f1')=>('{}')\n",_baris.replace("gpu", " ").trim()).as_bytes()).expect("");
                 buf.clear();
                 return
             }
@@ -51,6 +51,6 @@ fn token(buf:&mut String,/*log:&mut[bool; 2],*/_lex:& mut File,_baris:&mut Strin
 }
 fn _str(kalimat:String,lex:& mut File){
     if kalimat.contains("\"") {
-        lex.write(format!("('c0')<=>('str')<=>({})\n",kalimat).as_bytes()).expect("");
+        lex.write(format!("('c0')<=>('str')=>({})\n",kalimat).as_bytes()).expect("");
     }
 }

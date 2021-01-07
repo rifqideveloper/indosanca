@@ -1,56 +1,27 @@
-use std::fs::File;
-//use std::io::{BufRead, BufReader};
-use std::io::prelude::*;
-//use std::sync::mpsc::channel;
-pub fn bangun_lexer(_lex:File , main_:std::sync::mpsc::Receiver<std::string::String> ,selesai:std::sync::mpsc::Sender<std::string::String>) {
-    //let mut _baris:String = String::with_capacity(10);
-    let mut _baris = String::with_capacity(10);
-    let mut buf = String::with_capacity(10);
-    let mut _lex = _lex;
-    /*let mut log = [false,false];*/
-    main_.recv().expect("");
-    selesai.send("".to_string()).expect("");
+
+pub fn lexer(lanjut:std::sync::mpsc::Sender<std::string::String>,terima:std::sync::mpsc::Receiver<std::string::String>,ke_lex_f:std::sync::mpsc::Sender<std::string::String>){
+    let mut _buf = String::with_capacity(15);
+    let mut sintak = String::with_capacity(15);
+    let mut _char :std::str::Split<&str>;
     loop {
-        _baris = main_.recv().expect("");
-        if _baris == " " { break }
-        token(&mut buf,/*&mut log,*/&mut _lex,&mut _baris);
-        selesai.send("".to_string()).expect("erro di lex_x");
-    }
-}
-fn token(buf:&mut String,/*log:&mut[bool; 2],*/_lex:& mut File,_baris:&mut String){
-    for i in _baris.split(""){
-        match i {
-            "#" =>{ return }
-            "\t" => { continue }
-            " " => { continue }
-            _ =>{ buf.push_str(i) }
+        _buf = terima.recv().expect("");
+        if _buf == "" {break}
+        _char = _buf.split("");
+        for i in _char {
+            match i {
+                "#" => { sintak.clear();break }
+                "\t"|" " =>{continue}
+                _ => {sintak.push_str(i)}
+            }
+            match sintak.as_str() {
+                "cpu" => {
+                    ke_lex_f.send(format!("('f0')<<('{}')\n",_buf.replace("cpu ", " ").trim())).expect("");
+                    sintak.clear()
+                }
+                _ =>{}
+            }
         }
-        match buf.as_str() {
-            "cpu" => {
-                _lex.write(format!("('f0')=>('{}')\n",_baris.replace("cpu", " ").trim()).as_bytes()).expect("");
-                buf.clear();
-                return
-            }
-            "gpu" => {
-                _lex.write(format!("('f1')=>('{}')\n",_baris.replace("gpu", " ").trim()).as_bytes()).expect("");
-                buf.clear();
-                return
-            }
-            "cetak" => {
-                _str(_baris.replace("cetak", ""),_lex);
-                buf.clear();
-                return
-            }
-            "cons" => {}
-            "din" => {}
-            "heap" => {}
-            "ini" => {}
-            _ => {}
-        }
+        lanjut.send("".to_string()).expect("")
     }
-}
-fn _str(kalimat:String,lex:& mut File){
-    if kalimat.contains("\"") {
-        lex.write(format!("('c0')<=>('str')=>({})\n",kalimat).as_bytes()).expect("");
-    }
+    ke_lex_f.send("".to_string()).expect("")
 }

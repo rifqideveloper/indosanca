@@ -17,7 +17,6 @@ fn main(){
     let _lex = std::thread::spawn(move || {lexer::lexer(kirim2,terima,kirim3)});
     let _lex_f = std::thread::spawn(move || {con_write::tuliskan(terima3,&PROYEK)}).join();
     
-    
 }
 
 

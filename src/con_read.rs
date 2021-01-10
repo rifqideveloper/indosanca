@@ -3,6 +3,7 @@ use std::fs::File;
 use std::io::{BufRead, BufReader};
 pub fn baca(main_forder: String,kirim:std::sync::mpsc::Sender<std::string::String>,terima:std::sync::mpsc::Receiver<std::string::String>){
     let mut baris = String::with_capacity(15);
+    print!("[con read siap]\n");
     for i in direktori_list(format!("{}\\kode",main_forder)){
         let mut file = BufReader::with_capacity(10, File::open(i).expect(""));
         while file.read_line(&mut baris).expect("") != 0 {
@@ -14,6 +15,7 @@ pub fn baca(main_forder: String,kirim:std::sync::mpsc::Sender<std::string::Strin
         baris.push_str("\n");
     }
     kirim.send("".to_string()).expect("");
+    print!("[con read selesai]\n");
 }
 fn direktori_list(path:String) -> Vec<String>{    
     let mut file : Vec<String> = Vec::with_capacity(2);

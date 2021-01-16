@@ -9,10 +9,20 @@ pub fn parser(token:std::sync::mpsc::Receiver<std::string::String>,lanjut:std::s
             "('c0')\n" =>{kirim.send("\tjs konsole log\n".to_string()).expect("")}
             "" =>{break}
             _ =>{
-                if buf.contains("\t('str'"){kirim.send(format!("\t{}",buf)).expect("")}
+                if buf.contains("\t('str'"){kirim.send(_str_(&buf)).expect("")}
             }
         }
         lanjut.send("".to_string()).expect("");
     }
     kirim.send("".to_string()).expect("");
+}
+fn _str_(buf:&String) -> String {
+    let mut test = String::with_capacity(15);
+    for i in buf.split(""){
+        test.push_str(i);
+        if test.contains("('str','"){test.clear()}
+    }
+    test.pop();
+    test.pop();
+    format!("{}\"{}\"","\t\t",test)
 }

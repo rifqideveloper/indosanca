@@ -47,11 +47,11 @@ fn main(){
     //data yang diterima akan dikirim ke file parse
     let _pohon_ = std::thread::spawn(move || {pohon::tulis(&PROYEK,terima5)}).join();
     //pokom sintak akan dioptimalkan
-    //fitur in belum dibuat
+    //fitur ini belum dibuat
 
     let args : Vec<String> = std::env::args().collect();
-    
     //membersihkan terget kompilasi sebelumnya
+    //jika forder tidak ada akan error tapi akan dihiraukan 
     std::fs::remove_dir_all(format!("{}\\target",args[PROYEK])).ok();
     //membuat target direktori
     std::fs::create_dir_all(format!("{}\\target",args[PROYEK])).expect("tidak dapat membuat target direktori (target)");
@@ -64,69 +64,51 @@ fn main(){
             let (kirim9,terima9) = channel();
             let _baca_ke_js = std::thread::spawn(move || {baca_pohon::baca(&PROYEK,kirim7,terima8)});
             let _konversi_js = std::thread::spawn(move || {js::konvesi(terima7,kirim8,kirim9)});
-            let _tulis_js = std::thread::spawn(move || {tulis_ke::js(terima9,&PROYEK)}).join();
-            let _tulis_html = std::thread::spawn(move || {
-                tulis_ke::html(&PROYEK)
-            }).join();
-            //let _selesai = _tulis_js.join();
+            let _tulis_js = std::thread::spawn(move || {tulis_ke::js(terima9,&PROYEK)});
+            let _tulis_html = std::thread::spawn(move || {tulis_ke::html(&PROYEK)});
+            let mut _selesai = _tulis_js.join();
+                _selesai = _tulis_html.join();
         }
-    });
-    /*
-    // target kompilasi selanjutnya
-    // masih dalam tahap prototiping
-    let args : Vec<String> = std::env::args().collect();
-    let asm = std::thread::spawn(move || {
-        if args[PROYEK-1].contains("asm") ||
-            args[PROYEK-1].contains("win32")||
-            args[PROYEK-1].contains("win64")||
-            args[PROYEK-1].contains("lin32")||
-            args[PROYEK-1].contains("lin64")
-        {
-            // konversi ke assembly
-            // pastikan assembly selesai sebelum
-            // konversi bahasa mesin
-            std::fs::create_dir_all(format!("{}\\target\\asm",args[PROYEK])).expect("tidak dapat membuat target direktori (asm)");
-            let _asm = std::thread::spawn( || {
-                
-            }).join();
-            
-            let win32 = std::thread::spawn(move || {
-                std::fs::create_dir_all(format!("{}\\target\\win32",args[PROYEK].clone())).expect("tidak dapat membuat target direktori (win32)");
-
-            });
-            let win64 = std::thread::spawn(move || {
-                std::fs::create_dir_all(format!("{}\\target\\win64",args[PROYEK].clone())).expect("tidak dapat membuat target direktori (win64)");
-
-            });
-            let lin32 = std::thread::spawn(move || {
-                std::fs::create_dir_all(format!("{}\\target\\lin32",args[PROYEK])).expect("tidak dapat membuat target direktori (lin32)");
-
-            });
-            let lin64 = std::thread::spawn(move || {
-                std::fs::create_dir_all(format!("{}\\target\\lin64",args[PROYEK])).expect("tidak dapat membuat target direktori (lin64)");
-
-            });
-            let mut _asm_ = win32.join();
-                _asm_ = win64.join();
-                _asm_ = lin32.join();
-                _asm_ = lin64.join();
-        }
-        
-        
     });
     
-    let args : Vec<String> = std::env::args().collect();
+    // masih dalam tahap prototiping 
+    let asm = std::thread::spawn(move || {
+        let asmx86 = std::thread::spawn(move || {
+            let args : Vec<String> = std::env::args().collect();
+            if args[PROYEK-1].contains("asm86"){
+                std::fs::create_dir_all(format!("{}\\target\\asm86",args[PROYEK])).expect("tidak dapat membuat target direktori");
+            }
+        });
+        let asmx64 = std::thread::spawn( || {
+            let args : Vec<String> = std::env::args().collect();
+            if args[PROYEK-1].contains("asm64"){
+                std::fs::create_dir_all(format!("{}\\target\\asm64",args[PROYEK])).expect("tidak dapat membuat target direktori");
+            }
+        });
+        let win32 = std::thread::spawn(move || {
+            let args : Vec<String> = std::env::args().collect();
+            if args[PROYEK-1].contains("win32"){
+                std::fs::create_dir_all(format!("{}\\target\\win32",args[PROYEK])).expect("tidak dapat membuat target direktori");
+            }
+        });
+        let win64 = std::thread::spawn(move || {
+            let args : Vec<String> = std::env::args().collect();
+            if args[PROYEK-1].contains("win64"){
+                std::fs::create_dir_all(format!("{}\\target\\win64",args[PROYEK])).expect("tidak dapat membuat target direktori");
+            }
+        });
+        let mut _selesai = asmx86.join();
+            _selesai = asmx64.join();
+            _selesai = win32.join();
+            _selesai = win64.join();
+    });
     let gds = std::thread::spawn(move || {
-        std::fs::create_dir_all(format!("{}\\target\\gdscrip",args[PROYEK])).expect("tidak dapat membuat target direktori");
-        if args[PROYEK-1].contains("gds"){
-
+        let args : Vec<String> = std::env::args().collect();
+        if args[PROYEK-1].contains("gds") || args[PROYEK-1].contains("gdscrip"){
+            std::fs::create_dir_all(format!("{}\\target\\gdscrip",args[PROYEK])).expect("tidak dapat membuat target direktori");
         }
     });
-    */
     let mut _selesai = wasm.join();
-    /* 
         _selesai = asm.join();
         _selesai = gds.join();
-    */
-
 }

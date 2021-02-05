@@ -1,0 +1,8 @@
+fn main
+	konsole log
+		"test\n"
+	konsole log
+		"test\n"
+	konsole log
+		"test\n"
+(!!!)

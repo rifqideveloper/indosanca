@@ -8,4 +8,5 @@ pub fn tulis (_proyek:&usize,terima:std::sync::mpsc::Receiver<std::string::Strin
         if _buf == "" {break}
         file.write(_buf.as_bytes()).expect("");
     }
+    file.write("\n(!!!)".as_bytes()).expect("");
 }

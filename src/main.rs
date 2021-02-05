@@ -11,7 +11,7 @@ mod js;
 mod tulis_ke;
 fn main(){
     //angka dibawah nyadiguankan untuk mempermudah pengembangan aplikasi
-    const PROYEK:usize = 2;//ubah proyek angka ke 1 pada versi akhir
+    static PROYEK:usize = 2;//ubah proyek angka ke 1 pada versi akhir
     /*
     setiap untaiyan(thread) memiliki tugas masing2 dan akan saling
     berkomunikasi melalui kanal dibawah
@@ -48,8 +48,7 @@ fn main(){
     let _pohon_ = std::thread::spawn(move || {pohon::tulis(&PROYEK,terima5)}).join();
     //pokom sintak akan dioptimalkan
     //fitur ini belum dibuat
-
-    let args : Vec<String> = std::env::args().collect();
+    let args :Vec<String> = std::env::args().collect();
     //membersihkan terget kompilasi sebelumnya
     //jika forder tidak ada akan error tapi akan dihiraukan 
     std::fs::remove_dir_all(format!("{}\\target",args[PROYEK])).ok();
@@ -58,7 +57,7 @@ fn main(){
     let wasm = std::thread::spawn(move || {
         if args[PROYEK-1].contains("wasm") {
             //konversi pohon sintak ke js,wasm,html
-            std::fs::create_dir_all(format!("{}\\target\\www",args[PROYEK])).expect("tidak dapat membuat target direktori (www)");
+            std::fs::create_dir_all(format!("{}\\target\\www",&args[PROYEK])).expect("tidak dapat membuat target direktori (www)");
             let (kirim7,terima7) = channel();
             let (kirim8,terima8) = channel();
             let (kirim9,terima9) = channel();
@@ -72,14 +71,14 @@ fn main(){
     });
     
     // masih dalam tahap prototiping 
-    let asm = std::thread::spawn(move || {
-        let asmx86 = std::thread::spawn(move || {
+    let asm = std::thread::spawn( move|| {
+        let asmx86 = std::thread::spawn( move || {
             let args : Vec<String> = std::env::args().collect();
-            if args[PROYEK-1].contains("asm86"){
-                std::fs::create_dir_all(format!("{}\\target\\asm86",args[PROYEK])).expect("tidak dapat membuat target direktori");
+            if args[PROYEK-1].clone().contains("asm86"){
+                std::fs::create_dir_all(format!("{}\\target\\asm86",&args[PROYEK])).expect("tidak dapat membuat target direktori");
             }
         });
-        let asmx64 = std::thread::spawn( || {
+        let asmx64 = std::thread::spawn( move|| {
             let args : Vec<String> = std::env::args().collect();
             if args[PROYEK-1].contains("asm64"){
                 std::fs::create_dir_all(format!("{}\\target\\asm64",args[PROYEK])).expect("tidak dapat membuat target direktori");
@@ -97,10 +96,10 @@ fn main(){
                 std::fs::create_dir_all(format!("{}\\target\\win64",args[PROYEK])).expect("tidak dapat membuat target direktori");
             }
         });
-        let mut _selesai = asmx86.join();
-            _selesai = asmx64.join();
-            _selesai = win32.join();
-            _selesai = win64.join();
+        asmx86.join().expect("");
+        asmx64.join().expect("");
+        win32.join().expect("");
+        win64.join().expect("");
     });
     let gds = std::thread::spawn(move || {
         let args : Vec<String> = std::env::args().collect();
@@ -108,7 +107,7 @@ fn main(){
             std::fs::create_dir_all(format!("{}\\target\\gdscrip",args[PROYEK])).expect("tidak dapat membuat target direktori");
         }
     });
-    let mut _selesai = wasm.join();
-        _selesai = asm.join();
-        _selesai = gds.join();
+    wasm.join().expect("");
+    asm.join().expect("");
+    gds.join().expect("");
 }

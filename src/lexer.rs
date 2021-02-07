@@ -7,7 +7,6 @@ pub fn lexer(lanjut:std::sync::mpsc::Sender<std::string::String>,terima:std::syn
     let mut _str_ = false;
     let mut _koment = false;
     let mut duplikat = (false,0u32,String::with_capacity(50));
-    
     print!("[lexer siap]\n");
     loop {
         _buf = terima.recv().expect("");
@@ -15,9 +14,8 @@ pub fn lexer(lanjut:std::sync::mpsc::Sender<std::string::String>,terima:std::syn
         for i in _buf.split("") {
             if _str_ {
                 if i == "\""{
-                    if !duplikat.0 {
-                        ke_lex_f.send(format!("\n\t('str'){}",sintak)).expect("");
-                    }else {
+                    ke_lex_f.send(format!("\n\t('str'){}",sintak)).expect("");
+                    if duplikat.0 {
                         duplikat.2.push_str(&format!("\n\t('str'){}",sintak))
                     }
                     sintak.clear();
@@ -37,19 +35,13 @@ pub fn lexer(lanjut:std::sync::mpsc::Sender<std::string::String>,terima:std::syn
             }
             match sintak.as_str(){
                 "cpu"=>{
-                    if !duplikat.0 {
-                        ke_lex_f.send(fungsi(&mut sintak,&_funsi[0].to_string(),&_funsi[1].to_string(),&_buf)).expect("");
-                    }else {
-                        duplikat.2.push_str(&fungsi(&mut sintak,&_funsi[0].to_string(),&_funsi[1].to_string(),&_buf))
-                    }
+                    ke_lex_f.send(fungsi(&mut sintak,&_funsi[0].to_string(),&_funsi[1].to_string(),&_buf)).expect("");
+                    continue;
                 }
                 "cetak" =>{
                     sintak.clear();
-                    if !duplikat.0 {
-                        ke_lex_f.send("\n('c0')".to_string()).expect("");
-                    }else {
-                        duplikat.2.push_str(&"\n('c0')".to_string())
-                    }
+                    ke_lex_f.send("\n('c0')".to_string()).expect("");
+                    if duplikat.0 {duplikat.2.push_str(&"\n('c0')".to_string())}
                     continue;
                 }
                 "<duplikat"=>{
@@ -59,9 +51,8 @@ pub fn lexer(lanjut:std::sync::mpsc::Sender<std::string::String>,terima:std::syn
                     continue
                 }
                 "duplikat>"=>{
-                    print!("duplikat tertutup\n");
+                    ulangi(&duplikat.2, &duplikat.1,&ke_lex_f);
                     duplikat.0 = false;
-                    ke_lex_f.send(ulangi(&duplikat.2, &duplikat.1)).expect("");
                     duplikat.2.clear();
                     sintak.clear();
                     continue
@@ -80,13 +71,11 @@ pub fn lexer(lanjut:std::sync::mpsc::Sender<std::string::String>,terima:std::syn
 }
 fn fungsi(sintak:&mut String ,f:&String,fn_:&String,n:&String) -> String{
     sintak.clear();
-    format!("('{}','{}')",&f,n.replace(fn_, " ").trim())
+    format!("('{}')('{}')",&f,n.replace(fn_, " ").trim())
 }
-fn ulangi(token:&String,jumlah_ulangi:&u32) -> String{
-    let mut ret = String::with_capacity(15);
-    for _i in 0..*jumlah_ulangi{
-        ret.push_str(token)
+fn ulangi(token:&String,jumlah_ulangi:&u32,kirim:&std::sync::mpsc::Sender<std::string::String>){
+    for _i in 1..*jumlah_ulangi{
+        kirim.send(token.to_string()).expect("")
     }
-    ret
 }
 

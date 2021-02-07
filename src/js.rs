@@ -2,7 +2,6 @@
 pub fn konvesi(data:std::sync::mpsc::Receiver<std::string::String>,lanjut:std::sync::mpsc::Sender<bool>,kirim:std::sync::mpsc::Sender<std::string::String>){
     let mut buf = String::with_capacity(15);
     let mut _main_ = false;
-    
     let mut arg = false;
     loop {
         buf = data.recv().expect("");
@@ -11,7 +10,8 @@ pub fn konvesi(data:std::sync::mpsc::Receiver<std::string::String>,lanjut:std::s
                 if buf.contains("\t\t"){
                     buf.remove(0);
                     buf.remove(0);
-                    kirim.send(format!("{});",buf).to_string()).expect("");
+                    buf.pop();
+                    kirim.send(format!("{});",buf.to_string())).expect("");
                     arg = false;
                 }
             }
@@ -23,14 +23,13 @@ pub fn konvesi(data:std::sync::mpsc::Receiver<std::string::String>,lanjut:std::s
         match buf.as_str() {
             "" => {break}
             "fn main\n" => {
-                kirim.send("const main = function(){".to_string()).expect("");
+                kirim.send("const main=function(){".to_string()).expect("");
                 _main_ = true
             }
             "(!!!)" =>{
-                print!("testing");
                 if _main_ {
+                    _main_ = false;
                     kirim.send("}();".to_string()).expect("");
-                   
                 }
             }
             _ =>{}

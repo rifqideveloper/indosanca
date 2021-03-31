@@ -1,7 +1,7 @@
 
 pub fn lexer(lanjut:std::sync::mpsc::Sender<std::string::String>,terima:std::sync::mpsc::Receiver<std::string::String>,ke_lex_f:std::sync::mpsc::Sender<std::string::String>){
     let mut _buf = String::with_capacity(15);
-    let mut sintak = String::with_capacity(15);
+    let mut sintak = String::with_capacity(30);
     let _funsi = ["f0","cpu","f1","gpu"];
     let _kode = ["('c0')\n"];
     let mut _str_ = false;
@@ -51,12 +51,24 @@ pub fn lexer(lanjut:std::sync::mpsc::Sender<std::string::String>,terima:std::syn
                     continue
                 }
                 "duplikat>"=>{
-                    ulangi(&duplikat.2, &duplikat.1,&ke_lex_f);
-                    duplikat.0 = false;
-                    duplikat.2.clear();
+                    ulangi(&mut duplikat.0, &duplikat.1,&mut duplikat.2,&ke_lex_f);
                     sintak.clear();
                     continue
                 }
+                "let<"|"mut<"|"kon<"=>{
+                    var("\n('var')".to_string(),&_buf,&ke_lex_f);
+                    sintak.clear();
+                    continue
+                }
+                "glo<"|"var<"=>{
+                    var("\n('glovar')".to_string(),&_buf,&ke_lex_f);
+                    sintak.clear();
+                    continue
+                }
+                "<putar"=>{}
+                "putar>"=>{}
+                "<logika"=>{}
+                "logika>"=>{}
                 _ =>{}
             }
 
@@ -73,9 +85,15 @@ fn fungsi(sintak:&mut String ,f:&String,fn_:&String,n:&String) -> String{
     sintak.clear();
     format!("('{}')('{}')",&f,n.replace(fn_, " ").trim())
 }
-fn ulangi(token:&String,jumlah_ulangi:&u32,kirim:&std::sync::mpsc::Sender<std::string::String>){
-    for _i in 1..*jumlah_ulangi{
+fn ulangi(log:&mut bool ,jumlah_ulangi:&u32,token:&mut String,kirim:&std::sync::mpsc::Sender<std::string::String>){
+    for _i in 1..*jumlah_ulangi + 1{
         kirim.send(token.to_string()).expect("")
     }
+    *log = false;
+    token.clear()
+}
+fn var(var:String,buf:&std::string::String,kirim:&std::sync::mpsc::Sender<std::string::String>){
+
+    kirim.send(var).expect("")
 }
 

@@ -3,6 +3,4 @@ fn main
 		"test\n"
 	konsole log
 		"test\n"
-	konsole log
-		"test\n"
 (!!!)

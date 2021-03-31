@@ -1,0 +1,3 @@
+#main funsi
+cpu main
+    let<i8> test = 8

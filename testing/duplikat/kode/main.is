@@ -1,4 +1,4 @@
 cpu main
-   <duplikat=3
+   <duplikat=1
       cetak "test\n"
    duplikat>

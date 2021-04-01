@@ -1,2 +1,14 @@
 ('f0')('main')
-('var')('int','s','8')
+('var','i8','test1')8
+('var','u8','test2')8
+('var','i16','test3')8
+('glovar','u16','test4')8
+('glovar','i32','test5')8
+('var','u32','test6')8
+('var','i64','test7')8
+('var','u64','test8')8
+('var','str','test9')"8"
+	('str')str>test9=8
+('var','char','test10')'8'
+('var','vec::u8','test11')[8]
+('var','auto','test12')8

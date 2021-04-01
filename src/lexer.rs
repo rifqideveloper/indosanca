@@ -56,12 +56,12 @@ pub fn lexer(lanjut:std::sync::mpsc::Sender<std::string::String>,terima:std::syn
                     continue
                 }
                 "let<"|"mut<"|"kon<"=>{
-                    var("\n('var')".to_string(),&_buf,&ke_lex_f);
+                    var("var".to_string(),&_buf,&ke_lex_f);
                     sintak.clear();
                     continue
                 }
                 "glo<"|"var<"=>{
-                    var("\n('glovar')".to_string(),&_buf,&ke_lex_f);
+                    var("glovar".to_string(),&_buf,&ke_lex_f);
                     sintak.clear();
                     continue
                 }
@@ -92,8 +92,16 @@ fn ulangi(log:&mut bool ,jumlah_ulangi:&u32,token:&mut String,kirim:&std::sync::
     *log = false;
     token.clear()
 }
-fn var(var:String,buf:&std::string::String,kirim:&std::sync::mpsc::Sender<std::string::String>){
 
-    kirim.send(var).expect("")
+fn nilai(test:String) -> String{
+    test
+}
+fn var(_var:String,buf:&std::string::String,kirim:&std::sync::mpsc::Sender<std::string::String>){
+    let mut splitter = buf.splitn(4, &['<','>','='][..]);
+        splitter.next().unwrap();
+    let tipe = splitter.next().unwrap().trim();
+    let nama = splitter.next().unwrap().trim();
+    let nilai = nilai(splitter.next().unwrap().trim().to_string());
+    kirim.send(format!("\n('{}','{}','{}'){}",_var,if tipe != ""{tipe}else{"auto"} ,nama,nilai)).expect("")
 }
 

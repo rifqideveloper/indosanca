@@ -4,7 +4,7 @@ pub fn konvesi(data:std::sync::mpsc::Receiver<std::string::String>,lanjut:std::s
     let mut _main_ = false;
     let mut arg = false;
     loop {
-        buf = data.recv().expect("");
+        buf.push_str(&data.recv().expect(""));
         if _main_ {
             if arg {
                 if buf.contains("\t\t"){
@@ -28,12 +28,13 @@ pub fn konvesi(data:std::sync::mpsc::Receiver<std::string::String>,lanjut:std::s
             }
             "(!!!)" =>{
                 if _main_ {
-                    _main_ = false;
                     kirim.send("}();".to_string()).expect("");
+                    _main_ = false;
                 }
             }
             _ =>{}
         }
+        buf.clear();
         lanjut.send(true).expect("");
     }
     kirim.send("".to_string()).expect("")

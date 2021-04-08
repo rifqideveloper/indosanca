@@ -1,0 +1,16 @@
+#main funsi
+cpu main
+    #
+    <putar : 2
+        cetak "hallo\n"
+    putar>
+    #
+    <putar : i di 0..4
+        cetak i + '\n'
+    putar>
+    #
+    let<bool> maju = benar
+    <putar : benar
+        cetak "test"
+        maju = salah
+    putar>

@@ -1,10 +1,8 @@
 use std::fs;
-use std::env;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 pub fn baca(proyek:&usize,kirim:std::sync::mpsc::Sender<std::string::String>,terima:std::sync::mpsc::Receiver<std::string::String>){
-    let main_forder : Vec<String> = env::args().collect();
-    let main_forder = format!("{}\\kode",main_forder[*proyek]);
+    let main_forder = format!("{}\\kode",std::env::args().collect::<Vec<String>>()[*proyek]);
     let mut baris = String::with_capacity(15);
     print!("[con read siap]\n");
     for i in direktori_list(format!("{}",main_forder)){

@@ -1,1 +1,1 @@
-console.log("hello ,dunia.");
+const main=function(){console.log("hello ,dunia.");}();

@@ -1,8 +1,8 @@
 
 pub fn parser(token:std::sync::mpsc::Receiver<std::string::String>,lanjut:std::sync::mpsc::Sender<std::string::String>,kirim:std::sync::mpsc::Sender<std::string::String>){
-    let mut buf = String::with_capacity(15);
+    let mut buf = String::with_capacity(30);
     loop {
-        buf = token.recv().expect("");
+        buf.push_str(&token.recv().expect(""));
         match buf.as_str(){
             "('c0')\n" =>{kirim.send("\n\tkonsole log".to_string()).expect("")}
             "" =>{break}
@@ -16,6 +16,7 @@ pub fn parser(token:std::sync::mpsc::Receiver<std::string::String>,lanjut:std::s
                 if buf.contains("\t('str'"){kirim.send(_str_(&buf)).expect("")}
             }
         }
+        buf.clear();
         lanjut.send("".to_string()).expect("");
     }
     kirim.send("".to_string()).expect("");

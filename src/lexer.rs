@@ -1,4 +1,4 @@
-
+extern crate meval;
 pub fn lexer(lanjut:std::sync::mpsc::Sender<std::string::String>,terima:std::sync::mpsc::Receiver<std::string::String>,ke_lex_f:std::sync::mpsc::Sender<std::string::String>){
     let mut _buf = String::with_capacity(15);
     let mut sintak = String::with_capacity(30);
@@ -48,22 +48,22 @@ pub fn lexer(lanjut:std::sync::mpsc::Sender<std::string::String>,terima:std::syn
                     print!("duplikat pembuka\n");
                     duplikat.0 = true;
                     duplikat.1 = _buf.split("=").collect::<Vec<&str>>()[1].trim().parse::<u32>().unwrap();
-                    continue
+                    break
                 }
                 "duplikat>"=>{
                     ulangi(&mut duplikat.0, &duplikat.1,&mut duplikat.2,&ke_lex_f);
                     sintak.clear();
-                    continue
+                    break
                 }
                 "let<"|"mut<"|"kon<"=>{
                     var("var".to_string(),&_buf,&ke_lex_f);
                     sintak.clear();
-                    continue
+                    break
                 }
                 "glo<"|"var<"=>{
                     var("glovar".to_string(),&_buf,&ke_lex_f);
                     sintak.clear();
-                    continue
+                    break
                 }
                 "<putar"=>{}
                 "putar>"=>{}
@@ -92,16 +92,22 @@ fn ulangi(log:&mut bool ,jumlah_ulangi:&u32,token:&mut String,kirim:&std::sync::
     *log = false;
     token.clear()
 }
+fn agumen(test:String) -> String{
+    let retval = "".to_string();
 
-fn nilai(test:String) -> String{
-    test
+    retval
 }
+fn nilai(test:&str) -> String{
+    //prototipe
+    return "\n|".to_string() + test.trim()
+}
+//fn nilai_agument(){}
 fn var(_var:String,buf:&std::string::String,kirim:&std::sync::mpsc::Sender<std::string::String>){
     let mut splitter = buf.splitn(4, &['<','>','='][..]);
         splitter.next().unwrap();
     let tipe = splitter.next().unwrap().trim();
     let nama = splitter.next().unwrap().trim();
-    let nilai = nilai(splitter.next().unwrap().trim().to_string());
+    let nilai = nilai(splitter.next().unwrap());
     kirim.send(format!("\n('{}','{}','{}'){}",_var,if tipe != ""{tipe}else{"auto"} ,nama,nilai)).expect("")
 }
 

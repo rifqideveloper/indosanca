@@ -1,4 +1,6 @@
 use std::sync::mpsc::channel;
+//use std::fs::File;
+//use std::io::prelude::*;
 extern crate wat;
 mod lexer;
 mod parser;
@@ -10,8 +12,9 @@ mod baca_pohon;
 mod js;
 mod tulis_ke;
 fn main(){
+    let sekarang = std::time::Instant::now();
     //angka dibawah nyadiguankan untuk mempermudah pengembangan aplikasi
-    static PROYEK:usize = 2;//ubah proyek angka ke 1 pada versi akhir
+    const PROYEK:usize = 2;//<-- ubah proyek angka ke 1 pada versi akhir
     /*
     setiap untaiyan(thread) memiliki tugas masing2 dan akan saling
     berkomunikasi melalui kanal dibawah
@@ -29,85 +32,58 @@ fn main(){
     let (kirim5,terima5) = channel();
     let (jeda1,jeda2) = channel();
     let (lanjut1,lanjut2) = channel();
+    //
+    std::fs::create_dir_all(format!("{}\\parsing",std::env::args().collect::<Vec<String>>()[PROYEK])).expect("tidak dapat membuat target direktori (parsing)");
     //membaca semua file nyang ada di directori yang dipilih dan dikirim ke lexer
-    let _kode = std::thread::spawn(move || {con_read::baca(&PROYEK,kirim,terima2)});
+    std::thread::Builder::new().name("_kode".to_string()).spawn(move || {con_read::baca(&PROYEK,kirim,terima2)}).expect("");
     //data yang diterima akan diubah menjadi token dan dikirim ke lex_f
-    let _lex = std::thread::spawn(move || {lexer::lexer(kirim2,terima,kirim3)});
+    std::thread::Builder::new().name("_lex".to_string()).spawn(move || {lexer::lexer(kirim2,terima,kirim3)}).expect("");
     //data yang diterima akan ditulis ke lexer file dan dibaca oleh token_read
-    let _lex_f = std::thread::spawn(move || {con_write::tuliskan(terima3,&PROYEK,jeda1)});
+    std::thread::Builder::new().name("_lex_f".to_string()).spawn(move || {con_write::tuliskan(terima3,&PROYEK,jeda1)}).expect("");
     /*
     token read akan membaca lexer file secara bergantian dan jika
     _lex_f selesai token_read akan membaca sisa nya
     data akan dikirim ke _parser_
     pastikan _lex_f dan _token_read tersingkronisasi dengan baik dangan mengunakan channel
     */
-    let _token_read = std::thread::spawn(move || {token_read::baca(&PROYEK,kirim4,lanjut2,jeda2)});
+    std::thread::Builder::new().name("_token_read".to_string()).spawn(move || {token_read::baca(&PROYEK,kirim4,lanjut2,jeda2)}).expect("");
     //data yang diterima akan diproses menjadi pohon sintak abstrak dan data dikirim ke _pohom_
-    let _parser_ = std::thread::spawn(move || {parser::parser(terima4,lanjut1,kirim5)});
+    std::thread::Builder::new().name("_parser_".to_string()).spawn(move || {parser::parser(terima4,lanjut1,kirim5)}).expect("");
     //data yang diterima akan dikirim ke file parse
-    let _pohon_ = std::thread::spawn(move || {pohon::tulis(&PROYEK,terima5)}).join();
-    //pokom sintak akan dioptimalkan
-    //fitur ini belum dibuat
-    let args :Vec<String> = std::env::args().collect();
-    //membersihkan terget kompilasi sebelumnya
-    //jika forder tidak ada akan error tapi akan dihiraukan 
+    let _pohon_ = std::thread::Builder::new().name("_pohon_".to_string()).spawn(move || {pohon::tulis(&PROYEK,terima5)}).expect("").join();
+    /*pokom sintak akan dioptimalkan
+    fitur ini belum dibuat
+    */
+    let args = std::env::args().collect::<Vec<String>>();
+     //membersihkan terget kompilasi sebelumnya,jika forder tidak ada akan error tapi akan dihiraukan
     std::fs::remove_dir_all(format!("{}\\target",args[PROYEK])).ok();
     //membuat target direktori
     std::fs::create_dir_all(format!("{}\\target",args[PROYEK])).expect("tidak dapat membuat target direktori (target)");
-    let wasm = std::thread::spawn(move || {
-        if args[PROYEK-1].contains("wasm") {
+    //std::thread.pust();
+    let wasm = std::thread::Builder::new().name("wasm".to_string()).spawn( move || {
+        if args[PROYEK-1].clone().contains("wasm") {
             //konversi pohon sintak ke js,wasm,html
-            std::fs::create_dir_all(format!("{}\\target\\www",&args[PROYEK])).expect("tidak dapat membuat target direktori (www)");
+            println!("[wasm dimuali]");
+            std::fs::create_dir_all(format!("{}\\target\\www",args[PROYEK])).expect("tidak dapat membuat target direktori (www)");
             let (kirim7,terima7) = channel();
             let (kirim8,terima8) = channel();
             let (kirim9,terima9) = channel();
-            let _baca_ke_js = std::thread::spawn(move || {baca_pohon::baca(&PROYEK,kirim7,terima8)});
-            let _konversi_js = std::thread::spawn(move || {js::konvesi(terima7,kirim8,kirim9)});
-            let _tulis_js = std::thread::spawn(move || {tulis_ke::js(terima9,&PROYEK)});
-            let _tulis_html = std::thread::spawn(move || {tulis_ke::html(&PROYEK)});
+            let _baca_ke_js = std::thread::spawn(move || baca_pohon::baca(&PROYEK,kirim7,terima8));
+            let _konversi_js = std::thread::spawn(move || js::konvesi(terima7,kirim8,kirim9));
+            let _tulis_js = std::thread::spawn(move || tulis_ke::js(terima9,&PROYEK));
+            let _tulis_html = std::thread::spawn(move || tulis_ke::html(&PROYEK));
             let mut _selesai = _tulis_js.join();
                 _selesai = _tulis_html.join();
+            println!("[wasm selesai]")
         }
-    });
-    
-    // masih dalam tahap prototiping 
-    let asm = std::thread::spawn( move|| {
-        let asmx86 = std::thread::spawn( move || {
-            let args : Vec<String> = std::env::args().collect();
-            if args[PROYEK-1].clone().contains("asm86"){
-                std::fs::create_dir_all(format!("{}\\target\\asm86",&args[PROYEK])).expect("tidak dapat membuat target direktori");
-            }
-        });
-        let asmx64 = std::thread::spawn( move|| {
-            let args : Vec<String> = std::env::args().collect();
-            if args[PROYEK-1].contains("asm64"){
-                std::fs::create_dir_all(format!("{}\\target\\asm64",args[PROYEK])).expect("tidak dapat membuat target direktori");
-            }
-        });
-        let win32 = std::thread::spawn(move || {
-            let args : Vec<String> = std::env::args().collect();
-            if args[PROYEK-1].contains("win32"){
-                std::fs::create_dir_all(format!("{}\\target\\win32",args[PROYEK])).expect("tidak dapat membuat target direktori");
-            }
-        });
-        let win64 = std::thread::spawn(move || {
-            let args : Vec<String> = std::env::args().collect();
-            if args[PROYEK-1].contains("win64"){
-                std::fs::create_dir_all(format!("{}\\target\\win64",args[PROYEK])).expect("tidak dapat membuat target direktori");
-            }
-        });
-        asmx86.join().expect("");
-        asmx64.join().expect("");
-        win32.join().expect("");
-        win64.join().expect("");
-    });
-    let gds = std::thread::spawn(move || {
-        let args : Vec<String> = std::env::args().collect();
-        if args[PROYEK-1].contains("gds") || args[PROYEK-1].contains("gdscrip"){
-            std::fs::create_dir_all(format!("{}\\target\\gdscrip",args[PROYEK])).expect("tidak dapat membuat target direktori");
-        }
-    });
+    }).expect("");
     wasm.join().expect("");
-    asm.join().expect("");
-    gds.join().expect("");
+    
+    
+    //gitignore
+    /*
+    let mut file = File::create(format!("{}\\.gitignore",std::env::args().collect::<Vec<String>>()[PROYEK])).expect("");
+        file.write_all(b"/target\n/parsing\n/aset").expect("")
+    */
+    println!("selesai dalam : {}/detik", sekarang.elapsed().as_secs_f32());
 }

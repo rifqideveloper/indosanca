@@ -1,0 +1,25 @@
+#main funsi
+cpu main
+    #logaka : 
+    #   logika adalah gabungan swicher/match(rust) dan if else
+    #   cara kerjanya hampir sama seperti swicher/match(rust) dan if else
+    #   jika salah satu kasus benar maka kode terpilih akan tereksekusi
+    #   pilih variable yang ingin dibandingkan, sama seperti swicher/match(rust) tapi tanpa ada batasan jumlah
+    let<i8> angka = 8
+    let<str> huruf = "a"
+    <logika(angka,huruf)
+        # variable yang ingin dilambang dengan '?' dipisalkan oleh ',' dan ';' secara berurutan
+        # jika semua benar ','
+        << ? == 8 , ? == "a"
+            cetak "benar semua"
+        # jika salah satu benar ';'
+        << ? == 8 ; ? == "a"
+            cetak "benar sebagian"
+        #lewati arguman
+        <<,? == "a"
+            cetak "huruf = a"
+        # jika tidak ada kasus yang benar '_'
+        << _ 
+            cetak "salah semua"
+    logika>
+    # logika tidak mendukung nesting untuk saat ini !!!

@@ -1,0 +1,7 @@
+[seting]
+nama_app = "main"
+versi = "0.1.0"
+pembuat = ["rifqi"]
+kompilasi = ["wasm","win64"]
+[dep]
+test = "test"

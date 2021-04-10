@@ -1,2 +1,11 @@
 /target
-*.exe
+/testing/hello/target
+/testing/duplikat/target
+/testing/logika/target
+/testing/putar/target
+/testing/var/target
+/testing/hello/parsing
+/testing/duplikat/parsing
+/testing/logika/parsing
+/testing/putar/parsing
+/testing/var/parsing

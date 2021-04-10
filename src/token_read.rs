@@ -1,7 +1,7 @@
 use std::fs::File;
 use std::io::{BufRead, BufReader};
-pub fn baca(proyek:&usize,kirim_ke_parser:std::sync::mpsc::Sender<std::string::String>,tunggu:std::sync::mpsc::Receiver<std::string::String>,tunggu_lexer:std::sync::mpsc::Receiver<bool>){
-    let mut file = BufReader::with_capacity(15,File::open(format!("{}\\parsing\\lexer",std::env::args().collect::<Vec<String>>()[*proyek])).expect(""));
+pub fn baca(proyek:String,kirim_ke_parser:std::sync::mpsc::Sender<std::string::String>,tunggu:std::sync::mpsc::Receiver<std::string::String>,tunggu_lexer:std::sync::mpsc::Receiver<bool>){
+    let mut file = BufReader::with_capacity(15,File::open(format!("{}\\parsing\\lexer",proyek)).expect(""));
     let mut buf = String::with_capacity(15);
     let mut jeda = tunggu_lexer.recv().expect(""); 
     while file.read_line(&mut buf).expect("") != 0 {

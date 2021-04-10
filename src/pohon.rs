@@ -1,6 +1,6 @@
 use std::io::Write;
-pub fn tulis (_proyek:&usize,terima:std::sync::mpsc::Receiver<std::string::String>){
-    let mut file = std::fs::File::create(format!("{}\\parsing\\parser",std::env::args().collect::<Vec<String>>()[*_proyek])).expect("");
+pub fn tulis (_proyek:String,terima:std::sync::mpsc::Receiver<std::string::String>){
+    let mut file = std::fs::File::create(format!("{}\\parsing\\parser",_proyek)).expect("");
     let mut _buf = String::with_capacity(15);
     loop {
         _buf = terima.recv().expect("");

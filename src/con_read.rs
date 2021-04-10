@@ -1,8 +1,8 @@
 use std::fs;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
-pub fn baca(proyek:&usize,kirim:std::sync::mpsc::Sender<std::string::String>,terima:std::sync::mpsc::Receiver<std::string::String>){
-    let main_forder = format!("{}\\kode",std::env::args().collect::<Vec<String>>()[*proyek]);
+pub fn baca(proyek:String,kirim:std::sync::mpsc::Sender<std::string::String>,terima:std::sync::mpsc::Receiver<std::string::String>){
+    let main_forder = format!("{}\\kode",proyek);
     let mut baris = String::with_capacity(15);
     print!("[con read siap]\n");
     for i in direktori_list(format!("{}",main_forder)){
@@ -15,6 +15,7 @@ pub fn baca(proyek:&usize,kirim:std::sync::mpsc::Sender<std::string::String>,ter
         }
         baris.push_str("\n");
     }
+    
     kirim.send("".to_string()).expect("");
     print!("[con read selesai]\n");
 }

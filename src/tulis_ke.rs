@@ -1,8 +1,8 @@
 use std::fs::File;
 use std::io::Write;
-pub fn js(data:std::sync::mpsc::Receiver<std::string::String>,proyek:&usize){
+pub fn js(data:std::sync::mpsc::Receiver<std::string::String>,proyek:String){
     let mut buf = String::with_capacity(15);
-    let mut file = File::create(format!("{}\\target\\www\\index.js",std::env::args().collect::<Vec<String>>()[*proyek])).expect("");
+    let mut file = File::create(format!("{}\\target\\www\\index.js",proyek)).expect("");
     loop{
         buf.push_str(&data.recv().expect(""));
         match buf.as_str() {
@@ -11,8 +11,8 @@ pub fn js(data:std::sync::mpsc::Receiver<std::string::String>,proyek:&usize){
         }
     }
 }
-pub fn html(proyek:&usize){
-    let mut file = File::create(format!("{}\\target\\www\\index.html",std::env::args().collect::<Vec<String>>()[*proyek])).expect("");
+pub fn html(proyek:String){
+    let mut file = File::create(format!("{}\\target\\www\\index.html",proyek)).expect("");
     file.write_all(b"<!DOCTYPE HTML><html><body>").expect("");
     /*
     let mut extra = String::with_capacity(15);

@@ -5,7 +5,7 @@ cpu main
         cetak "hallo\n"
     putar>
     #
-    <putar : i di 0..4
+    <putar i di 0..4
         cetak i + '\n'
     putar>
     #

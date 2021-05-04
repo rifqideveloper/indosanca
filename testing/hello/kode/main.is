@@ -1,4 +1,3 @@
-#main funsi
-cpu main
-    #cetak string ke konsole
-    cetak "hello ,dunia."
+# test
+cpu main #main fungsi
+	cetak "hello dunia"

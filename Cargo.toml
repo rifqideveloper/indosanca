@@ -1,17 +1,19 @@
 [package]
 name = "indosanca"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["rifqi nugraha"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+concat-reader = "0.1.0"
 toml = "0.5"
+serde_json = "1.0.64"
 serde_derive = "1.0.125"
 serde = { version = "1.0", features = ["derive"] }
 wat = "1.0"
 meval = "0.2"
-
+lazy_static = "1.4.0"
 [profile.release]
 overflow-checks = true

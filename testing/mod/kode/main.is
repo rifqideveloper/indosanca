@@ -1,0 +1,8 @@
+
+<mod print
+	cpu hello
+		cetak "hello dunia"
+mod>
+
+cpu main
+	print::hello()

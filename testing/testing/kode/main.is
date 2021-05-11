@@ -1,4 +1,2 @@
 cpu main
-    <duplikat: 3
-        cetak ?d
-    duplikat>
+    let<u8>test=8

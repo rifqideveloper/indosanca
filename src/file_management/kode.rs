@@ -68,7 +68,7 @@ impl Data {
     }
 }
 
-pub fn kode(path:&String){
+pub fn baca(path:&String){
     use std::fs;    
     use std::fs::File;
     use std::io::{BufRead, BufReader};
@@ -85,7 +85,11 @@ pub fn kode(path:&String){
     //std::iter::repeat("ha").take(5).collect::<String>()
     for path in fs::read_dir(format!("{}\\kode",path)).unwrap() 
     {
-        buffer.dir = path.unwrap().path().display().to_string();
+        let x = path.unwrap().path().display().to_string();
+        buffer.file.write_fmt(format_args!("<mod {}\n",
+            x.clone().split(&['\\','/'][..]).last().expect("").replace(".","_")
+        )).expect("");
+        buffer.dir = x;
         let mut file = BufReader::new(File::open(&buffer.dir).expect(""));
         while file.read_line(&mut buffer.baris).expect("") != 0 {
             buffer.format();
@@ -94,14 +98,15 @@ pub fn kode(path:&String){
                 if buffer.format_str(&i) { continue }
                 if i == "\n" && buffer.dup.0 == 0 {
                     buffer.file.write(buffer.buf.as_bytes()).expect("");
-                    print!("{}",buffer.buf);
+                    
                     buffer.buf.clear();
                 }
             }
             buffer.baris.clear()
             //print!("{}",baris);
             //terima.recv().expect("");
-        }  
+        }
+        buffer.file.write_fmt(format_args!("mod>\n")).expect("");  
     }
     
 }

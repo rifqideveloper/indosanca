@@ -1,0 +1,3 @@
+cpu main
+	let mut<u8>test = 0
+    test = 8

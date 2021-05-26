@@ -56,17 +56,20 @@ pub mod wasm {
     }
 }
 pub mod parsing {
-    pub fn tulis(f:&str,_proyek:&String,terima:std::sync::mpsc::Receiver<std::string::String>){
+    pub fn tulis(
+        mulai:std::sync::mpsc::Sender<()>,
+        f:&str,
+        _proyek:&String,
+        terima:std::sync::mpsc::Receiver<std::string::String>,
+    ){
         use std::io::Write;
         let mut file = std::fs::File::create(format!("{}\\parsing\\{}",_proyek,f)).expect("");
-        let mut _buf = String::with_capacity(40);
-        loop {
-            _buf = terima.recv().expect("");
-            if _buf == "" {
-                file.write(_buf.as_bytes()).expect("");
-                break
-            }
+        let mut _buf = terima.recv().expect("");
+        while _buf != ""{
             file.write(_buf.as_bytes()).expect("");
+            _buf = terima.recv().expect("");
         }
+        drop(file);
+        mulai.send(()).unwrap();
     }
 }

@@ -1,0 +1,2 @@
+cpu main
+	cetak "hello dunia"

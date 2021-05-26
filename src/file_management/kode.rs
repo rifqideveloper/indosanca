@@ -1,5 +1,3 @@
-
-
 struct Data {
     dup :(usize, usize,String),
     baris: String,
@@ -67,7 +65,7 @@ impl Data {
         return false
     }
 }
-
+#[allow(non_snake_case)]
 pub fn baca(path:&String){
     use std::fs;    
     use std::fs::File;
@@ -90,8 +88,8 @@ pub fn baca(path:&String){
             x.clone().split(&['\\','/'][..]).last().expect("").replace(".","_")
         )).expect("");
         buffer.dir = x;
-        let mut file = BufReader::new(File::open(&buffer.dir).expect(""));
-        while file.read_line(&mut buffer.baris).expect("") != 0 {
+        //unsafe
+        while BufReader::new(File::open(&buffer.dir).expect("")).read_line(&mut buffer.baris).expect("") != 0 {
             buffer.format();
             if buffer.duplikat() {continue}
             for i in buffer.baris.clone().split(""){
@@ -106,6 +104,8 @@ pub fn baca(path:&String){
             //print!("{}",baris);
             //terima.recv().expect("");
         }
+        buffer.baris.clear();
+        //unsafe
         buffer.file.write_fmt(format_args!("mod>\n")).expect("");  
     }
     

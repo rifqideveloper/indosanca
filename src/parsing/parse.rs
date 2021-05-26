@@ -1,24 +1,31 @@
 pub fn parse(
-    nama_app:String,
     terima:std::sync::mpsc::Receiver<Vec<String>>
     ,kirim:std::sync::mpsc::Sender<String>,
-    lanjut:std::sync::mpsc::Sender<bool>
+
 ){
-    kirim.send(format!("{{\"tipe\":\"program\",\"nama\":\"{nama}\"}}\n",nama = nama_app)).expect("parse_");
+    //kirim.send(format!("{{\"tipe\":\"program\",\"nama\":\"{nama}\"}}\n",nama = nama_app)).expect("parse_");
     let mut buf :Vec<String> =  Vec::from( terima.recv().expect("") );
     buf.reserve(20);
     while buf.len() != 0 {
         match (buf[0].as_str(),buf[1].as_str()){
-            ("let","<")=>{
-                match buf[2].as_str(){
+            ("let",_)=>{
+                let  (indx,tipe) = if buf[1] == "<"{
+                    (2,"var_".to_string())
+                } else {
+                    (3, format!{ "var_{}" , buf[1] }  )
+                };
+                match buf[indx].as_str(){
                     "u8"=>{
-                        kirim.send(format!("{{\"tipe\":\"var_\",\"data\":\"{}\",\"nama\":\"{}\",\"nilai\":\"{}\"}}\n",buf[2],buf[4],buf[6])).expect("parse_");
+                        kirim.send(format!("{{\"tipe\":\"{}\",\"data\":\"{}\",\"nama\":\"{}\",\"nilai\":\"{}\"}}\n",tipe,buf[indx],buf[indx+2],buf[indx+4])).expect("parse_");
                     }
                     ">"=>{
-                        kirim.send(format!("{{\"tipe\":\"var_\",\"data\":\"auto\",\"nama\":\"{}\",\"nilai\":\"{}\"}}\n",buf[3],buf[5])).expect("parse_");
+                        kirim.send(format!("{{\"tipe\":\"{}\",\"data\":\"auto\",\"nama\":\"{}\",\"nilai\":\"{}\"}}\n",tipe,buf[indx+1],buf[indx+3])).expect("parse_");
                     }
                     _=>{}
                 }
+            }
+            (_,"=")=>{
+                kirim.send(format!("{{\"tipe\":\"tulis\",\"var\":\"{0}\",\"nilai\":\"{1}\"}}\n",buf[0],buf[2])).expect("parse_");
             }
             ("cetak",_)=>{
                 kirim.send(format!("{{\"tipe\":\"cetak\",\"nilai\":\"{nama}\"}}\n",nama = buf[1])).expect("parse_");
@@ -36,7 +43,7 @@ pub fn parse(
         }
         buf =  terima.recv().expect("") ;
     }
-    lanjut.send(true).expect("lanjut ke parse_2");
+    
     //println!("testting");
     kirim.send("".to_string()).expect("parse selesai");
     

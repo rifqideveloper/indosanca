@@ -1,0 +1,2 @@
+cpu main
+    let<u8>test = 0

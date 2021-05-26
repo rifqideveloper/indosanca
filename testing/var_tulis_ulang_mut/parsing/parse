@@ -1,0 +1,5 @@
+{"tipe":"modul_masuk","nama":"main"}
+{"tipe":"fn_cpu","nama":"main"}
+{"tipe":"var_mut","data":"u8","nama":"test","nilai":"0"}
+{"tipe":"tulis","var":"test","nilai":"8"}
+{"tipe":"modul_keluar"}

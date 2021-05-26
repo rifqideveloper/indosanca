@@ -7,8 +7,12 @@ mod parsing;
 mod konversi;
 #[macro_use]
 extern crate lazy_static;
+
+use std::sync::{Mutex/*,Arc, Barrier*/};
 lazy_static! {
-    static ref ARGS: Vec<String> = std::env::args().collect::<Vec<String>>();//<-- ubah proyek angka ke 1 pada versi akhir
+    static ref BUFF: Mutex<String> = std::sync::Mutex::new(String::with_capacity(100));
+    static ref ARGS: Vec<String> = std::env::args().collect::<Vec<String>>();//
+    //static ref BUF: String = String::with_capacity(100);
 }
 macro_rules! tread {
     ($a:block, $b:expr,$( $x:block , $y:expr),+) => {
@@ -32,20 +36,22 @@ macro_rules! tread {
             .join().expect("");
     }
 }
-fn main(){
+fn main() {
     /*
-    setiap untaiyan(thread) memiliki tugas masing2 dan akan saling
-    berkomunikasi melalui kanal dibawah
-                            !!peringatan!!
-    aplikasi kompilasi ini tidak mengecek kesalaham hanya menkopilasi kode ketarget yang diinginkan
-    pemeriksaan kesalahan diserahkan sepenuhnya pada ide atau pengguna 
-    saya tiadak bertangung jawab pada pun kesalahan penguna
+        setiap untaiyan(thread) memiliki tugas masing2 dan akan saling
+    berkomunikasi melalui kanal dibawah.
     guna ataupun memodifikasi dengan bebas aplikasi in semau anda tanpa batasan 
     untuk lebih jelas lihat dilicense aplikasi di https://github.com/rifqideveloper/indosanca/blob/master/LICENSE
     */
     const PROYEK:usize = 2;
+    
+    //tahapan kopilasi hanya berlanjut jika _ERROR = false
     let waktu : std::time::Instant = std::time::Instant::now();
-    let (perpus,kompilasi,versi,nama_app,pola) = file_management::seting::seting(&PROYEK,&ARGS.to_vec());
+    //use std::sync::Arc;
+    //let foo = Arc::new(String::with_capacity(100));
+    //kode error 1
+    #[allow(unused_variables)]
+    let (perpus,kompilasi,versi,nama_app,turbo,pola) = file_management::seting::seting(&mut BUFF.lock().unwrap(),&PROYEK,&ARGS.to_vec()) ;
     if pola.0 {
         /*
         **versi lama 0.1.0**
@@ -76,38 +82,43 @@ fn main(){
         }).expect("").join().expect("");
         */
         //gabung_kode::kode(&ARGS[PROYEK]);
-        file_management::kode::baca(&ARGS[PROYEK]);
+        
+        //file_management::kode::baca(&ARGS[PROYEK]);
+        let (test1,test2) = channel();
         let (a,b) = channel();
-        let (c,d) = channel();
-        let (lanjut_parse_2,mulai_parse_2) = channel();
+        //let (c,d) = channel();
+        let (file_ind,index)= channel();
+        let (x,y) = channel();
+        let (m,p) = channel();
+        let (k,r) = channel();
+        //
+        //let (mulai,tunggu) = channel();
+        //let (mulai2,tunggu2) = channel();
         tread!{join ->
-            {parsing::lexer::baca(&ARGS[PROYEK], a)},"lexer".to_string(),lex,
-            {parsing::parse::parse(nama_app, b , c ,lanjut_parse_2)},"parse".to_string(),parse,
-            {
-                
-                //let (indexing,indx)= channel();
-                let (file_ind,index)= channel();
-                let (x,y) = channel();
-                mulai_parse_2.recv().expect("menunggu parse pertama");
-                tread!{join -> 
-                    //{file_management::index::baca(indx,file_ind)},"index".to_string(),indext,
-                    {file_management::baca::file(file_ind,format!("{}\\parsing\\parse",&ARGS[PROYEK]))},"parse_f_1".to_string(),parse_f_1,
-                    {parsing::parse_2::baca(index,x)},"parse_2_".to_string(),parse_2_,
-                    {
-                        file_management::tulis_ke::parsing::tulis("parse_2",&ARGS[PROYEK],y)
-                    },"tulis_parse_2".to_string(),tulis_parse_2
-                };
-                
-                
-                
-            },"parse_2".to_string(),parse_2,
-            {file_management::parse::tulis(&ARGS[PROYEK],"parse",d)},"parse_f".to_string(),parse_f
-           
+            //kode error 10
+            {file_management::kode_2::baca(&mut BUFF.lock().unwrap(),&ARGS[PROYEK], test1)},"test".to_string(),test1,
+            //kode error 11
+            {parsing::lexer::baca_2(test2, a)},"test2".to_string(),test2,
+            //{ parsing::lexer::baca(&mut BUFF.lock().unwrap(),&ARGS[PROYEK], a) },"lexer".to_string(),lex,
+            //kode error 12
+            { parsing::parse::parse( b , file_ind )},"parse".to_string(),parse,
+            //kode error 13
+            //{file_management::parse::tulis(mulai,&ARGS[PROYEK],"parse",d)},"parse_f".to_string(),parse_f,
+            //kode error 14
+            //{file_management::baca::file(tunggu,&mut BUFF.lock().unwrap(),file_ind,format!("{}\\parsing\\parse",&ARGS[PROYEK]))},"parse_f_1".to_string(),parse_f_1,
+            //kode error 15
+            {parsing::parse_2::baca(index,x)},"parse_2_".to_string(),parse_2_,
+            //kode error 16
+            //kode error 17
+            {file_management::index_2::baca(&mut BUFF.lock().unwrap(), y, &ARGS[PROYEK], p, k,turbo)},"inx2".to_string(),inx2,
+             //kode error 18
+            {parsing::parse_3::parse(m,r)},"tulis_parse_3".to_string(),tulis_parse_2
         };
         //file_management::hapus_baris::baris(&ARGS[PROYEK], "parse", 0);
         println!("[parsing selesai : {}/detik]", waktu.elapsed().as_secs_f32());
     }
     if pola.1 {
+        //kode error 20
         println!("[optimalisasi selesai : {}/detik]", waktu.elapsed().as_secs_f32());
     }
     if pola.2 {
@@ -127,9 +138,13 @@ fn main(){
                     std::fs::create_dir_all(format!("{}\\target\\www\\wasm",&ARGS[PROYEK])).expect("tidak dapat membuat target direktori (target)");
                     let ((a,b),(c,d),(e,f)) = (channel(),channel(),channel());
                     tread!(
+                        //kode error 30
                         {file_management::tulis_ke::wasm::wasm(&ARGS[PROYEK],f)},"wasm/wasm".to_string(),
+                        //kode error 31
                         {konversi::wasm::tulis(&ARGS[PROYEK],a,c,e)},"wasm".to_string(),
+                        //kode error 32
                         {file_management::tulis_ke::wasm::js(&ARGS[PROYEK],b)},"wasm/js".to_string(),
+                        //kode error 33
                         {file_management::tulis_ke::wasm::html(&ARGS[PROYEK],d)},"wasm/html".to_string()
                     );
                     println!("[konversi/wasm selesai : {}/detik]", waktu.elapsed().as_secs_f32());
@@ -138,6 +153,7 @@ fn main(){
             {
                 if kom.1 {
                     std::fs::create_dir_all(format!("{}\\target\\win64",&ARGS[PROYEK])).expect("tidak dapat membuat target direktori (target)");
+                    //kode error 40
                     println!("[konversi/win64 selesai : {}/detik]", waktu.elapsed().as_secs_f32());
                 }
             },"win64".to_string(),win64
@@ -145,4 +161,77 @@ fn main(){
         println!("[konversi selesai : {}/detik]", waktu.elapsed().as_secs_f32());
     }
     println!("[semua selesai : {}/detik]", waktu.elapsed().as_secs_f32());
+   
+}
+#[allow(unused_imports)]
+use std::process::Command;
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use Command;
+    #[test]
+    #[ignore]
+    fn parsing_() {
+        if !Command::new("./target/debug/indosanca.exe")
+        .args(&["parsing", "testing/testing"])
+        .spawn()
+        .unwrap()
+        .wait()
+        .unwrap()
+        .success() {
+            panic!("");
+        }
+    }
+    #[test]
+    #[ignore]
+    fn proyek() {// belum siap
+        if !Command::new("./target/debug/indosanca.exe")
+        .args(&["proyek", "testing/proyek"])
+        .spawn()
+        .unwrap()
+        .wait()
+        .unwrap()
+        .success() {
+            panic!("");
+        }
+    }
+    #[test]
+    fn parsing_dekralasi() {
+        if !Command::new("./target/debug/indosanca.exe")
+        .args(&["parsing", "testing/var_deklarasi"])
+        .spawn()
+        .unwrap()
+        .wait()
+        .unwrap()
+        .success() {
+            panic!("");
+        }
+    }
+    #[test]
+    #[should_panic]
+    fn parsing_tulis_ulang_gagal() {
+        if Command::new("./target/debug/indosanca.exe")
+        .args(&["parsing", "testing/var_tulis_ulang_gagal"])
+        .spawn()
+        .unwrap()
+        .wait()
+        .unwrap()
+        .code()
+        .unwrap() == 18 {
+            panic!("");
+        }
+    }
+    #[test]
+    fn parsing_tulis_ulang_mut() {
+        if !Command::new("./target/debug/indosanca.exe")
+        .args(&["parsing", "testing/var_tulis_ulang_mut"])
+        .spawn()
+        .unwrap()
+        .wait()
+        .unwrap()
+        .success() {
+            panic!("");
+        }
+    }
+    
 }

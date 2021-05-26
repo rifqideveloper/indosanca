@@ -1,8 +1,8 @@
 
-use serde::{Deserialize, Serialize};
-use serde_json::json;
-use serde_json::{Result, Value};
-use std::fs;
+//use serde::{Deserialize, Serialize};
+//use serde_json::json;
+use serde_json::{/*Result,*/ Value};
+//use std::fs;
 pub fn baca(
     baris:std::sync::mpsc::Receiver<String>,
     kirim:std::sync::mpsc::Sender<std::string::String>
@@ -28,11 +28,9 @@ pub fn baca(
                         if fn_.0 {","} else { fn_.0 = true ; "" }
                         ,json["nama"])
                     ).expect("msg: &str")
-                } else if json["tipe"] == "program" {
-                    kirim.send(format!("{}\n",json)).expect("msg: &str");
                 } else {
                     kirim.send(format!("{}{}",
-                    if fn_.1 {","} else { fn_.0 = true ; "" }
+                    if fn_.1 {","} else { fn_.1 = true ; "" }
                     ,json)).expect("msg: &str")
                 }
             }

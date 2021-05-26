@@ -1,1 +1,0 @@
-const main=function(){console.log("hello ,dunia.");}();

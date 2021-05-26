@@ -1,2 +1,3 @@
 cpu main
-    let<u8>test=8
+	let atom<u8>test=8
+	test = 0

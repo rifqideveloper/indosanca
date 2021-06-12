@@ -4,7 +4,9 @@ use std::fs::File;
 use std::io::{ BufReader};
 use serde_derive::Deserialize;
 
+
 #[derive(Deserialize)]
+//#[allow]
 struct Seting{
     nama_app :String,
     versi :String,
@@ -35,6 +37,7 @@ fn buat_seting_file(f:& String){
             ") {
                 println!("'{0}\\seting.toml' dapat dibuat tapi tidak dapat ditulis ?\ninfo : jika file '{0}' tidak ada maka program akan membuatkan file",f);
                 std::process::exit(1);
+               
             }
         }
         Err(_)=>{
@@ -89,60 +92,7 @@ async fn bangun_proyek(f:& String){
     buat_seting_file(f);
     println!("[bangun proyek]");
 } 
-fn bantuan(){
-    let (input,mut line) = (std::io::stdin(),String::with_capacity(10));
-    loop{
-        println!("{}[2J", 27 as char);
-        println!("  .*.  😀apa yang saya bisa bantu ?");
-        println!("  :::   ketik 'keluar' untuk keluar");
-        println!("   :::   📂ketik 'dokument' untuk membuka dokumentasi");
-        println!("    :::   🏃🏼‍♀️🏋🏼‍♀️🚴🏼‍♀️ketik 'latihan' untuk memulai latihan");
-        println!("   :::   ketik ");
-        println!("  :::   ketik ");
-        println!(" :::   ketik ");
-        println!("  ::   ketik ");
-        println!("  /   😊ketik 'siapa anda' kamu ingin tahu siapa aku");
-        input.read_line(&mut line).unwrap();
-        match line.trim_end() {
-            "keluar"=>{break}
-            "siapa anda"=>{
-                println!("sebelum saya menjawab sebutkan nama mu dulu");
-                let mut nama = String::new();
-                loop{
-                    input.read_line(&mut nama).unwrap();
-                    nama = nama.trim_end().to_string();
-                    if !nama.is_empty() {break} else {
-                        println!("jawab dulu pertanyaan saya");
-                    }
-                }
-                if nama.len() > 3 {println!("{} nama pendek sekali tapi bagus",nama)}
-                else if nama.len() < 20 {println!("{} nama panjang sekali tapi bagus",nama)}
-                else {println!("{} nama yang bagus",nama)}
-                println!("ok nama saya indosanca dan saya adalah kompiler👩‍💻👨‍💻");
-                println!("saya berasal dari indonesia 🇮🇩");
-                println!("apa anda tahu kompiler itu apa ? (ketik 'y' untuk iya dan 't' untuk tidak)");
-                loop{
-                    line.clear();
-                    input.read_line(&mut line).unwrap();
-                    match line.trim_end(){
-                        "y"=>{println!("bagus 💯👍 pintar sekali");break}
-                        "t"=>{
-                            println!("kompiler/Kompilator (Inggris: compiler) adalah sebuah program komputer yang berguna untuk menerjemahkan program komputer yang ditulis dalam bahasa pemrograman tertentu menjadi program yang ditulis dalam bahasa pemrograman lain.Terlepas dari pengertiannya yang demikian relatif luas, istilah kompilator biasa digunakan untuk program komputer yang menerjemahkan program yang ditulis dalam bahasa pemrograman tingkat tinggi (semacam bahasa Pascal, C++, BASIC, FORTRAN, Visual Basic, Visual C#, Java, xBase, atau COBOL) menjadi bahasa mesin, biasanya dengan bahasa Assembly sebagai perantara. ");
-                            println!("sumber Dari Wikipedia bahasa Indonesia, ensiklopedia bebas https://id.wikipedia.org/wiki/Kompilator");
-                            println!("\nuntuk saya menerjemahkan ke web(js/html/wasm) dan assembli");
-                            break
-                        }
-                        _=>{println!("jawab yang benar");}
-                    }
-                }
-                input.read_line(&mut line).unwrap();
-            }
-            _=>{}
-        }
-        line.clear()
-    }
-    
-}
+
 pub fn seting(buf:&mut String,proyek:&usize ,args:&Vec<String>) -> (Vec<String>, Vec<String>, String, String,bool ,(bool,bool,bool)){
     let pola = match args[*proyek - 1].as_str() {
         "parsing" => (true,false,false),
@@ -153,17 +103,13 @@ pub fn seting(buf:&mut String,proyek:&usize ,args:&Vec<String>) -> (Vec<String>,
         "bangun" => (false,true,true),
         "instan" => (false,false,true),
         "optimal" => (false,true,false),
-        "bantuan"=>{
-            bantuan();
-            std::process::exit(0);
-        }
         _ => (true,true,true),
     };
     //let mut pembuat:Vec<String>= vec!["?".to_string()];
     let file = format!("{}\\seting.toml",args[*proyek]);
     let perpus:Vec<String>= vec!["std".to_string()];
     if !Path::new(&file).exists() {buat_seting_file(&args[*proyek])}
-        match BufReader::with_capacity(10, 
+        match BufReader::with_capacity(1000, 
             match File::open(&file) {
             Ok(o)=>o,
             _=>{

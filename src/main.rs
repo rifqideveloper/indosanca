@@ -5,6 +5,9 @@ extern crate wat;
 mod file_management;
 mod parsing;
 mod konversi;
+mod codeart;
+mod dok;
+use std::fs::File;
 #[macro_use]
 extern crate lazy_static;
 
@@ -22,7 +25,7 @@ macro_rules! tread {
         std::thread::Builder::new().name($b).spawn(move || $a ).expect("")
             .join().expect("");
     };
-    (join ->  $( $x:block , $y:expr,$i:ident),+ ) => {
+    (join ->  $( $x:block , $y:expr,$i:ident),+ $(,)*) => {
         // prototype
         $(
             let $i = std::thread::Builder::new().name($y).spawn(move || $x ).expect("");
@@ -36,7 +39,8 @@ macro_rules! tread {
             .join().expect("");
     }
 }
-fn main() {
+
+fn kopilasi() {
     /*
         setiap untaiyan(thread) memiliki tugas masing2 dan akan saling
     berkomunikasi melalui kanal dibawah.
@@ -112,10 +116,11 @@ fn main() {
             //kode error 17
             {file_management::index_2::baca(&mut BUFF.lock().unwrap(), y, &ARGS[PROYEK], p, k,turbo)},"inx2".to_string(),inx2,
              //kode error 18
-            {parsing::parse_3::parse(m,r)},"tulis_parse_3".to_string(),tulis_parse_2
+            {parsing::parse_3::parse(m,r,&ARGS[PROYEK])},"tulis_parse_3".to_string(),tulis_parse_2,
+            //{},"pohon".to_string(),pohon
         };
         //file_management::hapus_baris::baris(&ARGS[PROYEK], "parse", 0);
-        println!("[parsing selesai : {}/detik]", waktu.elapsed().as_secs_f32());
+        println!("parsing selesai : {}/detik\n]", waktu.elapsed().as_secs_f32());
     }
     if pola.1 {
         //kode error 20
@@ -130,23 +135,17 @@ fn main() {
                 _ =>{}
             }
         }
+        
+        static mut POHON :std::vec::Vec<crate::parsing::parse_3::Pohon> = Vec::new();
+        unsafe {
+            POHON = bincode::deserialize_from(
+                std::io::BufReader::new(File::open(format!("{}/parsing/pohon.bin",&ARGS[PROYEK])).unwrap())
+            ).unwrap();
+        }
         tread!(join -> 
             {
                 if kom.0 {
-                    std::fs::create_dir_all(format!("{}\\target\\www",&ARGS[PROYEK])).expect("tidak dapat membuat target direktori (target)");
-                    std::fs::create_dir_all(format!("{}\\target\\www\\aset",&ARGS[PROYEK])).expect("tidak dapat membuat target direktori (target)");
-                    std::fs::create_dir_all(format!("{}\\target\\www\\wasm",&ARGS[PROYEK])).expect("tidak dapat membuat target direktori (target)");
-                    let ((a,b),(c,d),(e,f)) = (channel(),channel(),channel());
-                    tread!(
-                        //kode error 30
-                        {file_management::tulis_ke::wasm::wasm(&ARGS[PROYEK],f)},"wasm/wasm".to_string(),
-                        //kode error 31
-                        {konversi::wasm::tulis(&ARGS[PROYEK],a,c,e)},"wasm".to_string(),
-                        //kode error 32
-                        {file_management::tulis_ke::wasm::js(&ARGS[PROYEK],b)},"wasm/js".to_string(),
-                        //kode error 33
-                        {file_management::tulis_ke::wasm::html(&ARGS[PROYEK],d)},"wasm/html".to_string()
-                    );
+                    konversi::web::app( unsafe{ &POHON } ,&ARGS[PROYEK] );
                     println!("[konversi/wasm selesai : {}/detik]", waktu.elapsed().as_secs_f32());
                 }
             },"wasm".to_string(),was,
@@ -162,6 +161,25 @@ fn main() {
     }
     println!("[semua selesai : {}/detik]", waktu.elapsed().as_secs_f32());
    
+}
+fn main(){
+    match ARGS.len(){
+        3 => kopilasi(),
+        2=>{
+            match ARGS[1].as_str(){
+                "bantuan"=>dok::bantuan(),
+                _=>{
+                    println!("command line argumen tidak sesuai");
+                    std::process::exit(1);
+                }
+            }
+        }
+        1 => codeart::ide(),
+        _ =>{
+            println!("command line argumen tidak sesuai");
+            std::process::exit(1);
+        }
+    }
 }
 #[allow(unused_imports)]
 use std::process::Command;
@@ -184,7 +202,7 @@ mod tests {
     }
     #[test]
     #[ignore]
-    fn proyek() {// belum siap
+    fn proyek() {// belum siap // cetak belum selesai
         if !Command::new("./target/debug/indosanca.exe")
         .args(&["proyek", "testing/proyek"])
         .spawn()
@@ -225,6 +243,32 @@ mod tests {
     fn parsing_tulis_ulang_mut() {
         if !Command::new("./target/debug/indosanca.exe")
         .args(&["parsing", "testing/var_tulis_ulang_mut"])
+        .spawn()
+        .unwrap()
+        .wait()
+        .unwrap()
+        .success() {
+            panic!("");
+        }
+    }
+    #[test]
+    fn parsing_kepemilikan_1() {
+        if !Command::new("./target/debug/indosanca.exe")
+        .args(&["parsing", "testing/parsing_kepemilikan_1"])
+        .spawn()
+        .unwrap()
+        .wait()
+        .unwrap()
+        .success() {
+            panic!("");
+        }
+    }
+    #[test]
+    #[should_panic]
+    #[ignore]
+    fn parsing_salah_tipe() {//belum siap
+        if Command::new("./target/debug/indosanca.exe")
+        .args(&["parsing", "testing/parsing_salah_tipe"])
         .spawn()
         .unwrap()
         .wait()

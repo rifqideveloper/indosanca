@@ -1,3 +1,4 @@
 cpu main
-	let atom<u8>test=8
-	test = 0
+	cetak "hallo" 
+	
+	

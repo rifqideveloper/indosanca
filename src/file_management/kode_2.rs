@@ -1,6 +1,11 @@
 use std::fs;    
 use std::fs::File;
 use std::io::{BufRead, BufReader};
+//use rust_embed::RustEmbed;
+//#[derive(RustEmbed)]
+//#[folder = "asset/"]
+//#[prefix = "prefix/"]
+//struct Asset;
 struct Data<'a>{
     kirim:&'a std::sync::mpsc::Sender<std::string::String>
 }
@@ -11,8 +16,8 @@ impl Data<'_>{
                 x.clone().split(&['\\','/'][..]).last().expect("").replace(".is","")
             )
         ).expect("msg: &str");
-        let mut read = BufReader::new(File::open(&x).expect(""));
-        while read.read_line( buf).expect("") != 0 {
+        let mut read = BufReader::with_capacity(1000,File::open(&x).expect(""));
+        while read.read_line( buf ).unwrap() != 0 {
             *buf = buf.trim_start().to_string(); //buf.trim_start();
             if !buf.is_empty(){
                 self.kirim.send(
@@ -24,7 +29,7 @@ impl Data<'_>{
         self.kirim.send("mod>\n".to_string()).expect("msg: &str");
     }
     fn selesai(self){
-        self.kirim.send("".to_string()).expect("")
+        self.kirim.send("".to_string()).unwrap()
     }
 }
 pub fn baca(
@@ -32,6 +37,13 @@ pub fn baca(
     path:&String,
     kirim:std::sync::mpsc::Sender<std::string::String>
 ){
+    //let t = Asset::get("prefix/std.txt").unwrap();
+    //kirim.send("<mod std\n".to_string()).unwrap();
+    
+    //for file in Asset::get("prefix/std.txt").unwrap() {
+     //   println!("{}", file.as_ref());
+    //}
+    //kirim.send("mod>\n".to_string()).unwrap();
     let data = Data{
         kirim:&kirim
     };

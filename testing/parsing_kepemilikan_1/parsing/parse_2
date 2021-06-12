@@ -1,0 +1,1 @@
+{"mod":"main","nilai":[{"fn":"main","nilai":[{"data":"u8","nama":"pemilik_lama","nilai":{"nilai":"0","tipe":"nomer"},"tipe":"var_"},{"data":"i8","nama":"pemilik_baru","nilai":{"nilai":"pemilik_lama","tipe":"minta"},"tipe":"var_"}]}]}

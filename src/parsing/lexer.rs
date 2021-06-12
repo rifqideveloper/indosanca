@@ -1,9 +1,8 @@
+
 struct Token{
     x : Vec<String>,
-    
     buf:String,
     _str:(bool,bool,bool),
-              //()//{}/[]
     blok:(bool,u64,u64,u64),
     kirim : std::sync::mpsc::Sender<Vec<String>>
 }
@@ -26,7 +25,7 @@ impl Token{
                         self.buf.clear();
                         break
                     }
-                    _=>{self.buf.push(w);}
+                    _=>{self.buf.push(w)}
                 }
         }
     }
@@ -70,61 +69,54 @@ impl Token{
 
     }
     fn lanjut(&mut self){
-        if !self.blok.0{
-            if !self.x.is_empty(){
-                self.kirim.send(self.x.clone()).expect("");
-                #[cfg(debug_assertions)]
-                println!("[lexer]\n{:#?}",self.x.clone());
-                self.x.clear()
-            }
+        if !self.blok.0 && !self.x.is_empty(){
+            self.kirim.send(self.x.clone()).expect("");
+            #[cfg(debug_assertions)] println!("[lexer]\n{:#?}",self.x.clone());
+            self.x.clear()
         }
     }
+    
     fn token(&mut self,data:String){
         if data == "mod>\n"{
-            
             self.kirim.send(["mod".to_string(),">".to_string()].to_vec()).expect("");
             return
-        }
+        } 
         let mut y = data.chars();
         loop{
             match y.next(){
-                i if !self._str.0 && i == Some('\n') ||i == None =>{
+                i if !self._str.0 && i == Some('\n') || i == None => {
                     self.lanjut();
                     break
                 }
                 Some(i)=>{
                     match i {
-                        '('|')'=>{ 
-                            if i == '('{
-                                self.blok.1 += 1;
-                                self.blok.0 = true
-                            } else {
-                                self.blok.1 -= 1;
-                                self._blok_();
-                            }
+                        '('=>{ 
+                            self.blok.1 += 1;
+                            self.blok.0 = true;
+                            self.x.push(i.to_string());
+                        }
+                        ')'=>{
+                            self.blok.1 -= 1;
+                            self._blok_();
+                            self.x.push(i.to_string());
+                        }        
+                        '['=>{
+                            self.blok.3 += 1;
+                            self.blok.0 = true;
+                            self.x.push(i.to_string());
+                        }
+                        ']'=>{
+                            self.blok.3 -= 1;
+                            self._blok_();
                             self.x.push(i.to_string());
                         }
                         '{'|'}'=>{
-                            if i == '{'{
-                                self.blok.2 += 1;
-                                self.blok.0 = true
-                            } else {
-                                self.blok.2 -= 1;
-                                self._blok_();
-                            }
-                            self.x.push(i.to_string());
+                            self.lanjut();
+                            self.kirim.send(
+                                [i.to_string()].to_vec()
+                            ).unwrap()
                         }
-                        '['|']'=>{
-                            if i == '['{
-                                self.blok.3 += 1;
-                                self.blok.0 = true
-                            } else {
-                                self.blok.3 -= 1;
-                                self._blok_();
-                            }
-                            self.x.push(i.to_string());
-                        }
-                        '<'|'>'|'='|':'|';'|'!'|','=>{ self.x.push(i.to_string()) }
+                        '<'|'>'|'='|':'|'!'|','|'&'|'*'=>{ self.x.push(i.to_string()) }
                         '\"'=>{
                             self.buf.push(i);
                             if !self._str.0{
@@ -157,6 +149,7 @@ impl Token{
                         n if n != ' ' =>{
                             self._kata(i,&mut y)
                         }
+                        ';' => { self.lanjut() }
                         _=>{}
                     }
                 }
@@ -165,7 +158,10 @@ impl Token{
         }
     }
     fn selesai(self){
-        self.kirim.send([].to_vec()).expect("")
+        match self.kirim.send([].to_vec()){
+            Ok(_)=>{}
+            Err(_)=>{panic!()}
+        }
     }
 }
 pub fn baca_2(terima:std::sync::mpsc::Receiver<String>,kirim:std::sync::mpsc::Sender<Vec<String>>){
@@ -177,9 +173,19 @@ pub fn baca_2(terima:std::sync::mpsc::Receiver<String>,kirim:std::sync::mpsc::Se
         kirim:kirim
     };
     loop{
-        let data = terima.recv().expect("msg: &str");
-        if data == "" {break}
-        token.token(data)
+        match terima.recv(){
+            Ok(o)=>{
+                if !o.is_empty(){
+                    token.token(o);
+                    continue
+                }
+                break
+            }
+            Err(_)=>{
+                println!("gagal menerima");
+                std::process::exit(1);
+            }
+        }
     }
     token.selesai()
 }

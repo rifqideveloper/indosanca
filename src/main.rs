@@ -56,6 +56,7 @@ fn kopilasi() {
     //kode error 1
     #[allow(unused_variables)]
     let (perpus,kompilasi,versi,nama_app,turbo,pola) = file_management::seting::seting(&mut BUFF.lock().unwrap(),&PROYEK,&ARGS.to_vec()) ;
+    static mut POHON :std::vec::Vec<crate::parsing::parse_3::Pohon> = Vec::new();
     if pola.0 {
         /*
         **versi lama 0.1.0**
@@ -116,7 +117,7 @@ fn kopilasi() {
             //kode error 17
             {file_management::index_2::baca(&mut BUFF.lock().unwrap(), y, &ARGS[PROYEK], p, k,turbo)},"inx2".to_string(),inx2,
              //kode error 18
-            {parsing::parse_3::parse(m,r,&ARGS[PROYEK])},"tulis_parse_3".to_string(),tulis_parse_2,
+            {parsing::parse_3::parse(m,r,&ARGS[PROYEK],unsafe{ &mut POHON })},"tulis_parse_3".to_string(),tulis_parse_2,
             //{},"pohon".to_string(),pohon
         };
         //file_management::hapus_baris::baris(&ARGS[PROYEK], "parse", 0);
@@ -135,17 +136,19 @@ fn kopilasi() {
                 _ =>{}
             }
         }
-        
-        static mut POHON :std::vec::Vec<crate::parsing::parse_3::Pohon> = Vec::new();
         unsafe {
-            POHON = bincode::deserialize_from(
-                std::io::BufReader::new(File::open(format!("{}/parsing/pohon.bin",&ARGS[PROYEK])).unwrap())
-            ).unwrap();
+            if !pola.0 || !pola.1 {
+                POHON = bincode::deserialize_from(
+                    std::io::BufReader::new(File::open(format!("{}/parsing/pohon.bin",&ARGS[PROYEK])).unwrap())
+                ).unwrap();
+            }
         }
         tread!(join -> 
             {
                 if kom.0 {
-                    konversi::web::app( unsafe{ &POHON } ,&ARGS[PROYEK] );
+                    //konversi::wasm::wat(&ARGS[PROYEK]);
+                    //konversi::web::app( unsafe{ &POHON } ,&ARGS[PROYEK] );
+                    konversi::web_2::app(unsafe{ &POHON } ,&ARGS[PROYEK]);
                     println!("[konversi/wasm selesai : {}/detik]", waktu.elapsed().as_secs_f32());
                 }
             },"wasm".to_string(),was,
@@ -167,7 +170,7 @@ fn main(){
         3 => kopilasi(),
         2=>{
             match ARGS[1].as_str(){
-                "bantuan"=>dok::bantuan(),
+                "bantuan"=> dok::bantuan(),
                 _=>{
                     println!("command line argumen tidak sesuai");
                     std::process::exit(1);
@@ -212,6 +215,17 @@ mod tests {
         .success() {
             panic!("");
         }
+    }
+    #[test]
+    //#[ignore]
+    fn token_slice(){
+        let _t = "hallo ".to_string();
+        let x = 6;
+        for i in 0.._t.len(){
+            if &_t[i..x] == "hallo "{
+                panic!()
+            }
+        }        
     }
     #[test]
     fn parsing_dekralasi() {

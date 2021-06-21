@@ -75,8 +75,67 @@ impl Token{
             self.x.clear()
         }
     }
-    
+    fn token_slice(&mut self,data:String){
+        // tokenizer 2.0.0
+        // tidak butuh bufer
+        if data == "mod>\n"{
+            self.kirim.send(["mod".to_string(),">".to_string()].to_vec()).expect("");
+            return
+        } 
+        let mut x = 0;
+        for y in 0..data.len(){
+            match &data[x..y] {
+                i if !self._str.0 && i == "\n" =>{
+                    self.lanjut();
+                    break
+                }
+                "<"|">"|"="|":"|"!"|","|"&"|"*"=>{ self.x.push(data[x..y].to_string()) ; x += 1 }
+                "("=>{ 
+                    self.blok.1 += 1;
+                    self.blok.0 = true;
+                    self.x.push(data[x..y].to_string()) ; x += 1
+                }
+                ")"=>{
+                    self.blok.1 -= 1;
+                    self._blok_();
+                    self.x.push(data[x..y].to_string()) ; x += 1
+
+                }        
+                "["=>{
+                    self.blok.3 += 1;
+                    self.blok.0 = true;
+                    self.x.push(data[x..y].to_string()) ; x += 1
+
+                }
+                "]"=>{
+                    self.blok.3 -= 1;
+                    self._blok_();
+                    self.x.push(data[x..y].to_string()) ; x += 1
+
+                }
+                "{"|"}"=>{
+                    self.lanjut();
+                    self.kirim.send(
+                        [data[x..y].to_string()].to_vec()
+                    ).unwrap()
+                }
+                "\""=>{
+
+                }
+                _ if self._str.0 =>{
+                
+                }
+                n if n != " "  =>{
+
+                }
+                ";" => { self.lanjut() }
+                _=>{}
+            }
+        }
+        
+    }
     fn token(&mut self,data:String){
+        // tokenizer 1.0.0
         if data == "mod>\n"{
             self.kirim.send(["mod".to_string(),">".to_string()].to_vec()).expect("");
             return

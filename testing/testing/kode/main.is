@@ -1,4 +1,4 @@
 cpu main
 	cetak "hallo" 
-	
+	cetak " world"
 	

@@ -20,8 +20,30 @@ pub fn app(pohon:&std::vec::Vec<crate::parsing::parse_3::Pohon>,path:&String){
     </html>\
     ").unwrap();
     let mut js = BufWriter::new( File::create(format!("{}\\target\\www\\index.js",path)).unwrap() );
-    js.write(b"var main = function(){\n").unwrap();
+    js.write(b"\
+    var import_object = {\n\
+    \"import\" :{
+        \"mem\": new WebAssembly.Memory({initial: 1}),\n\
+        \"log\":(offset, length) => {\
+                var  bytes = new  Uint8Array(import_object.import.mem.buffer, offset, length);\
+                var  string = new  TextDecoder('utf8').decode(bytes);\
+                console.log(string)\
+                },\n\
+                \"decode_print\": (start, end) => {\n\
+                    document.write(new TextDecoder(\"utf-8\").decode(\
+                        new Uint8Array(import_object.js.mem.buffer, start, end)\
+                    ));\n\
+                }}\
+    }\n").unwrap();
+    js.write(b"\
+    fetch('main.wasm').then(response =>\n\
+        response.arrayBuffer()\n\
+    ).then(bytes => WebAssembly.instantiate(bytes,import_object)).then(results => {\n\
+        var instance = results.instance.exports\n\
+        var main = function(){\n").unwrap();
     use crate::parsing::parse_3::Pohon;
+    //js.write(b"console.log(instance.add(1, 2))\n").unwrap();
+    /*
     for i in pohon{
         match i {
             Pohon::cetak(o)=>{
@@ -37,5 +59,9 @@ pub fn app(pohon:&std::vec::Vec<crate::parsing::parse_3::Pohon>,path:&String){
             Pohon::var(o)=>{}
         }
     }
-    js.write(b"}()").unwrap();
+    */
+    js.write(b"instance.main()\n").unwrap();
+    //js.write(b"var f = instance.exports.main()\n").unwrap();
+    js.write(b"}()\n\
+    }).catch(console.error);").unwrap();
 }

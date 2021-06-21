@@ -43,15 +43,15 @@ use serde::{Serialize, Deserialize};
 #[allow(non_camel_case_types)]
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Tipe{
-    _u8(u8),
-    _String(String)
+    _u8(Option<u8>),
+    _String(String),
 }
 
 #[allow(non_camel_case_types)]
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Variabel{
-    nilai:Tipe,
-    id:u64,
+    pub nilai:Tipe,
+    pub id:u64,
     
 }
 #[allow(non_camel_case_types)]
@@ -67,10 +67,17 @@ pub enum Pohon{
     cetak(Nilai),
     var(Variabel),
 }
+//
+#[derive(rust_embed::RustEmbed)]
+#[folder = "std/parsing"]
+#[prefix = "prefix/"]
+struct STD;
+//
 pub fn parse(
     kirim:std::sync::mpsc::Sender<([String; 3],bool)>,
     terima:std::sync::mpsc::Receiver<std::option::Option<serde_json::Value>>,
-    path:&String
+    path:&String,
+    pohon :&mut Vec<Pohon>,
 ){
     let lokasi :Vec<[String; 3]>= Vec::from([["main".to_string(),"main".to_string(),"".to_string()]]);
     let mut id :u64 = 0;
@@ -78,8 +85,12 @@ pub fn parse(
     let mut _data_ : HashMap<u64, Data> = HashMap::with_capacity(2);
     let mut bahaya = false;
     let mut alokasi = ([0u64,0u64],false);
-    let mut pohon :Vec<Pohon> = Vec::with_capacity(5);
     let mut nesting = 0u64;
+    // standar library
+    //let _std : std::borrow::Cow<[u8]> = STD::get("prefix/parse_2").unwrap() ;
+    let _std = serde_json::from_str::<serde_json::Value>( std::str::from_utf8( STD::get("prefix/parse_2").unwrap().as_ref() ).unwrap());
+    //println!("{:#?}",_std);
+    //
     kirim.send((lokasi[0].clone(),false)).unwrap();
     match terima.recv().expect("msg: &str") {
         Some(_data)=>{
@@ -152,7 +163,7 @@ pub fn parse(
                                                 panic!()
                                             } else if t.tipe == "\"u8\"" {
                                                 Tipe::_u8(
-                                                    t.nilai.parse::<u8>().unwrap()
+                                                    Some(t.nilai.parse::<u8>().unwrap())
                                                 )
                                             } else {
                                                 panic!()

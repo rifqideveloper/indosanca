@@ -1,6 +1,6 @@
 [package]
 name = "indosanca"
-version = "0.4.0"
+version = "0.5.0"
 authors = ["rifqi nugraha"]
 edition = "2018"
 repository = "https://github.com/rifqideveloper/indosanca.git"
@@ -17,7 +17,7 @@ toml = "0.5"
 serde_json = "1.0.64"
 serde_derive = "1.0.125"
 serde = { version = "1.0", features = ["derive"] }
-wat = "1.0"
+wat = "1.0.38"
 meval = "0.2"
 lazy_static = "1.4.0"
 druid = "0.7.0"

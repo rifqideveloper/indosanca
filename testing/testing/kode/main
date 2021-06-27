@@ -1,0 +1,4 @@
+cpu main
+    let<u8>test = 3
+    cetak "hallo"
+    cetak " world"

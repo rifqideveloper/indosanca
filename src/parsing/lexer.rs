@@ -1,12 +1,13 @@
 
 struct Token{
     x : Vec<String>,
-    buf:String,
+    //buf:String,
     _str:(bool,bool,bool),
     blok:(bool,u64,u64,u64),
     kirim : std::sync::mpsc::Sender<Vec<String>>
 }
 impl Token{
+    /*
     fn _kata(&mut self,i:char, y:&mut std::str::Chars){
         self.buf.push(i);
         loop{
@@ -59,6 +60,7 @@ impl Token{
             self.buf.push(i)
         }
     }
+    */
     fn _blok_(&mut self){
         if self.blok.1 == 0 && self.blok.2 == 0 && self.blok.3 == 0{
             if self.x.last() == Some(&",".to_string()) {
@@ -75,65 +77,71 @@ impl Token{
             self.x.clear()
         }
     }
-    fn token_slice(&mut self,data:String){
+    fn token_slice(&mut self,data:&mut String,extra:&std::sync::mpsc::Receiver<String>){
         // tokenizer 2.0.0
-        // tidak butuh bufer
-        if data == "mod>\n"{
-            self.kirim.send(["mod".to_string(),">".to_string()].to_vec()).expect("");
-            return
-        } 
-        let mut x = 0;
-        for y in 0..data.len(){
-            match &data[x..y] {
-                i if !self._str.0 && i == "\n" =>{
-                    self.lanjut();
-                    break
-                }
-                "<"|">"|"="|":"|"!"|","|"&"|"*"=>{ self.x.push(data[x..y].to_string()) ; x += 1 }
-                "("=>{ 
-                    self.blok.1 += 1;
-                    self.blok.0 = true;
-                    self.x.push(data[x..y].to_string()) ; x += 1
-                }
-                ")"=>{
-                    self.blok.1 -= 1;
-                    self._blok_();
-                    self.x.push(data[x..y].to_string()) ; x += 1
-
-                }        
-                "["=>{
-                    self.blok.3 += 1;
-                    self.blok.0 = true;
-                    self.x.push(data[x..y].to_string()) ; x += 1
-
-                }
-                "]"=>{
-                    self.blok.3 -= 1;
-                    self._blok_();
-                    self.x.push(data[x..y].to_string()) ; x += 1
-
-                }
-                "{"|"}"=>{
-                    self.lanjut();
-                    self.kirim.send(
-                        [data[x..y].to_string()].to_vec()
-                    ).unwrap()
+        // tidak butuh bufer 
+        // belum selesai     
+        let mut x = 0 ;
+        'main:loop {
+            match &data[x..x + 1] {
+                "\n"=>{self.lanjut();break}
+                ";"=>{self.lanjut()}
+                "<"|">"|"="|":"|"!"|","|"&"|"*"=>{
+                    self.x.push(data[x..x + 1].to_string())
                 }
                 "\""=>{
+                    let mut leng = data.len();
+                    for i in x+1..leng{
+                        match &data[i..i+1] {
+                        "\""=>{
+                            self.x.push(data[x..i+1].to_string());
+                            x = i + 1;
+                            continue 'main
+                        }
+                        "\n"=>{
+                            data.replace_range(i..i+1," ");
+                            data.push_str(&extra.recv().unwrap().trim_start());
+                            leng = data.len();
+                        }
+                        _=>{}
+                        }
+                    }
+                }
+            
+                i if i != " " && i != "\t" && i != "\r" =>{
+                    for i in x+1..data.len(){
+                        match &data[i..i+1] {
+                            " "|";"|"\""|"\r" /*|"<"|">"|"="|":"|"!"|","|"&"|"*"|"\n"*/=>{
+                                self.x.push(data[x..i].to_string());
+                                x = i ;
+                                continue 'main
+                            }
+                            "<"|">"|"="|":"|"!"|","|"&"|"*"=>{
+                                self.x.push(data[x..i].to_string());
+                                self.x.push(data[i..i + 1].to_string());
+                                x = i + 1;
+                                continue 'main
 
+                            }
+                            "\n"=>{
+                                self.x.push(data[x..i].to_string());
+                                self.lanjut();
+                                break 'main
+                            }
+                            
+                            _=>{}
+                        }
+                    }
                 }
-                _ if self._str.0 =>{
-                
-                }
-                n if n != " "  =>{
-
-                }
-                ";" => { self.lanjut() }
                 _=>{}
             }
+            x += 1 ;
         }
+        //println!("{:#?}",self.x);
+
         
     }
+    /*
     fn token(&mut self,data:String){
         // tokenizer 1.0.0
         if data == "mod>\n"{
@@ -216,6 +224,7 @@ impl Token{
             }
         }
     }
+    */
     fn selesai(self){
         match self.kirim.send([].to_vec()){
             Ok(_)=>{}
@@ -226,25 +235,26 @@ impl Token{
 pub fn baca_2(terima:std::sync::mpsc::Receiver<String>,kirim:std::sync::mpsc::Sender<Vec<String>>){
     let mut token = Token{
         x : Vec::with_capacity(10),
-        buf:String::with_capacity(10),
+        //buf:String::with_capacity(10),
         _str:(false,false,false),
         blok:(false,0,0,0),
         kirim:kirim
     };
     loop{
         match terima.recv(){
-            Ok(o)=>{
-                if !o.is_empty(){
-                    token.token(o);
-                    continue
+            Ok(mut o)=>{
+                if o.is_empty(){
+                    token.selesai();
+                    return
                 }
-                break
+                token.token_slice(&mut o,&terima);
             }
             Err(_)=>{
                 println!("gagal menerima");
                 std::process::exit(1);
             }
-        }
+        };
+
     }
-    token.selesai()
+    
 }

@@ -694,7 +694,7 @@ dependencies = [
 
 [[package]]
 name = "indosanca"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "bincode",
  "druid",

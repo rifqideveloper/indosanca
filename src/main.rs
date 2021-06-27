@@ -148,7 +148,9 @@ fn kopilasi() {
                 if kom.0 {
                     //konversi::wasm::wat(&ARGS[PROYEK]);
                     //konversi::web::app( unsafe{ &POHON } ,&ARGS[PROYEK] );
-                    konversi::web_2::app(unsafe{ &POHON } ,&ARGS[PROYEK]);
+                    //konversi::web_2::app(unsafe{ &POHON } ,&ARGS[PROYEK]);
+                    konversi::web_2::app_2(unsafe{ &POHON } ,&ARGS[PROYEK]);
+
                     println!("[konversi/wasm selesai : {}/detik]", waktu.elapsed().as_secs_f32());
                 }
             },"wasm".to_string(),was,
@@ -221,11 +223,9 @@ mod tests {
     fn token_slice(){
         let _t = "hallo ".to_string();
         let x = 6;
-        for i in 0.._t.len(){
-            if &_t[i..x] == "hallo "{
-                panic!()
-            }
-        }        
+
+
+        println!("{}",&_t[5..])
     }
     #[test]
     fn parsing_dekralasi() {

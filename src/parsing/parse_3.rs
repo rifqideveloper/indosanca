@@ -172,7 +172,6 @@ pub fn parse(
                                         }
                                     )
                                 );
-                                
                                 //println!("{:#?}",_var);
                                 
                             }
@@ -224,7 +223,18 @@ pub fn parse(
                             rumah:lokasi[lokasi.len()-1].to_vec(),
                             nesting:nesting
                         });
+                        //sementara
+                        //hanya untuk u8
+                        pohon.push(
+                            Pohon::var(
+                                Variabel{
+                                    nilai:Tipe::_u8(Some( _data_.get(&(&id-1)).unwrap().nilai.parse::<u8>().unwrap())),
+                                    id:id-1 
+                                }
+                            )
+                        );
                         id += 1 ;
+
                     }
                     
                     //println!("{:?}\n{:?}",_data_,_var);

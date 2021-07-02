@@ -1,39 +1,3 @@
-#[derive(Debug)]
-struct Data {
-    tipe:String,
-    nilai:String
-}
-#[derive(Debug)]
-struct Var {
-    tipe:String,
-    id:u64,
-    nama:String,
-    data:(bool,u64),
-    dibaca:[bool;2],
-    ditulis:[bool;2],
-    rumah:std::vec::Vec<String>,
-    nesting:u64
-}
-#[allow(dead_code)]
-impl Var {
-    fn boleh_ditulis(&self)-> bool{
-        self.ditulis[1]
-    }
-    fn boleh_dibaca(&self)-> bool{
-        self.dibaca[1]
-    }
-    fn sudah_ditulis(&self)-> bool{
-        self.ditulis[0]
-    }
-    fn sudah_dibaca(&self)-> bool{
-        self.dibaca[0]
-    }
-    fn peringatan(&self)-> bool{
-        self.data.0
-    }
-}
-
-
 
 use serde_json::json;
 use std::collections::HashMap;
@@ -46,7 +10,17 @@ pub enum Tipe{
     _u8(Option<u8>),
     _String(String),
 }
-
+#[derive(Debug)]
+struct Data {
+    tipe:String,
+    nilai:String
+}
+#[derive(Debug)]
+struct Var {
+    tipe:String,
+    id:u64,
+    nama:String,
+}
 #[allow(non_camel_case_types)]
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Variabel{
@@ -58,14 +32,30 @@ pub struct Variabel{
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Nilai {
     lansung(String),
+    lansung_int(u64),
+    lansung_float(f64),
     penujuk(Variabel),
     minta(Variabel)
 }
 #[allow(non_camel_case_types)]
 #[derive(Serialize, Deserialize, Debug)]
+pub enum Arit {
+    tambah(u64,Nilai,Nilai),
+    kurang(u64,Nilai,Nilai),
+    kali(u64,Nilai,Nilai),
+    bagi(u64,Nilai,Nilai),
+    modus(u64,Nilai,Nilai),
+    sin(u64,Nilai),
+    cos(u64,Nilai),
+    Tan(u64,Nilai)
+}
+#[allow(non_camel_case_types)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum Pohon{
     cetak(Nilai),
-    var(Variabel),
+    var(u64,Tipe),
+    tulis(u64,Tipe),
+    arit(Arit)    
 }
 //
 #[derive(rust_embed::RustEmbed)]
@@ -73,6 +63,117 @@ pub enum Pohon{
 #[prefix = "prefix/"]
 struct STD;
 //
+pub fn parse_2(
+    kirim:std::sync::mpsc::Sender<([String; 3],bool)>,
+    terima:std::sync::mpsc::Receiver<std::option::Option<serde_json::Value>>,
+    path:&String,
+    pohon :&mut Vec<Pohon>,
+){
+    let mut id :u64 = 0;
+    let mut _var:Vec<Var>= Vec::with_capacity(2);
+    let mut _data_ : HashMap<u64, Data> = HashMap::with_capacity(2);
+    let lokasi :Vec<[String; 3]>= Vec::from([["main".to_string(),"main".to_string(),"".to_string()]]);
+
+    'main:loop {
+        kirim.send((lokasi.last().unwrap().clone(),false)).unwrap();
+        match terima.recv().unwrap(){
+            Some(o)=>{
+                for i in 0..{
+                    match o["nilai"][i]["tipe"].as_str() {
+                        Some(v)=>{
+                            match v {
+                                "var"=>{
+                                    //sementara
+                                    _var.push(
+                                        Var{
+                                            id:id,
+                                            tipe:o["nilai"][i]["data"].as_str().unwrap().to_string(),
+                                            nama:o["nilai"][i]["nama"].as_str().unwrap().to_string(),
+                                        }
+                                    );
+                                    pohon.push(
+                                        Pohon::var(
+                                            id,Tipe::_u8(None),
+                                        )
+                                    );
+                                    id += 1;
+                                }
+                                "tulis"=>{
+                                    //belum selesai
+                                    let nama = o["nilai"][i]["nama"].as_str().unwrap();
+                                    
+                                    let nilai = &o["nilai"][i]["nilai"];
+
+                                    for i in _var.iter(){
+                                        if i.nama == nama {
+                                            if nilai[1] == json!(null) {
+                                                pohon.push(
+                                                    Pohon::tulis(i.id,
+                                                        //SEMENTARA
+                                                        Tipe::_u8(Some(nilai[0].as_str().unwrap().parse::<u8>().unwrap()))
+                                                    )
+                                                );
+                                                break
+                                            } 
+                                            break
+                                        }
+                                    }
+                                }
+                                "cetak"=>{
+                                    /* prototipe
+                                    let mut x = 0;
+                                    loop{
+                                        match o["nilai"][i]["nilai"][x].as_str(){
+                                            Some(_)=>{
+                                                match o["nilai"][i]["nilai"][0].as_str().unwrap() {
+                                                    "lansung"=>{
+                                                        pohon.push(
+                                                            Pohon::cetak(Nilai::lansung(
+                                                                o["nilai"][i]["nilai"][x + 1].as_str().unwrap().to_string()
+                                                            ))
+                                                        );
+                                                    }
+                                                    _=>{}
+                                                }
+                                            }
+                                            None=>{break}
+                                        }
+                                        x += 2
+                                    }*/
+                                    match o["nilai"][i]["nilai"][0].as_str().unwrap(){
+                                        "lansung"=>{
+                                            pohon.push(
+                                                Pohon::cetak(Nilai::lansung(
+                                                    o["nilai"][i]["nilai"][1].as_str().unwrap().to_string()
+                                                ))
+                                            );
+                                        }
+                                        _=>{}
+                                    }
+                                    
+                                }
+                                _=>{}
+                            }
+                        }
+                        None=>{break}
+                    }                    
+                }
+            }
+            None=>{panic!()}
+        }
+        break
+    }
+    kirim.send((["".to_string(),"".to_string(),"".to_string()],true)).unwrap();
+    println!("{:#?}",pohon);
+    bincode::serialize_into(
+        BufWriter::with_capacity(
+            1000, 
+            File::create(
+                format!("{}/parsing/pohon.bin",path)
+            ).unwrap()
+    ), &pohon).unwrap();
+}
+/*
 pub fn parse(
     kirim:std::sync::mpsc::Sender<([String; 3],bool)>,
     terima:std::sync::mpsc::Receiver<std::option::Option<serde_json::Value>>,
@@ -80,12 +181,13 @@ pub fn parse(
     pohon :&mut Vec<Pohon>,
 ){
     let lokasi :Vec<[String; 3]>= Vec::from([["main".to_string(),"main".to_string(),"".to_string()]]);
-    let mut id :u64 = 0;
+    let mut id :u64 = 1;
     let mut _var:Vec<Var>= Vec::with_capacity(2);
     let mut _data_ : HashMap<u64, Data> = HashMap::with_capacity(2);
     let mut bahaya = false;
     let mut alokasi = ([0u64,0u64],false);
     let mut nesting = 0u64;
+    let mut _null = false;
     // standar library
     //let _std : std::borrow::Cow<[u8]> = STD::get("prefix/parse_2").unwrap() ;
     let _std = serde_json::from_str::<serde_json::Value>( std::str::from_utf8( STD::get("prefix/parse_2").unwrap().as_ref() ).unwrap());
@@ -116,6 +218,24 @@ pub fn parse(
                     //println!("{:#?}",pohon);
                 }else if _data["nilai"][i]["tipe"].to_string().starts_with("\"var_") {
                     //print!("test");
+                    if _data["nilai"][i]["nilai"] == json!(null){
+                        println!("null !!!");
+                        let v = Var{
+                            id:id,
+                            tipe:_data["nilai"][i]["data"].to_string(),
+                            nama:_data["nilai"][i]["nama"].to_string(),
+                            data:(false,0),
+                            dibaca:[true,false],
+                            ditulis:[true,false],
+                            rumah:lokasi[lokasi.len()-1].to_vec(),
+                            nesting:nesting
+                        };
+                        id+=1;
+                        println!("{:?}",v);
+                        _var.push(v);
+                        _null = true;
+                        continue
+                    }
                     if _data["nilai"][i]["nilai"]["tipe"] == "minta"{
                         //dalam proses
                         //println!("{} {}",_data["nilai"][i]["nilai"],_var[0].nama);
@@ -185,14 +305,15 @@ pub fn parse(
                                         _data["nilai"][i]["data"].to_string()
                                     } else {
                                         println!("kode/{}.is/{}\n\n\
-                                        tipe data tidak sesuai",lokasi[0][0],lokasi[0][1]);
+                                        tipe data tidak sesuai\n\
+                                        butuh u8 dapat {:?}",lokasi[0][0],lokasi[0][1],_data["nilai"][i]["data"].as_str());
                                         std::process::exit(18);
                                     }
                                    
                                 }
                                 _=>{
-                                    println!(">> kode/{}.is/{}\n",lokasi[0][0],lokasi[0][1]);
-                                    println!("tipe data tidak tidak diketahui ?");
+                                    println!("erro{}",_data);
+                                    println!(">> kode/{}.is/{}\ntipe data tidak tidak diketahui ?",lokasi[0][0],lokasi[0][1]);
                                     std::process::exit(18);
                                 }
                             },
@@ -200,7 +321,12 @@ pub fn parse(
                                 let mut t = _data["nilai"][i]["nilai"]["nilai"].to_string();
                                 t.remove(0);
                                 t.pop();
-                                t
+                                if t == "null"{
+                                    println!("null terdeteksi");
+                                    std::process::abort()
+                                } else {
+                                    t
+                                }
                             },
                         });
                         id += 1 ;
@@ -240,6 +366,7 @@ pub fn parse(
                     //println!("{:?}\n{:?}",_data_,_var);
                     //std::process::exit(0);
                 } else if _data["nilai"][i]["tipe"] == "tulis" {
+                    
                     let t = _data["nilai"][i]["var"].to_string();
                     //println!("test");
                     for mut _i in &mut _var {
@@ -285,7 +412,7 @@ pub fn parse(
                                 varabel {2} tidak boleh berubah\n\
                                 bantuan : tambahkan mut dalam variabel {2}\n\
                                 contoh  :\n\
-                                |       ↓↓↓\n\
+                                |\n\
                                 |   let mut <_> _ = _\n\
                                 |       ↑↑↑\n"
                                 ,lokasi[0][0],lokasi[0][1],t);
@@ -315,3 +442,4 @@ pub fn parse(
         ), &pohon).unwrap();
     println!("[\n(sebelum optimalisasi)\nalokasi = {}\nmemory = {}{}/bit\n",alokasi.0[0],alokasi.0[1],if alokasi.1 { "+" } else { "" });
 }
+*/

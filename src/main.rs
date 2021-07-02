@@ -112,12 +112,15 @@ fn kopilasi() {
             //kode error 14
             //{file_management::baca::file(tunggu,&mut BUFF.lock().unwrap(),file_ind,format!("{}\\parsing\\parse",&ARGS[PROYEK]))},"parse_f_1".to_string(),parse_f_1,
             //kode error 15
-            {parsing::parse_2::baca(index,x)},"parse_2_".to_string(),parse_2_,
+            {parsing::parse_2::parse(index,x)},"parse_2_".to_string(),parse_2_,
             //kode error 16
             //kode error 17
             {file_management::index_2::baca(&mut BUFF.lock().unwrap(), y, &ARGS[PROYEK], p, k,turbo)},"inx2".to_string(),inx2,
              //kode error 18
-            {parsing::parse_3::parse(m,r,&ARGS[PROYEK],unsafe{ &mut POHON })},"tulis_parse_3".to_string(),tulis_parse_2,
+            {
+                parsing::parse_3::parse_2(m,r,&ARGS[PROYEK],unsafe{ &mut POHON })
+                //parsing::parse_3::parse(m,r,&ARGS[PROYEK],unsafe{ &mut POHON })
+            },"tulis_parse_3".to_string(),tulis_parse_2,
             //{},"pohon".to_string(),pohon
         };
         //file_management::hapus_baris::baris(&ARGS[PROYEK], "parse", 0);
@@ -143,6 +146,7 @@ fn kopilasi() {
                 ).unwrap();
             }
         }
+        println!("[pohon]\n{:#?}",unsafe{ &POHON });
         tread!(join -> 
             {
                 if kom.0 {
@@ -150,7 +154,6 @@ fn kopilasi() {
                     //konversi::web::app( unsafe{ &POHON } ,&ARGS[PROYEK] );
                     //konversi::web_2::app(unsafe{ &POHON } ,&ARGS[PROYEK]);
                     konversi::web_2::app_2(unsafe{ &POHON } ,&ARGS[PROYEK]);
-
                     println!("[konversi/wasm selesai : {}/detik]", waktu.elapsed().as_secs_f32());
                 }
             },"wasm".to_string(),was,
@@ -222,7 +225,7 @@ mod tests {
     //#[ignore]
     fn token_slice(){
         let _t = "hallo ".to_string();
-        let x = 6;
+        let _x = 6;
 
 
         println!("{}",&_t[5..])

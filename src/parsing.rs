@@ -6,12 +6,13 @@ pub enum tipe{
 }
 #[allow(non_camel_case_types)]
 pub enum perintah {
-    variabel(tipe,String,String,String),
+    variabel_null(String,String),
     modul_masuk(String),
     modul_keluar,
     cetak(String),
     cpu(String,bool),
-    tulis(String,String),
+    tulis(String,Vec<String>),
+    arit_tambah(String,usize,usize),
     blok_buka,
     blok_tutup,
     selesai

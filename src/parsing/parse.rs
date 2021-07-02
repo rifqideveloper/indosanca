@@ -27,7 +27,6 @@ pub fn parse(
     //kirim.send(format!("{{\"tipe\":\"program\",\"nama\":\"{nama}\"}}\n",nama = nama_app)).expect("parse_");
     #[allow(unused_assignments)]
     let mut buf :Vec<String> =  Vec::with_capacity(20);
-    let mut n = 1;
     let mut dalam_fn = false;
     while { buf =  terima.recv().expect(""); buf.len() != 0 }  {
         if buf[0] == "{" {
@@ -82,25 +81,29 @@ pub fn parse(
                     }
                 }
                 ("let",_)=>{
-                    let  (indx,tipe) = if !dalam_fn {
+                    let  (indx,nama) = if !dalam_fn {
                         std::process::exit(1);
-                    } else if buf[n] == "<"{
-                        (2,"var_".to_string())
+                    } else if buf[1] == "<"{
+                        (2,buf[4].clone())
                     } else {
-                        n += 1 ;
-                        (3, format!{ "var_{}" , buf[1] }  )
+                        (3, buf[5].clone()  )
                     };
                     kirim.send(
-                        match buf[indx].as_str(){
-                            "u8"=>{
-                                perintah::variabel(tipe::_u8,tipe,buf[n+3].clone(),_int!(u8,buf[n+5].clone()))
-                            }
-                            _=>{std::process::exit(1);}
-                        }
+                        perintah::variabel_null(buf[indx].clone(),nama.clone())
                     ).unwrap();
-                    n = 1;
+                    if indx + 2 < buf.len()-1{
+                        let mut v = Vec::new();
+                        for i in indx+4..buf.len() {
+                            v.push(buf[i].clone())
+                        }
+                        kirim.send(
+                            perintah::tulis(nama,v)
+                        ).unwrap()
+                    }
+                    //pengaman aktiv
                 }
                 (_,"=")=>{
+                    /*
                     kirim.send(
                         perintah::tulis(buf[0].clone(),
                             if apa._str(&buf[2]) {
@@ -113,6 +116,7 @@ pub fn parse(
                             }
                         )
                     ).unwrap()
+                    */
                 }
                 ("jika",_)=>{
                     //uji coba

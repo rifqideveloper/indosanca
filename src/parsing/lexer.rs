@@ -86,12 +86,11 @@ impl Token{
             match &data[x..x + 1] {
                 "\n"=>{self.lanjut();break}
                 ";"=>{self.lanjut()}
-                "<"|">"|"="|":"|"!"|","|"&"|"*"=>{
+                "<"|">"|"="|":"|"!"|","|"&"|"*"|"+"|"-"|"/"=>{
                     self.x.push(data[x..x + 1].to_string())
                 }
                 "\""=>{
-                    let mut leng = data.len();
-                    for i in x+1..leng{
+                    for i in x+1..data.len(){
                         match &data[i..i+1] {
                         "\""=>{
                             self.x.push(data[x..i+1].to_string());
@@ -101,7 +100,6 @@ impl Token{
                         "\n"=>{
                             data.replace_range(i..i+1," ");
                             data.push_str(&extra.recv().unwrap().trim_start());
-                            leng = data.len();
                         }
                         _=>{}
                         }

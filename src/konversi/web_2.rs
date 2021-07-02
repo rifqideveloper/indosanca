@@ -1,4 +1,4 @@
-use crate::parsing::parse_3::{Pohon,Nilai,Variabel,Tipe};
+use crate::parsing::parse_3::{Pohon,Nilai,Variabel,Tipe,Arit};
 use std::io::Write;
 /*
 struct WEB{
@@ -163,7 +163,6 @@ pub fn  app_2(
     path:&String,
 ){
     {
-        println!("[pohon]\n{:#?}",pohon);
         let mut web = web {
             //path:path.to_string(),
             offset:0usize,
@@ -236,23 +235,79 @@ pub fn  app_2(
                         }
                         Nilai::minta(o)=>{}
                         Nilai::penujuk(o)=>{}
+                        Nilai::lansung_int(o)=>{}
+                        Nilai::lansung_float(o)=>{}
                     }
                 }
-                Pohon::var(o)=>{
+                Pohon::tulis(a,b)=>{
+                    match b {
+                        Tipe::_u8(o)=>{
+                            if let Some(o) = o {
+                                let v = &format!("(local.set ${} (i32.const {}))\n",a,o);
+                                _main.write(v.as_bytes()).unwrap();
+                            }
+                        }
+                        Tipe::_String(_)=>{
+
+                        }
+                    }
+                    
+                }
+                Pohon::var(a,b)=>{
+                    /*
                     match &o.nilai {
                         Tipe::_u8(x)=>{
                             let mut v = format!("(local ${} i32)\n",o.id);
                             local.write(v.as_bytes()).unwrap();
-                            v.clear();
                             if let Some(x) = x {
+                                v.clear();
                                 v.push_str(
                                     &format!("(local.set ${} (i32.const {}))\n",o.id,x)
-                                )
+                                );
+                                _main.write(v.as_bytes()).unwrap();
                             }
-                            _main.write(v.as_bytes()).unwrap();
+                            
                         }
                         Tipe::_String(o)=>{
+                            
+                        }
+                    }*/
+                    match b {
+                        Tipe::_u8(_)=>{
+                            let v = format!("(local ${} i32)\n",a);
+                            local.write(v.as_bytes()).unwrap();
+                        }
+                        Tipe::_String(_)=>{
 
+                        }
+                    }
+                }
+                Pohon::arit(o)=>{
+                    match o{
+                        Arit::bagi(a,b,c)=>{
+
+                        }
+                        Arit::kali(a,b,c)=>{
+
+                        }
+                        Arit::tambah(a,b,c)=>{
+
+                        }
+                        Arit::kurang(a,b,c)=>{
+
+                        }
+                        Arit::modus(a,b,c)=>{
+
+                        }
+                        //trigonometri
+                        Arit::sin(a,b)=>{
+
+                        }
+                        Arit::cos(a,b)=>{
+
+                        }
+                        Arit::Tan(a,b)=>{
+                            
                         }
                     }
                 }

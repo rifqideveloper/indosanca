@@ -38,9 +38,9 @@ pub fn parse(
                     )
                 ).unwrap();
             }
-            perintah::arit_tambah(a,b,c)=>{
+            //perintah::arit_tambah(a,b,c)=>{
 
-            }
+            //}
             perintah::tulis(a,b)=>{
                 kirim.send(
                     format!("{}{{\"tipe\":\"tulis\",\"nama\":\"{}\",\"nilai\":{:?}}}",

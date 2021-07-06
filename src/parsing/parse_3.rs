@@ -35,12 +35,14 @@ pub enum Nilai {
     lansung_int(u64),
     lansung_float(f64),
     penujuk(Variabel),
-    minta(Variabel)
+    minta(Variabel),
+    None
 }
+/*
 #[allow(non_camel_case_types)]
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Arit {
-    tambah(u64,Nilai,Nilai),
+    tambah(u64 ,Nilai,Nilai),
     kurang(u64,Nilai,Nilai),
     kali(u64,Nilai,Nilai),
     bagi(u64,Nilai,Nilai),
@@ -49,13 +51,20 @@ pub enum Arit {
     cos(u64,Nilai),
     Tan(u64,Nilai)
 }
+*/
 #[allow(non_camel_case_types)]
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Pohon{
     cetak(Nilai),
     var(u64,Tipe),
     tulis(u64,Tipe),
-    arit(Arit)    
+    const_32(i32),
+    local_set(i32),
+    add,
+    sub,
+    div_s,
+    div_u,
+    mul,    
 }
 //
 #[derive(rust_embed::RustEmbed)]
@@ -74,7 +83,7 @@ pub fn parse_2(
     let mut _data_ : HashMap<u64, Data> = HashMap::with_capacity(2);
     let lokasi :Vec<[String; 3]>= Vec::from([["main".to_string(),"main".to_string(),"".to_string()]]);
 
-    'main:loop {
+    loop {
         kirim.send((lokasi.last().unwrap().clone(),false)).unwrap();
         match terima.recv().unwrap(){
             Some(o)=>{
@@ -101,9 +110,7 @@ pub fn parse_2(
                                 "tulis"=>{
                                     //belum selesai
                                     let nama = o["nilai"][i]["nama"].as_str().unwrap();
-                                    
                                     let nilai = &o["nilai"][i]["nilai"];
-
                                     for i in _var.iter(){
                                         if i.nama == nama {
                                             if nilai[1] == json!(null) {
@@ -114,8 +121,136 @@ pub fn parse_2(
                                                     )
                                                 );
                                                 break
-                                            } 
-                                            break
+                                            }
+                                            let mut v : Vec<Pohon> = Vec::with_capacity(3);
+                                            let mut ari = (false,false,false,false);
+                                            for x in 0..{
+                                                if nilai[x] == json!(null) {break}
+                                                match nilai[x].as_str().unwrap(){
+                                                    "+"=>{
+                                                        ari.0 = true;
+                                                        /*
+                                                        v.push(
+                                                            Pohon::add
+                                                        );*/
+                                                    }
+                                                    "-"=>{
+                                                        ari.1 = true;
+                                                    }
+                                                    "/"=>{
+                                                        ari.2 = true;
+                                                    }
+                                                    "*"=>{
+                                                        ari.3 = true;
+                                                    }
+                                                    _=>{
+                                                        match nilai[x].as_str().unwrap().parse::<i32>(){
+                                                            Ok(a)=>{
+                                                                v.push(
+                                                                    Pohon::const_32(a)  
+                                                                );
+                                                                if ari.0 {
+                                                                    ari.0 = false;
+                                                                    v.push(
+                                                                        Pohon::add
+                                                                    );
+                                                                } else if ari.1 {
+                                                                    ari.1 = false;
+                                                                    v.push(
+                                                                        Pohon::sub
+                                                                    );
+                                                                } else if ari.2 {
+                                                                    match i.tipe.as_str(){
+                                                                        "u8"=>{
+                                                                            v.push(
+                                                                                Pohon::div_u
+                                                                            );
+                                                                        }
+                                                                        "i8"=>{
+                                                                            v.push(
+                                                                                Pohon::div_s
+                                                                            );
+                                                                        }
+                                                                        _=>{}
+                                                                    }
+                                                                    ari.2 = false;
+                                                                    
+                                                                } else if ari.3 {
+                                                                    ari.3 = false;
+                                                                    v.push(
+                                                                        Pohon::mul
+                                                                    );
+                                                                }
+                                                            }
+                                                            Err(_)=>{
+
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            if !v.is_empty(){
+                                                use std::convert::TryInto;
+                                                for x in &v{
+                                                    match x {
+                                                        Pohon::const_32(a)=>{
+                                                            pohon.push(
+                                                                Pohon::const_32(*a)
+                                                            );
+                                                        }
+                                                        Pohon::add=>{
+                                                            pohon.push(
+                                                                Pohon::add
+                                                            );
+                                                        }
+                                                        Pohon::sub=>{
+                                                            pohon.push(
+                                                                Pohon::sub
+                                                            );
+                                                        }
+                                                        Pohon::div_s=>{
+                                                            pohon.push(
+                                                              Pohon::div_s  
+                                                            );
+                                                        }
+                                                        Pohon::div_u=>{
+                                                            pohon.push(
+                                                                Pohon::div_u  
+                                                            );
+                                                        }
+                                                        Pohon::mul=>{
+                                                            pohon.push(
+                                                                Pohon::mul  
+                                                            );
+                                                        }
+                                                        _=>{}
+                                                    }
+                                                }
+                                                pohon.push(
+                                                    Pohon::local_set(i.id.try_into().unwrap())
+                                                )
+                                            }
+                                            print!("testing {:?}",v);
+                                            /* 
+                                            let v = serde_json::from_str::<Vec<String>>(
+                                                nilai.as_str().unwrap()
+                                            ).unwrap();
+                                            //let x = Vec::new();
+                                            if v[1] == "+"{
+                                                //testing contoh
+                                                pohon.push(
+                                                    Pohon::arit(
+                                                        Arit::tambah(0,
+                                                        Nilai::lansung_int(
+                                                            v[0].parse().unwrap()
+                                                        ),Nilai::lansung_int(
+                                                            v[2].parse().unwrap()
+                                                        ))
+                                                    )  
+                                                );
+                                                break
+                                            }
+                                            */
                                         }
                                     }
                                 }

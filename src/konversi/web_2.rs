@@ -1,4 +1,4 @@
-use crate::parsing::parse_3::{Pohon,Nilai,Variabel,Tipe,Arit};
+use crate::parsing::parse_3::{Pohon,Nilai,Variabel,Tipe};
 use std::io::Write;
 /*
 struct WEB{
@@ -209,6 +209,10 @@ pub fn  app_2(
             match i {
                 Pohon::cetak(o)=>{
                     match o {
+                        Nilai::None=>{
+                            
+                        }
+                        
                         Nilai::lansung(o)=>{
                             if o.is_empty(){continue}
                             if !web.import_lib[0]{
@@ -233,11 +237,47 @@ pub fn  app_2(
                             _main.write(web.print(o).as_bytes()).unwrap();
                             _data.write(o.as_bytes()).unwrap();
                         }
-                        Nilai::minta(o)=>{}
-                        Nilai::penujuk(o)=>{}
+                        Nilai::minta(o)|Nilai::penujuk(o)=>{
+                            //
+                        }
                         Nilai::lansung_int(o)=>{}
                         Nilai::lansung_float(o)=>{}
                     }
+                }
+                Pohon::const_32(a)=>{
+                     _main.write({
+                         format!("i32.const {}\n",a)
+                     }.as_bytes()).unwrap();       
+                }
+                Pohon::add=>{
+                    _main.write({
+                        "i32.add\n"
+                    }.as_bytes()).unwrap();  
+                }
+                Pohon::sub=>{
+                    _main.write({
+                        "i32.sub\n"
+                    }.as_bytes()).unwrap();  
+                }
+                Pohon::div_s=>{
+                    _main.write({
+                        "i32.div_s\n"
+                    }.as_bytes()).unwrap(); 
+                }
+                Pohon::div_u=>{
+                    _main.write({
+                        "i32.div_u\n"
+                    }.as_bytes()).unwrap(); 
+                }
+                Pohon::mul=>{
+                    _main.write({
+                        "i32.mul\n"
+                    }.as_bytes()).unwrap(); 
+                }
+                Pohon::local_set(a)=>{
+                    _main.write({
+                        format!("local.set ${}\n",a)
+                    }.as_bytes()).unwrap();
                 }
                 Pohon::tulis(a,b)=>{
                     match b {
@@ -279,35 +319,6 @@ pub fn  app_2(
                         }
                         Tipe::_String(_)=>{
 
-                        }
-                    }
-                }
-                Pohon::arit(o)=>{
-                    match o{
-                        Arit::bagi(a,b,c)=>{
-
-                        }
-                        Arit::kali(a,b,c)=>{
-
-                        }
-                        Arit::tambah(a,b,c)=>{
-
-                        }
-                        Arit::kurang(a,b,c)=>{
-
-                        }
-                        Arit::modus(a,b,c)=>{
-
-                        }
-                        //trigonometri
-                        Arit::sin(a,b)=>{
-
-                        }
-                        Arit::cos(a,b)=>{
-
-                        }
-                        Arit::Tan(a,b)=>{
-                            
                         }
                     }
                 }

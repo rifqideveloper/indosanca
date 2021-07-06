@@ -18,7 +18,7 @@ macro_rules! _int {
     };
 }
 use crate::parsing::perintah;
-use crate::parsing::tipe;
+//use crate::parsing::tipe;
 pub fn parse(
     terima:std::sync::mpsc::Receiver<Vec<String>>
     ,kirim:std::sync::mpsc::Sender<perintah>,
@@ -120,11 +120,15 @@ pub fn parse(
                 }
                 ("jika",_)=>{
                     //uji coba
-                    let log :Vec<String> = Vec::with_capacity(1); 
+                    let mut log :Vec<String> = Vec::with_capacity(1); 
                     for i in 1..buf.len()- 1 {
                         match buf[i].as_str(){
-                            "benar"=>{}
-                            "salah"=>{}
+                            "benar"=>{
+                                log.push("benar".to_string());
+                            }
+                            "salah"=>{
+                                log.push("salah".to_string());
+                            }
                             _=>{}
                         }
                     }

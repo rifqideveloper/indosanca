@@ -78,34 +78,54 @@ impl Token{
         }
     }
     fn token_slice(&mut self,data:&mut String,extra:&std::sync::mpsc::Receiver<String>){
-        // tokenizer 2.0.0
+        // tokenizer 2.0.1
         // tidak butuh bufer 
         // belum selesai     
         let mut x = 0 ;
         'main:loop {
             match &data[x..x + 1] {
-                "\n"=>{self.lanjut();break}
-                ";"=>{self.lanjut()}
+                "\n"=>{
+                    self.lanjut();
+                    break
+                }
+                ";"=>{
+                    self.lanjut()
+                }
                 "<"|">"|"="|":"|"!"|","|"&"|"*"|"+"|"-"|"/"=>{
                     self.x.push(data[x..x + 1].to_string())
                 }
                 "\""=>{
-                    for i in x+1..data.len(){
+                    for i in x+1..{
                         match &data[i..i+1] {
                         "\""=>{
-                            self.x.push(data[x..i+1].to_string());
+                            self.x.push(data[x..i+1].replace("\r", " ").to_string());
                             x = i + 1;
                             continue 'main
                         }
                         "\n"=>{
-                            data.replace_range(i..i+1," ");
-                            data.push_str(&extra.recv().unwrap().trim_start());
+                            //error
+                            data.pop();
+                            data.push_str(
+                                {format!("{}", 
+                                    { 
+                                        let mut v = extra.recv().unwrap();
+                                        if v.ends_with("\"") {
+                                            v.pop();
+                                        } 
+                                        v = v.trim_start().to_string();
+                                        v
+                                        
+                                    }  )
+                                }.as_str()  
+                            );
+                            
+                            println!("lexet test {}",data.to_string());
+
                         }
                         _=>{}
                         }
                     }
                 }
-            
                 i if i != " " && i != "\t" && i != "\r" =>{
                     for i in x+1..data.len(){
                         match &data[i..i+1] {
@@ -126,7 +146,6 @@ impl Token{
                                 self.lanjut();
                                 break 'main
                             }
-                            
                             _=>{}
                         }
                     }

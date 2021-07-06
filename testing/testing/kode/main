@@ -1,3 +1,5 @@
 cpu main
-    let<u8>test = 3  
-    cetak "hallo"
+    let<u8>test = 3 + 2 - 1 / 2 * 3
+    cetak "hallo
+    world
+    saya rifqi"

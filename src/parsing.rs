@@ -12,7 +12,7 @@ pub enum perintah {
     cetak(String),
     cpu(String,bool),
     tulis(String,Vec<String>),
-    arit_tambah(String,usize,usize),
+    //arit_tambah(String,usize,usize),
     blok_buka,
     blok_tutup,
     selesai

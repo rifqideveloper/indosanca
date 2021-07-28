@@ -11,8 +11,37 @@ pub fn parse(
     kirim:std::sync::mpsc::Sender<String>
 ){
     let mut fn_ = [false,false];
+    //let mut blok = 0;
     loop {
         match baris.recv().unwrap(){
+            perintah::putar=>{
+                kirim.send(
+                    format!("{}{{\"tipe\":\"putar\"}}",
+                    if fn_[1] {","} else { fn_[1] = true ; "" },
+                    )
+                ).unwrap()
+            }
+            perintah::putus=>{
+                kirim.send(
+                    format!("{}{{\"tipe\":\"putus\"}}",
+                    if fn_[1] {","} else { fn_[1] = true ; "" },
+                    )
+                ).unwrap()
+            }
+            perintah::lanjut=>{
+                kirim.send(
+                    format!("{}{{\"tipe\":\"lanjut\"}}",
+                    if fn_[1] {","} else { fn_[1] = true ; "" },
+                    )
+                ).unwrap()
+            }
+            perintah::batas=>{
+                kirim.send(
+                    format!("{}{{\"tipe\":\"batas\"}}",
+                    if fn_[1] {","} else { fn_[1] = true ; "" },
+                    )
+                ).unwrap()
+            }
             perintah::variabel_null(a,b)=>{
                 kirim.send(
                     format!("{}{{ \"tipe\":\"var\",\"data\":\"{}\",\"nama\":\"{}\" }}",
@@ -31,6 +60,10 @@ pub fn parse(
                             d.remove(0);
                             d.pop();
                             "lansung"
+                        }else if d.parse::<u64>().is_ok(){
+                            "langsung_int"
+                        } else if d.parse::<f64>().is_ok() {
+                            "langsung_f"
                         } else {
                             "var"
                         },
@@ -73,6 +106,27 @@ pub fn parse(
             perintah::blok_tutup=>{
 
             }
+            perintah::blok(a)=>{
+                kirim.send(
+                    format!("{}{{\"tipe\":\"blok\",\"nilai\":\"{}\"}}",if fn_[1] {","} else { fn_[1] = true ; ""},a)
+                ).unwrap()
+            }
+            perintah::br(o)=>{
+                kirim.send(
+                    format!("{}{{\"tipe\":\"br\",\"nilai\":\"{}\"}}",if fn_[1] {","} else { fn_[1] = true ; ""},o)
+                ).unwrap()
+            }
+            perintah::if_br(a,b)=>{
+                kirim.send(
+                    format!("{}{{\"tipe\":\"if_br\",\"nilai\":[\"{}\",\"{}\"]}}",if fn_[1] {","} else { fn_[1] = true ; ""},a,b)
+                ).unwrap()
+            }
+            perintah::blok_=>{
+                kirim.send(
+                    format!("{}{{\"tipe\":\"blok_\"}}",if fn_[0] {","} else { fn_[0] = true ; ""})
+                ).unwrap()
+            }
+            
             perintah::selesai=>{
                 kirim.send("".to_string()).unwrap();
                 break

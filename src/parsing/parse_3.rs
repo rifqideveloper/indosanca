@@ -60,11 +60,20 @@ pub enum Pohon{
     tulis(u64,Tipe),
     const_32(i32),
     local_set(i32),
+    blok(String),
+    blok_,
+    putar,
+    putus,
+    lanjut,
+    batas,
     add,
     sub,
     div_s,
     div_u,
-    mul,    
+    mul,
+    if_br(String,String),
+    br(String)    
+
 }
 //
 #[derive(rust_embed::RustEmbed)]
@@ -82,7 +91,6 @@ pub fn parse_2(
     let mut _var:Vec<Var>= Vec::with_capacity(2);
     let mut _data_ : HashMap<u64, Data> = HashMap::with_capacity(2);
     let lokasi :Vec<[String; 3]>= Vec::from([["main".to_string(),"main".to_string(),"".to_string()]]);
-
     loop {
         kirim.send((lokasi.last().unwrap().clone(),false)).unwrap();
         match terima.recv().unwrap(){
@@ -91,6 +99,34 @@ pub fn parse_2(
                     match o["nilai"][i]["tipe"].as_str() {
                         Some(v)=>{
                             match v {
+                                "putar"=>{
+                                    pohon.push(
+                                        Pohon::putar
+                                    )
+                                }
+                                "batas"=>{
+                                    pohon.push(
+                                        Pohon::batas
+                                    )
+                                }
+                                "lanjut"=>{
+                                    pohon.push(
+                                        Pohon::lanjut
+                                    )
+                                }
+                                "putus"=>{
+                                    pohon.push(
+                                        Pohon::putus
+                                    )
+                                }
+                                "blok"=>{
+                                    pohon.push(Pohon::blok(o["nilai"][i]["nilai"].as_str().unwrap().to_string()))
+                                }
+                                "blok_"=>{
+                                    pohon.push(
+                                        Pohon::blok_
+                                    )
+                                }
                                 "var"=>{
                                     //sementara
                                     _var.push(
@@ -254,6 +290,17 @@ pub fn parse_2(
                                         }
                                     }
                                 }
+                                "br"=>{
+                                    pohon.push(
+                                        Pohon::br(o["nilai"][i]["nilai"].as_str().unwrap().to_string())
+                                    )
+                                }
+                                "if_br"=>{
+                                    let (a,b) = (o["nilai"][i]["nilai"][0].as_str().unwrap(),o["nilai"][i]["nilai"][1].as_str().unwrap());
+                                    pohon.push(
+                                        Pohon::if_br(a.to_string(),b.to_string())
+                                    )
+                                }
                                 "cetak"=>{
                                     /* prototipe
                                     let mut x = 0;
@@ -282,6 +329,40 @@ pub fn parse_2(
                                                     o["nilai"][i]["nilai"][1].as_str().unwrap().to_string()
                                                 ))
                                             );
+                                        }
+                                        "langsung_int"=>{
+                                            pohon.push(
+                                                Pohon::cetak(
+                                                    Nilai::lansung_int(
+                                                        o["nilai"][i]["nilai"][1].as_str().unwrap().parse::<u64>().unwrap()
+                                                    )
+                                                )  
+                                            );
+                                        }
+                                        "langsung_f"=>{
+                                            pohon.push(
+                                                Pohon::cetak(
+                                                    Nilai::lansung_float(
+                                                        o["nilai"][i]["nilai"][1].as_str().unwrap().parse::<f64>().unwrap()
+                                                    )
+                                                )  
+                                            );
+                                        }
+                                        "var"=>{
+                                            for x in &_var{
+
+                                                if o["nilai"][i]["nilai"][1].as_str().unwrap() == x.nama {
+                                                    pohon.push(
+                                                        Pohon::cetak(Nilai::penujuk(
+                                                            Variabel{
+                                                                id:x.id,
+                                                                /*sementara*/nilai:Tipe::_u8(None)
+                                                            }
+                                                        ))
+                                                    );
+                                                    break
+                                                }
+                                            }
                                         }
                                         _=>{}
                                     }

@@ -94,6 +94,17 @@ impl Token{
                 "<"|">"|"="|":"|"!"|","|"&"|"*"|"+"|"-"|"/"=>{
                     self.x.push(data[x..x + 1].to_string())
                 }
+                "$"=>{
+                    match &data[x..x + 2]{
+                        "$!"|"$?"=>{
+                            self.x.push(data[x..x + 2].to_string());
+                            x += 1
+                        }
+                        _=>{
+                            self.x.push("$".to_string());
+                        }
+                    }
+                }
                 "\""=>{
                     for i in x+1..{
                         match &data[i..i+1] {

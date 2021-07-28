@@ -15,6 +15,14 @@ pub enum perintah {
     //arit_tambah(String,usize,usize),
     blok_buka,
     blok_tutup,
+    blok(String),
+    blok_,
+    if_br(String,u8),
+    br(String),
+    putar,
+    batas,
+    putus,
+    lanjut,
     selesai
 }
 

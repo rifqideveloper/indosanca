@@ -153,7 +153,7 @@ fn kopilasi() {
                     //konversi::wasm::wat(&ARGS[PROYEK]);
                     //konversi::web::app( unsafe{ &POHON } ,&ARGS[PROYEK] );
                     //konversi::web_2::app(unsafe{ &POHON } ,&ARGS[PROYEK]);
-                    konversi::web_2::app_2(unsafe{ &POHON } ,&ARGS[PROYEK]);
+                    konversi::web_2::app_3(unsafe{ &POHON } ,&ARGS[PROYEK]);
                     println!("[konversi/wasm selesai : {}/detik]", waktu.elapsed().as_secs_f32());
                 }
             },"wasm".to_string(),was,

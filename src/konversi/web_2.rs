@@ -152,8 +152,15 @@ struct web {
 }
 
 impl web {
+    fn body(&mut self,_in:&String)-> String{
+        let v = format!("i32.const {}\ni32.const {}\ncall $body\n",self.offset,_in.len());
+        self.offset += _in.len();
+        self.import_lib[0] = true;
+        self.import_lib[3] = true;
+        v
+    }
     fn print(&mut self,_in:&String) -> String{
-        let mut t = format!("i32.const {}\ni32.const {}\ncall $log\n",self.offset,_in.len());
+        let t = format!("i32.const {}\ni32.const {}\ncall $log\n",self.offset,_in.len());
         self.offset += _in.len();
         self.import_lib[0] = true;
         t
@@ -187,6 +194,9 @@ pub fn app_3(
         //path:path.to_string(),
         offset:0usize,
         import_lib:[false,false,false,false],
+        /*prototipe
+         css:[]
+        */
     };
     let mut _main = std::io::BufWriter::new( match std::fs::File::create(format!("{}\\parsing\\www\\main",path)){
         Ok(o)=>{o}
@@ -212,6 +222,16 @@ pub fn app_3(
     println!("{:?}",pohon);
     for i in pohon{
         match i {
+            Pohon::main(o)=>{
+                _main.write(o.as_bytes()).unwrap();
+            }
+            Pohon::r#if =>{
+                //_main.write(b"(else\n").unwrap();
+                _main.write(b"(block\n").unwrap();
+            }
+            Pohon::lalu_jika=>{
+                _main.write(b"(block $then\n").unwrap();
+            }
             Pohon::putar=>{
                 _main.write({
                     format!("(loop\n")
@@ -223,17 +243,29 @@ pub fn app_3(
             Pohon::putus=>{
                 // ???
             }
-            Pohon::batas=>{
-                _main.write({
-                    format!(")\n")
-                }.as_bytes()).unwrap();
+            Pohon::batas|Pohon::if_|Pohon::blok_|Pohon::jika_tutup=>{
+                _main.write(
+                    b")\n"
+                ).unwrap();
             }
+            
             Pohon::const_32(a)=>{
                 _main.write({
                     format!("i32.const {}\n",a)
                 }.as_bytes()).unwrap();       
            }
-            Pohon::add=>{
+           Pohon::i32_eqz=>{
+                _main.write(b"\ni32.eqz\n").unwrap();
+           }
+           Pohon::halaman(o)=>{ 
+                _main.write(
+                   web.body(&o).as_bytes()
+                ).unwrap();
+                //_main.write(web.print(o).as_bytes()).unwrap();
+                _data.write(o.as_bytes()).unwrap();
+                //println!("testing halaman ({})",o)
+           }
+           Pohon::add=>{
                _main.write({
                    "i32.add\n"
                }.as_bytes()).unwrap();  
@@ -290,14 +322,11 @@ pub fn app_3(
                     {format!("(block ${}\n",o)}.as_bytes()
                 ).unwrap();
            }
-           Pohon::blok_=>{
-                _main.write(b")\n").unwrap();
-           }
            Pohon::br(o)=>{
                 _main.write({format!("br {}\n",o)}.as_bytes()).unwrap();
            }
            Pohon::if_br(o,a)=>{
-                _main.write({format!("{}\ni32.eqz\nbr_if {}\n",a,o)}.as_bytes()).unwrap();
+                _main.write({format!("{}\nbr_if {}\n",a,o)}.as_bytes()).unwrap();
            }
            Pohon::cetak(o)=>{
                 match o {
@@ -330,48 +359,78 @@ pub fn app_3(
             std::fs::File::create(format!("{}\\parsing\\www\\main.wat",path)).unwrap()
         }
     });
-    
-    wat.write(b"(module\n").unwrap();
-    //wat library
-    if web.import_lib[1]{
-        //wat.write(b"").unwrap();
-        wat.write(b"(import\"import\"\"log_\"(func $log_(param i32)))\n").unwrap();
-    }
-    if web.import_lib[2]{
-        wat.write(b"(import\"import\"\"log_\"(func $log_f(param f32)))\n").unwrap();
-    }
-    if web.import_lib[3]{
-        wat.write(b"(import\"import\"\"body_\"(func $budy_(param i32)))\n").unwrap();
-    }
-    if web.import_lib[0]{
-        //wat.write(b"\"mem\":new WebAssembly.Memory({initial:1})\n").unwrap();
-        //(import "import" "mem" (memory 1))
-        wat.write({format!("(import\"import\"\"log\"(func $log(param i32 i32)))\n(import\"import\"\"mem\"(memory 1))\n(data (i32.const 0)\"{}\")\n",std::fs::read_to_string(format!("{}\\parsing\\www\\data",path)).unwrap())}.as_bytes()).unwrap();
-    }
-    //
-    wat.write(b"(func(export\"main\")\n").unwrap();
-    match std::fs::read(format!("{}\\parsing\\www\\local",path)) {
-        Ok(local)=>{
-            if !local.is_empty(){
-                wat.write(&local).unwrap();
-            }
+    let mut html = std::io::BufWriter::new( match std::fs::File::create(format!("{}\\target\\debug\\www\\index.html",path)){
+        Ok(o)=>{o}
+        Err(_)=>{
+            std::fs::create_dir_all(format!("{}\\parsing\\www",path)).expect("tidak dapat membuat target direktori (target)");
+            std::fs::File::create(format!("{}\\parsing\\www\\index.html",path)).unwrap()
         }
-        Err(_)=>{panic!()}
-    }
-    {wat}.write({format!("{}))",std::fs::read_to_string(format!("{}\\parsing\\www\\main",path)).unwrap())}.as_bytes()).unwrap();
-    std::fs::write(format!("{}\\target\\debug\\www\\main.wasm",path), &wat::parse_file(format!("{}\\parsing\\www\\main.wat",path)).unwrap()).unwrap();
-    
-    if web.import_lib != [false,false,false,false]{
-        let mut html = std::io::BufWriter::new( match std::fs::File::create(format!("{}\\target\\debug\\www\\index.html",path)){
-            Ok(o)=>{o}
-            Err(_)=>{
-                std::fs::create_dir_all(format!("{}\\parsing\\www",path)).expect("tidak dapat membuat target direktori (target)");
-                std::fs::File::create(format!("{}\\parsing\\www\\index.html",path)).unwrap()
-            }
-        });
+    });
+        //wat library
+        /*
+        if web.import_lib[1]{
+            //wat.write(b"").unwrap();
+            wat.write(b"(import\"import\"\"log_\"(func $log_(param i32)))\n").unwrap();
+        }
+        if web.import_lib[2]{
+            wat.write(b"(import\"import\"\"log_\"(func $log_f(param f32)))\n").unwrap();
+        }
+        if web.import_lib[3]{
+            wat.write(b"(import\"import\"\"body\"(func $body(param i32 i32)))\n").unwrap();
+        }
+        if web.import_lib[0]{
+            //wat.write(b"\"mem\":new WebAssembly.Memory({initial:1})\n").unwrap();
+            //(import "import" "mem" (memory 1))
+            wat.write({format!("(import\"import\"\"log\"(func $log(param i32 i32)))\n(import\"import\"\"mem\"(memory 1))\n(data (i32.const 0)\"{}\")\n",std::fs::read_to_string(format!("{}\\parsing\\www\\data",path)).unwrap())}.as_bytes()).unwrap();
+        }
+        */
+        wat.write(b"(module\n").unwrap();
         html.write(b"<head>").unwrap();
         //css
+        //
         html.write(b"<script>let i_o={\"import\":{").unwrap();
+        if web.import_lib[0]{
+            wat.write({format!("(import\"import\"\"log\"(func $log(param i32 i32)))\n(import\"import\"\"mem\"(memory 1))\n(data (i32.const 0)\"{}\")\n",std::fs::read_to_string(format!("{}\\parsing\\www\\data",path)).unwrap())}.as_bytes()).unwrap();
+            html.write(b"\"mem\":new WebAssembly.Memory({initial:1}),\"log\":(o,l)=>{console.log(new TextDecoder('utf8').decode(new Uint8Array(i_o.import.mem.buffer,o,l)))}").unwrap();
+            if web.import_lib[1]{
+                wat.write(b"(import\"import\"\"log_\"(func $log_(param i32)))\n").unwrap();
+                html.write(b",\"log_\":o=>console.log(o)").unwrap();
+            }
+            if web.import_lib[3]{
+                wat.write(b"(import\"import\"\"body\"(func $body(param i32 i32)))\n").unwrap();
+
+                html.write(b",\"body\":(o,l)=>{document.write(new TextDecoder('utf8').decode(new Uint8Array(i_o.import.mem.buffer,o,l)))}").unwrap();
+            }
+        } else if web.import_lib[1]{
+            html.write(b"\"log_\":o=>console.log(o)").unwrap();
+            wat.write(b"(import\"import\"\"log_\"(func $log_(param i32)))\n").unwrap();
+
+            if web.import_lib[3]{
+                wat.write(b"(import\"import\"\"body\"(func $body(param i32 i32)))\n").unwrap();
+                html.write(b",\"body\":(o,l)=>{document.write(new TextDecoder('utf8').decode(new Uint8Array(i_o.import.mem.buffer,o,l)))}").unwrap();
+                //html.write(b",\"body\":(o,l)=>{document.body=new TextDecoder('utf8').decode(new Uint8Array(i_o.import.mem.buffer,o,l));}").unwrap();
+            }
+        } else if web.import_lib[3]{
+            wat.write(b"(import\"import\"\"body\"(func $body(param i32 i32)))\n").unwrap();
+            html.write(b"\"body\":(o,l)=>{document.write(new TextDecoder('utf8').decode(new Uint8Array(i_o.import.mem.buffer,o,l)))}").unwrap();
+            //html.write(b"\"body\":(o,l)=>{document.body= new TextDecoder('utf8').decode(new Uint8Array(i_o.import.mem.buffer,o,l));}").unwrap();
+        }
+        //
+        html.write(b"}};fetch('main.wasm').then(r=>r.arrayBuffer()).then(b=>WebAssembly.instantiate(b,i_o)).then(r=>r.instance.exports.main()).catch(console.error);</script></head>").unwrap();
+
+        match std::fs::read_to_string(format!("{}\\parsing\\www\\local",path)) {
+            Ok(local)=>{
+                //write&drop
+                {wat}.write({format!("(func(export\"main\")\n{}{}))",
+                    if !local.is_empty(){local}else{"".to_string()},
+                    std::fs::read_to_string(format!("{}\\parsing\\www\\main",path)).unwrap()
+                )}.as_bytes()).unwrap();
+                std::fs::write(format!("{}\\target\\debug\\www\\main.wasm",path), &wat::parse_file(format!("{}\\parsing\\www\\main.wat",path)).unwrap()).unwrap();
+            }
+            Err(_)=>{panic!()}
+        }
+        //css
+        //
         //import
         /*versi lama
         let mut coma = false;
@@ -397,23 +456,7 @@ pub fn app_3(
             }
         }*/
         //optimalisasi
-        if web.import_lib[0]{
-            html.write(b"\"mem\":new WebAssembly.Memory({initial:1}),\"log\":(o,l)=>{console.log(new TextDecoder('utf8').decode(new Uint8Array(i_o.import.mem.buffer,o,l)))}").unwrap();
-            if web.import_lib[1]{
-                html.write(b",\"log_\":o=>console.log(o)").unwrap();
-            }
-            if web.import_lib[3]{
-                html.write(b",\"body_\":o=>{document.body=o;}").unwrap();
-            }
-        } else if web.import_lib[1]{
-            html.write(b"\"log_\":o=>console.log(o)").unwrap();
-            if web.import_lib[3]{
-                html.write(b",\"body_\":o=>{document.body = o}").unwrap();
-            }
-        } else if web.import_lib[3]{
-            html.write(b"\"body_\":o=>{document.body=o;}").unwrap();
-        }
-        html.write(b"}};fetch('main.wasm').then(r=>r.arrayBuffer()).then(b=>WebAssembly.instantiate(b,i_o)).then(r=>r.instance.exports.main()).catch(console.error);</script></head>").unwrap();
+        
         /*gagal
         html.write(b"<script>fetch('main.wasm').then(r=>r.arrayBuffer()).then(b=>WebAssembly.instantiate(b,{\"import\":{").unwrap();
         let mut coma = false;
@@ -431,9 +474,8 @@ pub fn app_3(
         }
         html.write(b"}})).then(r=>r.instance.exports.main()).catch(console.error);</script></head>").unwrap();
         */
-    } else {
-
-    }
+    
+    
 
 }
 /*

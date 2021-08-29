@@ -17,10 +17,115 @@ macro_rules! _int {
         }
     };
 }
+fn rv(buf:&Vec<String>,kirim:&std::sync::mpsc::Sender<perintah>,x:usize){
+    let mut bukan = false;
+    for i in x..buf.len() {
+        match buf[i].as_str(){
+            "benar"=>{
+                kirim.send(
+                    perintah::boolean(true)
+                ).unwrap()
+            }
+            "salah"=>{
+                kirim.send(
+                    perintah::boolean(false)
+                ).unwrap()
+            }
+            "!"=>{
+                bukan = true;
+                continue
+            }
+            "="=>{
+
+            }
+            _=>{}
+        }
+        if bukan {
+            kirim.send(
+                perintah::i32_eqz
+            ).unwrap();
+            bukan = false;
+        }
+    }
+    /*
+    match buf[x].as_str(){
+        "benar"=>{
+            kirim.send(
+                perintah::boolean(true)
+            ).unwrap()
+        }
+        "salah"=>{
+            kirim.send(
+                perintah::boolean(false)
+            ).unwrap()
+        }
+        "!"=>{
+            match buf[x+1].as_str(){
+                "benar"=>{
+                    kirim.send(
+                        perintah::boolean(true)
+                    ).unwrap()
+                }
+                "salah"=>{
+                    kirim.send(
+                        perintah::boolean(false)
+                    ).unwrap()
+                }
+                _=>{   }
+            }
+            kirim.send(
+                perintah::i32_eqz
+            ).unwrap()
+        }
+        _=>{}
+    }
+    */
+}
 use crate::parsing::perintah;
 //use crate::parsing::tipe;
-fn token(buf:&Vec<String>,kirim:&std::sync::mpsc::Sender<perintah>,dalam_fn:&mut bool){
+fn token(buf:&Vec<String>,jika_br:&mut bool,terima:&std::sync::mpsc::Receiver<Vec<String>>,kirim:&std::sync::mpsc::Sender<perintah>,dalam_fn:&mut bool){
     match buf[0].as_str(){
+        "jika"=>{
+            kirim.send(
+                perintah::jika
+            ).unwrap();
+            kirim.send(
+                perintah::blok("then".to_string())                
+            ).unwrap();
+            
+            rv(buf,kirim,1);
+            //
+            if terima.recv().unwrap()[0] == "{"{
+                kirim.send(
+                    perintah::jika_
+                ).unwrap();
+            } else {
+                panic!()
+            }
+            *jika_br = true;
+            //test
+        }
+        "lalu"=>{
+            if buf.len() == 1 {
+                
+            } else if buf[1] == "jika" {
+                *jika_br = true;
+                kirim.send(
+                    perintah::lalu_jika
+                ).unwrap();
+                //sementara
+                rv(buf,kirim,2);
+                if terima.recv().unwrap()[0] == "{"{
+                    kirim.send(
+                        perintah::jika_
+                    ).unwrap()
+                } else {
+                    panic!()
+                }
+            } else {
+                panic!()
+            }
+        }
         "let"=>{
             let (indx,nama) = if !*dalam_fn {
                 std::process::exit(1);
@@ -41,6 +146,7 @@ fn token(buf:&Vec<String>,kirim:&std::sync::mpsc::Sender<perintah>,dalam_fn:&mut
                     perintah::tulis(nama,v)
                 ).unwrap()
             }
+            *jika_br = true;
             //pengaman aktiv
         }
         "putar"=>{
@@ -88,6 +194,16 @@ fn token(buf:&Vec<String>,kirim:&std::sync::mpsc::Sender<perintah>,dalam_fn:&mut
                 
             ).unwrap()
         }
+        "halaman"=>{
+            kirim.send(
+                perintah::halaman({
+                    let mut v = buf[1].clone();
+                    v.remove(0);
+                    v.pop();
+                    v
+                })
+            ).unwrap()
+        }
         "cpu"=>{
             let (nama,publik) = if buf[0].as_str() == "pub"{
                 (buf[2].clone(),true)
@@ -105,10 +221,22 @@ fn token(buf:&Vec<String>,kirim:&std::sync::mpsc::Sender<perintah>,dalam_fn:&mut
             ).unwrap();
         }
         "}"=>{
-            kirim.send(
-                perintah::blok_tutup
-            ).unwrap();
-
+            //sementara jika
+            if *jika_br {
+                //keluar dari if
+                kirim.send(
+                    perintah::br("$if".to_string())
+                ).unwrap();
+                kirim.send(perintah::blok_tutup).unwrap();
+                //
+                //kirim.send(perintah::blok_tutup).unwrap();
+                //
+                kirim.send(perintah::jika_tutup).unwrap();
+                //
+                *jika_br = false;
+            } else {
+                kirim.send(perintah::blok_tutup).unwrap();
+            }
         }
         "blok"=>{
             kirim.send(
@@ -242,6 +370,44 @@ fn token(buf:&Vec<String>,kirim:&std::sync::mpsc::Sender<perintah>,dalam_fn:&mut
     }
     */
 }
+fn duplikat(
+    terima:&std::sync::mpsc::Receiver<Vec<String>>,
+    kirim:&std::sync::mpsc::Sender<perintah>,
+    jumlah:u64,
+){
+    let mut buf:Vec<Vec<String>> = Vec::with_capacity(2);
+    loop{
+        let v = terima.recv().unwrap();
+        if v[0] == "duplikat_batas"{
+            break
+        }
+        //token(&,&mut jika_br, &terima,&kirim, &mut dalam_fn);
+        buf.push(v);
+    }
+    for i in 0..jumlah{
+
+    }
+}
+//parse
+pub fn parse(
+    terima:std::sync::mpsc::Receiver<Vec<String>>
+    ,kirim:std::sync::mpsc::Sender<perintah>,
+){
+
+    let mut dalam_fn = false;
+    let mut buf :Vec<String> =  Vec::with_capacity(20);
+    let mut jika_br = false;
+    while { buf = terima.recv().expect(""); buf.len() != 0 }  {
+        if buf[0] == "duplikat" {
+            //belum selesai
+            duplikat(&terima,&kirim,buf[1].parse::<u64>().unwrap());
+            continue
+        }
+        token(&buf,&mut jika_br, &terima,&kirim, &mut dalam_fn);
+    }
+    kirim.send(perintah::selesai).expect("parse gagal selesai");
+}
+/*versi lama 0.7.0
 pub fn parse(
     terima:std::sync::mpsc::Receiver<Vec<String>>
     ,kirim:std::sync::mpsc::Sender<perintah>,
@@ -252,6 +418,7 @@ pub fn parse(
     let mut buf :Vec<String> =  Vec::with_capacity(20);
     let mut dalam_fn = false;
     let mut duplikat:(bool,u64,Vec<Vec<String>>,bool,bool) = (false,0,Vec::with_capacity(2),false,false);
+    let mut jika_br = [false,false];
     while { buf = terima.recv().expect(""); buf.len() != 0 }  {
         if buf[0] == "duplikat" {
             if let Ok(o) = buf[1].parse::<u64>() {
@@ -262,9 +429,9 @@ pub fn parse(
             }
         } else if buf[0] == "duplikat_batas" {
             if duplikat.3 && duplikat.4 {
-                token(&Vec::from(["blok".to_string(),"d0".to_string()]), &kirim,&mut dalam_fn);
+                token(&Vec::from(["blok".to_string(),"d0".to_string()]),&mut jika_br, &terima,&kirim,&mut dalam_fn);
                 for i in 0..duplikat.1{
-                    token(&Vec::from(["blok".to_string(),"d1".to_string()]), &kirim,&mut dalam_fn);
+                    token(&Vec::from(["blok".to_string(),"d1".to_string()]),&mut jika_br,&terima,&kirim,&mut dalam_fn);
                     for x in &duplikat.2{
                         let mut v :Vec<String>= Vec::with_capacity(x.len());
                         for y in x{
@@ -280,13 +447,15 @@ pub fn parse(
                                 v.push(y.clone())
                             }
                         }
-                        token(&v, &kirim, &mut dalam_fn)
+                        token(&v, &mut jika_br,&terima,&kirim, &mut dalam_fn)
                     }
-                    token(&Vec::from(["blok_".to_string()]), &kirim,&mut dalam_fn);
+                    token(&Vec::from(["blok_".to_string()]),&mut jika_br, &terima,&kirim,&mut dalam_fn);
                 }
-                token(&Vec::from(["blok_".to_string()]), &kirim,&mut dalam_fn);
+                token(&Vec::from(["blok_".to_string()]),&mut jika_br, &terima,&kirim,&mut dalam_fn);
+                duplikat.3 = false;
+                duplikat.4 = false;
             }else if duplikat.3 {
-                token(&Vec::from(["blok".to_string(),"d0".to_string()]), &kirim,&mut dalam_fn);
+                token(&Vec::from(["blok".to_string(),"d0".to_string()]),&mut jika_br,&terima, &kirim,&mut dalam_fn);
                 for i in 0..duplikat.1{
                     for x in &duplikat.2{
                         let mut v :Vec<String>= Vec::with_capacity(x.len());
@@ -300,13 +469,15 @@ pub fn parse(
                                 v.push(y.clone())
                             }
                         }
-                        token(&v, &kirim, &mut dalam_fn)
+                        token(&v,&mut jika_br, &terima,&kirim, &mut dalam_fn)
                     }
                 }
-                token(&Vec::from(["blok_".to_string()]), &kirim,&mut dalam_fn);
+                token(&Vec::from(["blok_".to_string()]),&mut jika_br,&terima, &kirim,&mut dalam_fn);
+                
+                duplikat.3 = false;
             }else if duplikat.4 {
                 for i in 0..duplikat.1{
-                    token(&Vec::from(["blok".to_string(),"d1".to_string()]), &kirim,&mut dalam_fn);
+                    token(&Vec::from(["blok".to_string(),"d1".to_string()]),&mut jika_br,&terima, &kirim,&mut dalam_fn);
                     for x in &duplikat.2{
                         let mut v :Vec<String>= Vec::with_capacity(x.len());
                         for y in x{
@@ -319,11 +490,11 @@ pub fn parse(
                                 v.push(y.clone())
                             }
                         }
-                        token(&v, &kirim, &mut dalam_fn)
+                        token(&v,&mut jika_br, &terima,&kirim, &mut dalam_fn)
                     }
-                    token(&Vec::from(["blok_".to_string()]), &kirim,&mut dalam_fn);
+                    token(&Vec::from(["blok_".to_string()]),&mut jika_br,&terima, &kirim,&mut dalam_fn);
                 }
-
+                duplikat.4 = false;
             } else {
                 for i in 0..duplikat.1{
                     for x in &duplikat.2{
@@ -335,9 +506,10 @@ pub fn parse(
                                 v.push(y.clone())
                             }
                         }
-                        token(&v, &kirim, &mut dalam_fn)
+                        token(&v,&mut jika_br, &terima,&kirim, &mut dalam_fn)
                     }
                 }
+                
             }
             duplikat.0 = false;
             duplikat.2.clear();
@@ -359,9 +531,12 @@ pub fn parse(
             }
             //println!("{:?}",duplikat.2)
         } else {
-            token(&buf, &kirim, &mut dalam_fn)
+            token(&buf,&mut jika_br, &terima,&kirim, &mut dalam_fn);
         }
     }
+    //sementara
+    
+    
     /*
     while buf.len() != 0 {
         match (buf[0].as_str(),buf[1].as_str()){
@@ -447,6 +622,8 @@ pub fn parse(
     }
     */
     //println!("testting");
+    kirim.send(perintah::blok_tutup).unwrap();
     kirim.send(perintah::selesai).expect("parse gagal selesai");
     
 }
+*/

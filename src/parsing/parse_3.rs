@@ -60,6 +60,8 @@ pub enum Pohon{
     tulis(u64,Tipe),
     const_32(i32),
     local_set(i32),
+    halaman(String),
+    i32_eqz,
     blok(String),
     blok_,
     putar,
@@ -71,8 +73,13 @@ pub enum Pohon{
     div_s,
     div_u,
     mul,
+    r#if,
+    if_,
+    jika_tutup,
+    lalu_jika,
     if_br(String,String),
-    br(String)    
+    br(String),
+    main(String)    
 
 }
 //
@@ -91,6 +98,8 @@ pub fn parse_2(
     let mut _var:Vec<Var>= Vec::with_capacity(2);
     let mut _data_ : HashMap<u64, Data> = HashMap::with_capacity(2);
     let lokasi :Vec<[String; 3]>= Vec::from([["main".to_string(),"main".to_string(),"".to_string()]]);
+    let mut jika :Vec<u8>= Vec::new();
+    let mut lalu = false;
     loop {
         kirim.send((lokasi.last().unwrap().clone(),false)).unwrap();
         match terima.recv().unwrap(){
@@ -295,10 +304,101 @@ pub fn parse_2(
                                         Pohon::br(o["nilai"][i]["nilai"].as_str().unwrap().to_string())
                                     )
                                 }
+                                "jika"=>{
+                                    jika.push(1);
+                                    pohon.push(
+                                        Pohon::blok("if".to_string())
+                                    )
+
+                                }
+                                "jika_"=>{
+                                    //???
+                                    //pohon.push(Pohon::if_br("".to_string(),"$if".to_string())   )
+                                    pohon.push(
+                                        Pohon::if_br("$then".to_string(),"".to_string())
+                                    )
+                                }
+                                "jika_tutup"=>{
+                                    if lalu{
+                                        lalu = false;
+                                    } else {
+                                        pohon.push(
+                                            Pohon::jika_tutup
+                                        );
+                                        
+                                    }
+
+                                }
+                                "lalu"=>{
+                                    //prototy
+                                    if let Pohon::jika_tutup = pohon.last().unwrap() {
+                                        pohon.pop().unwrap();
+                                        
+                                        lalu = true;
+                                    } else {
+                                        panic!()
+                                    }
+                                }
+                                "lalu_jika"=>{
+                                    //prototyp
+                                        pohon.push(
+                                            Pohon::lalu_jika
+                                        );
+                                }
+                                "blok_t_tutup"=>{
+                                    pohon.push(
+                                        Pohon::blok_
+                                    );
+                                }
+                                "blok_t_buka"=>{
+                                    if lalu{
+                                        
+                                    }else if jika.is_empty() {
+                                        pohon.push(
+                                            Pohon::blok("test".to_string())
+                                        )
+                                    } else {
+                                        jika.pop();
+                                    }
+                                }
+                                "_i32_eqz"=>{
+                                    pohon.push(
+                                        Pohon::i32_eqz
+                                    )
+                                }
+                                "_i32_konst"=>{
+                                    let v = o["nilai"][i]["nilai"].as_str().unwrap();
+                                    let v = format!("\ni32.const {}\n",v);
+                                    pohon.push(
+                                        Pohon::main(v)
+                                    )
+                                }
+                                "kurang"=>{
+                                    pohon.push(
+                                        Pohon::sub  
+                                    );
+                                }
+                                "benar"=>{
+                                    pohon.push(
+                                        Pohon::main("i32.const 0".to_string())   
+                                    )
+                                }
+                                "salah"=>{
+                                    pohon.push(
+                                        Pohon::main("i32.const 1".to_string())   
+                                    )
+                                }
                                 "if_br"=>{
                                     let (a,b) = (o["nilai"][i]["nilai"][0].as_str().unwrap(),o["nilai"][i]["nilai"][1].as_str().unwrap());
                                     pohon.push(
                                         Pohon::if_br(a.to_string(),b.to_string())
+                                    )
+                                }
+                                "halaman"=>{
+                                    pohon.push(
+                                        Pohon::halaman(
+                                            o["nilai"][i]["nilai"].as_str().unwrap().to_string()
+                                        )
                                     )
                                 }
                                 "cetak"=>{

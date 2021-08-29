@@ -1,8 +1,9 @@
 cpu main
-    duplikat 3
-        cetak "sebelum"
-        cetak "sesudah"
-        $lanjut
-        cetak "baru"
-        cetak "baru"
-    duplikat_batas
+jika !salah
+{
+    halaman "test"    
+}
+lalu 
+{
+    halaman "lalu"
+}

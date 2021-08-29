@@ -72,8 +72,63 @@ pub fn parse(
                 ).unwrap();
             }
             //perintah::arit_tambah(a,b,c)=>{
-
             //}
+            perintah::boolean(o)=>{
+                if o {
+                    kirim.send(
+                        format!("{}{{\"tipe\":\"benar\"}}",if fn_[1] {","}else{fn_[1] = true;""})
+                    ).unwrap()
+                } else {
+                    kirim.send(
+                        format!("{}{{\"tipe\":\"salah\"}}",if fn_[1] {","}else{fn_[1] = true;""})
+                    ).unwrap()
+                }
+            }
+            perintah::jika=>{
+                kirim.send(
+                    format!("{}{{\"tipe\":\"jika\"}}",if fn_[1] {","}else{fn_[1] = true;""})
+                ).unwrap();
+            }
+            perintah::lalu=>{
+                kirim.send(
+                    format!("{}{{\"tipe\":\"lalu\"}}",if fn_[1] {","}else{fn_[1] = true;""})
+                ).unwrap()
+            }
+            perintah::lalu_jika=>{
+                kirim.send(
+                    format!("{}{{\"tipe\":\"lalu_jika\"}}",if fn_[1] {","}else{fn_[1] = true;""})
+                ).unwrap()
+            }
+            perintah::jika_=>{
+                kirim.send(
+                    format!("{}{{\"tipe\":\"jika_\"}}",if fn_[1] {","}else{fn_[1] = true;""})
+                ).unwrap()
+            }
+            perintah::jika_tutup=>{
+                kirim.send(
+                    format!("{}{{\"tipe\":\"jika_tutup\"}}",if fn_[1] {","}else{fn_[1] = true;""})    
+                ).unwrap()
+            }
+            perintah::i32_eqz=>{
+                kirim.send(
+                    format!("{}{{\"tipe\":\"_i32_eqz\"}}",if fn_[1] {","}else{fn_[1] = true;""})
+                ).unwrap()
+            }
+            perintah::_i32_konst(o)=>{
+                kirim.send(
+                    format!("{1}{{\"tipe\":\"_i32_konst\",\"nilai\":\"{}\"}}",o,if fn_[1] {","}else{fn_[1] = true;""})
+                ).unwrap()
+            }
+            perintah::kurang=>{
+                kirim.send(
+                    format!("{}{{\"tipe\":\"kurang\"}}",if fn_[1] {","}else{fn_[1] = true;""})
+                ).unwrap()
+            }
+            perintah::halaman(o)=>{
+                kirim.send(
+                    format!("{}{{\"tipe\":\"halaman\",\"nilai\":\"{}\"}}",if fn_[1] {","} else { fn_[1] = true ; ""},o)
+                ).unwrap()
+            }
             perintah::tulis(a,b)=>{
                 kirim.send(
                     format!("{}{{\"tipe\":\"tulis\",\"nama\":\"{}\",\"nilai\":{:?}}}",
@@ -101,10 +156,15 @@ pub fn parse(
                 ).unwrap()
             }
             perintah::blok_buka=>{
-
+                kirim.send(
+                    format!("{}{{\"tipe\":\"blok_t_buka\"}}",if fn_[1] {","}else{fn_[1] = true;""})
+                ).unwrap()
             }
             perintah::blok_tutup=>{
+                kirim.send(
+                    format!("{}{{\"tipe\":\"blok_t_tutup\"}}",if fn_[1] {","}else{fn_[1] = true;""})
 
+                ).unwrap()
             }
             perintah::blok(a)=>{
                 kirim.send(

@@ -131,14 +131,61 @@ fn kopilasi() {
         println!("[optimalisasi selesai : {}/detik]", waktu.elapsed().as_secs_f32());
     }
     if pola.2 {
-        let mut kom  = (false,false);
-        for i in kompilasi {
+        #[cfg(debug_assertions)]
+        println!("[pohon]\n{:#?}",unsafe{ &POHON });
+        let mut tread = Vec::new();
+        let mut kom  = (false,false,false);
+        kompilasi.iter().for_each(|i| 
             match i.as_str() {
-                "wasm" => {kom.0 = true}
-                "win64" => {kom.1 = true}
-                _ =>{}
+                "wasm" => {
+                    if !kom.0 {
+                        tread.push(
+                            std::thread::Builder::new().name("wasm".to_string()).spawn( || {
+                                konversi::web_2::app_3(unsafe{ &POHON } ,&ARGS[PROYEK]);
+                            }).unwrap()
+                        ); 
+                        kom.0 = true
+                    }
+                }
+                "win64" => {
+                    if !kom.1 {
+                        kom.1 = true
+                    }
+                }
+                "interperetasi" =>{
+                    unsafe {
+                        if !kom.2 {
+                            let nama_app = nama_app.clone();
+                            tread.push(
+                                std::thread::Builder::new().name("interperetasi".to_string()).spawn(move || {
+                                    bincode::serialize_into(
+                                        std::io::BufWriter::with_capacity( 1000 , 
+                                            if let Ok(o) = File::create(format!("{}/target/inter/{}.bin",&ARGS[PROYEK],nama_app) ) {
+                                                o
+                                            } else {
+                                                let mut v = format!("{}/target/inter",&ARGS[PROYEK]) ;
+                                                std::fs::create_dir_all(&v).unwrap();
+                                                v.push_str("/");
+                                                v.push_str(&nama_app);
+                                                v.push_str(".bin");
+                                                File::create(v).unwrap()
+                                            }
+                                        ), 
+                                        &POHON
+                                    ).unwrap();
+                                }).unwrap()
+                            );
+                            kom.2 = true;
+                        }
+                    }
+                }
+                _=>{
+                    panic!()
+                }
             }
-        }
+        );
+        tread.into_iter().for_each(|i| i.join().unwrap() );
+        /*
         unsafe {
             if !pola.0 || !pola.1 {
                 POHON = bincode::deserialize_from(
@@ -146,7 +193,7 @@ fn kopilasi() {
                 ).unwrap();
             }
         }
-        println!("[pohon]\n{:#?}",unsafe{ &POHON });
+        *//*
         tread!(join -> 
             {
                 if kom.0 {
@@ -165,17 +212,25 @@ fn kopilasi() {
                 }
             },"win64".to_string(),win64
         );
-        println!("[konversi selesai : {}/detik]", waktu.elapsed().as_secs_f32());
+        */
+        //println!("[konversi selesai : {}/detik]", waktu.elapsed().as_secs_f32());
     }
-    println!("[semua selesai : {}/detik]", waktu.elapsed().as_secs_f32());
+    println!("[ selesai : {}/detik ]", waktu.elapsed().as_secs_f32());
    
 }
 fn main(){
+    if ARGS.len() != 1 {
+        kopilasi()
+    } else {
+        codeart::ide()
+    }
+    /*
     match ARGS.len(){
         3 => kopilasi(),
-        2=>{
+        2..4=>{
             match ARGS[1].as_str(){
                 "bantuan"=> dok::bantuan(),
+                
                 _=>{
                     println!("command line argumen tidak sesuai");
                     std::process::exit(1);
@@ -188,6 +243,7 @@ fn main(){
             std::process::exit(1);
         }
     }
+    */
 }
 #[allow(unused_imports)]
 use std::process::Command;

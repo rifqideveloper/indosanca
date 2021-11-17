@@ -77,7 +77,7 @@ impl Token{
             self.x.clear()
         }
     }
-    fn token_slice(&mut self,data:&mut String,extra:&std::sync::mpsc::Receiver<String>){
+    fn token_slice(&mut self,mut data:String,extra:&std::sync::mpsc::Receiver<String>){
         // tokenizer 2.0.1
         // tidak butuh bufer 
         // belum selesai     
@@ -91,7 +91,28 @@ impl Token{
                 ";"=>{
                     self.lanjut()
                 }
-                "<"|">"|"="|":"|"!"|","|"&"|"*"|"+"|"-"|"/"=>{
+                "="|"<"|">"|"!"|"+"|"-"|"/"|"*"|"%"=>{
+                    if data[x + 1..x + 2].to_string() == "=" {
+                        self.x.push(data[x..x + 2].to_string());
+                        x += 1
+                    } else {
+                        self.x.push(data[x..x + 1].to_string())
+                    }
+                
+                }
+                /*error
+                =>{
+                    println!("{}",data[x..x+2].to_string());
+                    self.x.push(
+                        if data[x+1..x+2] == data[x..x+1]{
+                            data[x..x+2].to_string()
+                        } else {
+                            data[x..x+1].to_string()
+                        }    
+                    )
+                }
+                */
+                ","|":"|"&"|"."|"?"=>{
                     self.x.push(data[x..x + 1].to_string())
                 }
                 "$"=>{
@@ -145,7 +166,7 @@ impl Token{
                                 x = i ;
                                 continue 'main
                             }
-                            "<"|">"|"="|":"|"!"|","|"&"|"*"=>{
+                            "<"|">"|"="|":"|"!"|","|"&"|"*"|"."|"("|")"=>{
                                 self.x.push(data[x..i].to_string());
                                 self.x.push(data[i..i + 1].to_string());
                                 x = i + 1;
@@ -253,12 +274,7 @@ impl Token{
         }
     }
     */
-    fn selesai(self){
-        match self.kirim.send([].to_vec()){
-            Ok(_)=>{}
-            Err(_)=>{panic!()}
-        }
-    }
+    
 }
 pub fn baca_2(terima:std::sync::mpsc::Receiver<String>,kirim:std::sync::mpsc::Sender<Vec<String>>){
     let mut token = Token{
@@ -268,6 +284,15 @@ pub fn baca_2(terima:std::sync::mpsc::Receiver<String>,kirim:std::sync::mpsc::Se
         blok:(false,0,0,0),
         kirim:kirim
     };
+    terima.iter().for_each(|o| 
+        if !o.is_empty(){
+            token.token_slice(o,&terima)
+        } else {
+            token.kirim.send([].to_vec()).unwrap();
+            return
+        }
+    );
+    /*
     loop{
         match terima.recv(){
             Ok(mut o)=>{
@@ -284,5 +309,6 @@ pub fn baca_2(terima:std::sync::mpsc::Receiver<String>,kirim:std::sync::mpsc::Se
         };
 
     }
+    */
     
 }

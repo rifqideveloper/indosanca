@@ -34,10 +34,42 @@ pub fn baca(
             buf.clear();
             buf.push_str(&terima.recv().expect(""));
         }
-        //drop(file);
+        drop(file);
         //
-        file = File::open(format!("{}\\parsing\\parse_2",path)).expect("");
+        'main:for data in terima_parse_3.iter() {
+            if data.0 == ["".to_string(),"".to_string(),"".to_string()] {break}
+            let mut reader = BufReader::with_capacity(1000,File::open(format!("{}\\parsing\\parse_2",path)).expect(""));
+            while {buf.clear();reader.read_line(buf).expect("") != 0} {
+                let u :Value = match serde_json::from_str(&buf){
+                    Ok(o)=>{o}
+                    Err(_)=>{
+                        println!("json format error");
+                        std::process::exit(1);           
+                    }
+                };
+                if u["mod"] == data.0[0] {
+                    //println!("testing {:?}",data.0);std::process::exit(17);
+                    for i in 0.. { 
+                        if u["nilai"][i]["fn"] == data.0[1]{
+                            kirim_parse_3.send(Some(u["nilai"][i].clone())).expect("msg: &str");
+                            continue 'main
+                        } 
+                        if u["nilai"][i] == json!(null){
+                            println!("{}",i);
+                            println!("fungsi '{0}' tidak ditemukan di modul '{1}'\nbantuan : tambahkan 'fn {0}' di modul '{1}'",data.0[1],data.0[0]);
+                            std::process::exit(17);
+                        }
+                    }
+                    
+                }
+            }
+            /*
+            println!("mudul '{0}' tidak ditemukan\nfungsi '{1}'\nbantuan : buat file '{0}.is' di forder 'kode'",data.0[0],data.0[1]);
+            std::process::exit(17);
+            */
+        }
         //File::with_options().create(true).read(true).write(true).open(format!("{}\\parsing\\parse_2",path)).unwrap()
+        /*
         'main:loop{
             let mut reader = BufReader::with_capacity(1000,&file);
             let data = terima_parse_3.recv().unwrap();
@@ -83,12 +115,12 @@ pub fn baca(
                 } 
                 
             } 
-            println!("mudul '{0}' tidak ditemukan\nbantuan : buat file '{0}.is' di forder 'kode'",data.0[0]);
+            println!("mudul '{0}' tidak ditemukan\nfungsi '{1}'\nbantuan : buat file '{0}.is' di forder 'kode'",data.0[0],data.0[1]);
             std::process::exit(17);
         }
+        */
     } else {
-        //turbo
-        //gagal
+        //turbo gagal
         //buf.clear();
         let mut r :Vec<Value> = Vec::with_capacity(2);
         loop{
@@ -114,7 +146,14 @@ pub fn baca(
             }
             
         }
-        let mut data :([String; 3],bool) = terima_parse_3.recv().unwrap();
+        /*
+        for data in terima_parse_3.iter(){
+
+            println!("mudul '{0}' tidak ditemukan\nmaka fungsi '{1}' tidak ada\nbantuan : buat file '{0}.is' di forder 'kode'",data.0[0],data.0[1]);
+            std::process::exit(17);
+        }
+        */
+        /*
         'main_:loop{
             if data.0 == ["".to_string(),"".to_string(),"".to_string()] {break}
             for u in &r {
@@ -139,7 +178,7 @@ pub fn baca(
                             continue 'main_
                         }
                         if u["nilai"][i] == json!(null){
-                            println!("funsi '{0}' tidak ditemukan di modul '{1}'\nbantuan : tambahkan 'fn {0}' di modul '{1}'",data.0[1],data.0[0]);
+                            println!("fungsi '{0}' tidak ditemukan di modul '{1}'\nbantuan : tambahkan 'fn {0}' di modul '{1}'",data.0[1],data.0[0]);
                             std::process::exit(17);
                         }
                         i += 1
@@ -152,5 +191,6 @@ pub fn baca(
         buf.clear();
         data = terima_parse_3.recv().unwrap();
         //println!("{:?}",data);
-    }
+        */
+    } 
 }

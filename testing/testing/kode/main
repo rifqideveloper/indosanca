@@ -1,9 +1,34 @@
+cpu test 
+    cetak "klik"
 cpu main
-jika !salah
-{
-    halaman "test"    
-}
-lalu 
-{
-    halaman "lalu"
-}
+    cetak "testing"
+
+    konst nama str = "konstan"
+    halaman nama
+    
+    swict nama
+        ? "konstan"
+            halaman "swict"
+            putus
+        ? _
+
+    swict_
+
+    bandingkan nama
+        ? "konstan"
+            halaman "banding"
+        ? _
+
+    bandingkan_
+
+    jika "konstan" == "konstan"
+        halaman "jika"
+    jika_
+    
+    app.tombol("tom",0)
+        .isi = "tomas"
+        .warna = "blue"
+        .warnalatarbelakang = "black"
+        .ukurankata = "15px"
+        .klik = main::test()
+        

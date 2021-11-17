@@ -17,10 +17,20 @@ macro_rules! _int {
         }
     };
 }
-fn rv(buf:&Vec<String>,kirim:&std::sync::mpsc::Sender<perintah>,x:usize){
+fn rv(buf:&Vec<String>,kirim:&std::sync::mpsc::Sender<perintah>,x:usize)
+{
     let mut bukan = false;
-    for i in x..buf.len() {
+    /*
+    let mut i = x.clone();
+    while if i < buf.len() {false} else { i += 1; true} {
         match buf[i].as_str(){
+            
+            /*prototyp
+            x if matches!(x.parse::<f32>(),
+                Ok(y)
+                if {true} 
+            ) =>{}
+            */
             "benar"=>{
                 kirim.send(
                     perintah::boolean(true)
@@ -35,17 +45,219 @@ fn rv(buf:&Vec<String>,kirim:&std::sync::mpsc::Sender<perintah>,x:usize){
                 bukan = true;
                 continue
             }
-            "="=>{
+            //i32.add
+            "+"=>{
+                kirim.send(
+                    perintah::tambah
+                ).unwrap();
+            }
+            //i32.sub
+            "-"=>{
+                kirim.send(
+                    perintah::kurang
+                ).unwrap();
+            }
+            //???
+            "/"=>{}
+            //i32.mul
+            "*"=>{}
+            //???
+            "%"=>{}
+            //???
+            "."=>{}
+            //i32.Ge_s
+            ">"=>{
 
             }
-            _=>{}
+            //i32.it_s
+            "<"=>{
+
+            }
+            "="=>{
+                panic!()
+            }
+            ","=>{
+            }
+            x if matches!(x.parse::<i32>(),
+                Ok(y) 
+                if {kirim.send(perintah::_i32_konst(y)).unwrap(); true}
+            ) =>{}
+            _=>{
+                panic!()
+            }
         }
+        
         if bukan {
             kirim.send(
                 perintah::i32_eqz
             ).unwrap();
             bukan = false;
         }
+        
+    }*/
+    fn pol(pola:&mut u8,kirim:&std::sync::mpsc::Sender<perintah>){
+        match pola {
+            1=>{
+                kirim.send(
+                    perintah::sama
+                ).unwrap();
+            }
+            2=>{
+                kirim.send(
+                    perintah::tidak_sama
+                ).unwrap();
+            }
+            3=>{
+                kirim.send(
+                    perintah::sama_lebih_besar
+                ).unwrap();
+                 
+            }
+            4=>{
+                kirim.send(
+                    perintah::sama_lebih_kecil
+                ).unwrap();
+            }
+            5=>{
+                kirim.send(
+                    perintah::lebih_kecil
+                ).unwrap();
+            }
+            6=>{
+                kirim.send(
+                    perintah::lebih_besar
+                ).unwrap();
+            }
+            _=>{return}
+        }
+        *pola = 0        
+    }
+    fn logi(l:bool,bukan:&mut bool,kirim:&std::sync::mpsc::Sender<perintah>){
+        if *bukan {
+            kirim.send(
+                perintah::boolean(!l)
+            ).unwrap();
+            *bukan = false
+        } else {
+            kirim.send(
+                perintah::boolean(l)
+            ).unwrap();
+        }
+    }
+
+    //jika peringatan true setelah loop selesai maka error
+    for i in x..buf.len(){
+        match buf[i].as_str(){
+            "benar"=>{
+                logi(true, &mut bukan, kirim);
+            }
+            "salah"=>{
+                logi(false, &mut bukan, kirim);
+            }
+            "!"=>{
+                bukan = true;
+            }
+            //i32.add
+            "+"=>{
+                kirim.send(
+                    perintah::tambah
+                ).unwrap()
+            }
+            //i32.sub
+            "-"=>{
+                kirim.send(
+                    perintah::kurang
+                ).unwrap()
+            }
+            //???
+            "/"=>{
+                kirim.send(
+                    perintah::bagi
+                ).unwrap()
+            }
+            //i32.mul
+            "*"=>{
+                kirim.send(
+                    perintah::kali
+                ).unwrap()
+            }
+            "%"=>{
+                kirim.send(
+                    perintah::modus
+                ).unwrap()
+            }
+            //???
+            "."=>{}
+            "="=>{
+                kirim.send(
+                    perintah::sama_dengan
+                ).unwrap()
+            }
+            //pola 1
+            "=="=>{            
+                kirim.send(
+                    perintah::i32_eq
+                ).unwrap()
+            }
+            //pola 2
+            "!="=>{
+                kirim.send(
+                    perintah::tidak_sama
+                ).unwrap()                
+                /*
+                kirim.send(
+                    perintah::i32_eqz
+                ).unwrap()
+                */
+            }
+            //pola 3
+            //sama lebih besar
+            "<="=>{
+                kirim.send(
+                    perintah::sama_lebih_besar
+                ).unwrap()
+            }
+            //pola 4
+            //sama lebih kecil
+            ">="=>{
+                kirim.send(
+                    perintah::sama_lebih_kecil
+                ).unwrap()
+            }
+            //pola 5
+            //lebih kecil
+            //i32.Ge_s
+            ">"=>{
+                kirim.send(
+                    perintah::lebih_kecil
+                ).unwrap()
+            }
+            //pola 6
+            //lebih besar
+            //i32.it_s
+            "<"=>{
+                kirim.send(
+                    perintah::lebih_besar
+                ).unwrap()
+            }
+            //prototipe
+            x if matches!(x.parse::<i32>(),
+                Ok(y) 
+                if {
+                    kirim.send(perintah::_i32_konst(y)).unwrap();
+                    true
+                }
+            ) =>{}
+            /*
+            variabel =>{}
+            */
+            _=>{}
+        }
+        if bukan {
+            panic!()
+        }
+        //
+        
     }
     /*
     match buf[x].as_str(){
@@ -81,202 +293,902 @@ fn rv(buf:&Vec<String>,kirim:&std::sync::mpsc::Sender<perintah>,x:usize){
     }
     */
 }
-use crate::parsing::perintah;
-//use crate::parsing::tipe;
-fn token(buf:&Vec<String>,jika_br:&mut bool,terima:&std::sync::mpsc::Receiver<Vec<String>>,kirim:&std::sync::mpsc::Sender<perintah>,dalam_fn:&mut bool){
-    match buf[0].as_str(){
-        "jika"=>{
-            kirim.send(
-                perintah::jika
-            ).unwrap();
-            kirim.send(
-                perintah::blok("then".to_string())                
-            ).unwrap();
-            
-            rv(buf,kirim,1);
-            //
-            if terima.recv().unwrap()[0] == "{"{
+fn jika(i:usize,buf:&mut std::vec::Vec<std::string::String>,kirim:&std::sync::mpsc::Sender<perintah>){
+    let mut tidak = false;
+    for i in i..buf.len() {
+        match buf[i].as_str(){
+            "!"=>{ tidak = true }
+            "benar"=>{
                 kirim.send(
-                    perintah::jika_
+                    perintah::boolean(
+                        if tidak {
+                            tidak = false;
+                            false
+                        } else {
+                            true
+                        }
+                    )
                 ).unwrap();
-            } else {
-                panic!()
             }
-            *jika_br = true;
-            //test
-        }
-        "lalu"=>{
-            if buf.len() == 1 {
-                
-            } else if buf[1] == "jika" {
-                *jika_br = true;
+            "salah"=>{
                 kirim.send(
-                    perintah::lalu_jika
+                    perintah::boolean(
+                        if tidak {
+                            tidak = false;
+                            true
+                        } else {
+                            false
+                        }
+                    )
+                ).unwrap()
+            }
+            _=>{}
+        }
+    }
+    kirim.send(
+        perintah::jika_
+    ).unwrap()
+}
+
+use crate::parsing::perintah;
+use crate::parsing::tipe;
+//use crate::parsing::tipe;
+fn glob_tipe(nama:&String,_mut:bool,tipe:tipe,kirim:&std::sync::mpsc::Sender<perintah>){
+    kirim.send(
+        perintah::glob_var(nama.to_string(),_mut,tipe)
+    ).unwrap()
+}
+fn let_(nama:&String,_mut:bool,tipe:tipe,kirim:&std::sync::mpsc::Sender<perintah>){
+    kirim.send(
+        perintah::_let(nama.to_string(),_mut,tipe)
+    ).unwrap()
+}
+fn token(mut buf: Vec<String>,jika_br:&mut bool,terima:&std::sync::mpsc::Receiver<Vec<String>>,kirim:&std::sync::mpsc::Sender<perintah>,dalam_fn:&mut bool,perintah_terakhir:&mut perintah){
+    let mut var = Vec::new();
+    let mut lapisan = 0 ;
+    loop{
+        match buf[0].as_str(){
+            "konst"=>{
+
+                /*
+                if buf[1] != "mut"{
+                    panic!()
+                }
+                if buf[4] != "=" {
+                    panic!()
+                }
+                if !buf[5].ends_with("\"") || !buf[5].starts_with("\""){
+                    panic!()
+                }
+                */
+                /*kirim.send(
+                    perintah::konst(buf[1].clone(),tipe::_string(buf[5].clone()))
+                ).unwrap()*/
+                match buf[2].as_str(){
+                    "str"=>{
+                        //print!("testing!!!");
+                        kirim.send(
+                            perintah::konst(buf[1].clone(),tipe::_string(buf[4].clone()))
+                        ).unwrap()
+                    }
+                    "i8"=>{}
+                    _=>{panic!()}
+                }
+            }
+            "let"=>{
+                if buf[1] == "mut" {
+                    match buf[3].as_str(){
+                        "str"=>{
+                            //???
+                            /*aturan ( prototipe )
+                                str tidak dapat diubah
+                                maka jika str mut maka akan error
+                            */
+                            panic!() 
+                        }
+                        "i8"=>{
+                            let_(&buf[2], true , tipe::_i8 , kirim)
+                        }
+                        "u8"=>{
+                            let_(&buf[2], true , tipe::_u8 , kirim)
+                        }
+                        "i16"=>{
+                            let_(&buf[2], true , tipe::_i16 , kirim)
+                        }
+                        "u16"=>{
+                            let_(&buf[2], true , tipe::_u16 , kirim)
+                        }
+                        "i32"=>{
+                            let_(&buf[2], true , tipe::_i32 , kirim)
+                        }
+                        "u32"=>{
+                            let_(&buf[2], true , tipe::_u32 , kirim)
+                        }
+                        "i64"=>{
+                            let_(&buf[2], true , tipe::_i64 , kirim)
+                        }
+                        "u64"=>{
+                            let_(&buf[2], true , tipe::_u64 , kirim)
+                        }
+                        _=>{panic!()}
+                    }
+                } else {
+
+                }
+            }
+            "global"=>{
+                //(local $index i32)
+                // 0 = String
+                // 1 = i8
+                // 2 = u8
+                // 3 = i16
+                // 4 = u16
+                // 5 = i32
+                // 6 = u32
+                // 7 = i64
+                // 8 = u64
+                if buf[1] == "mut" {
+                    //index
+                    //mut = true
+                    //nama = buf[2]
+                    match buf[3].as_str(){
+                        "str"=>{
+                            //???
+                            /*aturan ( prototipe )
+                                str tidak dapat diubah
+                                maka jika str mut maka akan error
+                            */
+                            panic!() 
+                        }
+                        "i8"=>{
+                            glob_tipe(&buf[2], true , tipe::_i8 , kirim)
+                        }
+                        "u8"=>{
+                            glob_tipe(&buf[2], true , tipe::_u8 , kirim)
+                        }
+                        "i16"=>{
+                            glob_tipe(&buf[2], true , tipe::_i16 , kirim)
+
+                        }
+                        "u16"=>{
+                            glob_tipe(&buf[2], true , tipe::_u16 , kirim)
+
+                        }
+                        "i32"=>{
+                            glob_tipe(&buf[2], true , tipe::_i32 , kirim)
+
+                        }
+                        "u32"=>{
+                            glob_tipe(&buf[2], true , tipe::_u32 , kirim)
+
+                        }
+                        "i64"=>{
+                            glob_tipe(&buf[2], true , tipe::_i64 , kirim)
+
+                        }
+                        "u64"=>{
+                            glob_tipe(&buf[2], true , tipe::_u64 , kirim)
+                        }
+                        _=>{panic!()}
+                    }
+                } else { 
+                    //??
+                }
+            }
+            /*
+            "jika"=>{
+                kirim.send(
+                    perintah::jika_b(lapisan)  
                 ).unwrap();
-                //sementara
-                rv(buf,kirim,2);
+                jika(1,buf,kirim);
+            }
+            "jika_"=>{
+                kirim.send(
+                    perintah::jika_tutup
+                ).unwrap();
+                kirim.send(
+                    perintah::blok_tutup
+                ).unwrap()
+            }
+            "lalu"=>{
+                if buf.len() > 1 {
+                    match buf[1].as_str(){
+                        "jika"=>{
+                            kirim.send(
+                                perintah::lalu_jika
+                            ).unwrap();
+                            jika(2,buf,kirim);
+                        }
+                        "jika_"=>{
+                            kirim.send(
+                                perintah::lalu_jika_
+                            ).unwrap();
+                        }
+                        _=>{}
+                    }
+                } else {
+                    kirim.send(
+                        perintah::lalu  
+                    ).unwrap();
+                }
+                
+            }
+            "lalu_"=>{
+                kirim.send(
+                    perintah::lalu_
+                ).unwrap()
+            }
+            */
+            "swict" =>{
+                let mut v = buf.clone();
+                v.remove(0);
+                kirim.send(
+                    perintah::swict(0,v)
+                ).unwrap();
+            }
+            "bandingkan" =>{
+                let mut v = buf.clone();
+                v.remove(0);
+                kirim.send(
+                    perintah::swict(1,v)
+                ).unwrap();
+            }
+            "jika" =>{
+                let mut v = buf.clone();
+                v.remove(0);
+                kirim.send(
+                    perintah::swict(2,v)
+                ).unwrap();
+            }
+            "?" =>{
+                let mut v = buf.clone();
+                v.remove(0);
+                kirim.send(
+                    perintah::kasus(
+                        if v[0] == "_" {
+                            //println!("kasus lalu");
+                            None
+                        } else {
+                            //println!("kasus'{:?}'",v);
+                            Some(v)
+                        }
+                    )   
+                ).unwrap()
+            }
+            "swict_" =>{
+                kirim.send(
+                    perintah::swict_(0)
+                ).unwrap();
+            }
+            "bandingkan_" =>{
+                kirim.send(
+                    perintah::swict_(1)
+                ).unwrap();
+            }
+            "jika_"=>{
+                kirim.send(
+                    perintah::swict_(2)
+                ).unwrap();
+            }
+            /* prototipe
+            "mencocokan"=>{
+
+            }
+            "mencocokan_"=>{
+
+            }
+            */
+            "benar"=>{
+                kirim.send(
+                    perintah::boolean(true)
+                ).unwrap();
+                if buf.len() != 1 {
+                    buf.remove(0);
+                    continue
+                }
+            }
+            "salah"=>{
+                kirim.send(
+                    perintah::boolean(false)
+                ).unwrap();
+                if buf.len() != 1 {
+                    buf.remove(0);
+                    continue
+                }
+            }
+            /*
+            "jika"=>{
+                kirim.send(
+                    perintah::jika
+                ).unwrap();
+                /*
+                kirim.send(
+                    perintah::blok("then".to_string())                
+                ).unwrap();
+                */
+                rv(buf,kirim,1);
+                //
                 if terima.recv().unwrap()[0] == "{"{
                     kirim.send(
                         perintah::jika_
-                    ).unwrap()
+                    ).unwrap();
                 } else {
                     panic!()
                 }
-            } else {
-                panic!()
+                *jika_br = true;
+                //test
             }
-        }
-        "let"=>{
-            let (indx,nama) = if !*dalam_fn {
-                std::process::exit(1);
-            } else if buf[1] == "<"{
-                (2,buf[4].clone())
-            } else {
-                (3, buf[5].clone()  )
-            };
-            kirim.send(
-                perintah::variabel_null(buf[indx].clone(),nama.clone())
-            ).unwrap();
-            if indx + 2 < buf.len()-1{
-                let mut v = Vec::new();
-                for i in indx+4..buf.len() {
-                    v.push(buf[i].clone())
+            "lalu"=>{
+                if buf.len() == 1 {
+                    kirim.send(
+                        perintah::lalu
+                    ).unwrap()
+                } else if buf[1] == "jika" {
+                    *jika_br = true;
+                    kirim.send(
+                        perintah::lalu_jika
+                    ).unwrap();
+                    //sementara
+                    rv(buf,kirim,2);
+                    if terima.recv().unwrap()[0] == "{"{
+                        kirim.send(
+                            perintah::jika_
+                        ).unwrap()
+                    } else {
+                        panic!()
+                    }
+                } else {
+                    panic!()
                 }
+            }
+            */
+            "let"=>{
+                let (indx,nama) = if !*dalam_fn {
+                    std::process::exit(1);
+                } else if buf[1] == "<"{
+                    (2,buf[4].clone())
+                } else {
+                    (3, buf[5].clone()  )
+                };
                 kirim.send(
-                    perintah::tulis(nama,v)
+                    perintah::variabel_null(buf[indx].clone(),nama.clone())
+                ).unwrap();
+                var.push(perintah::variabel_null(buf[indx].clone(),nama.clone()));
+                //if indx + 2 < buf.len()-1{
+                if indx + 3 < buf.len(){
+                    let mut v = Vec::new();
+                    for i in indx+4..buf.len() {
+                        v.push(buf[i].clone())
+                    }
+                    kirim.send(
+                        perintah::tulis(nama,v)
+                    ).unwrap()
+                }
+                *jika_br = true;
+                //pengaman aktiv
+            }
+            "putar"=>{
+                kirim.send(
+                    perintah::putar
+                ).unwrap();
+            }
+            "putar_batas"=>{
+                kirim.send(
+                    perintah::batas
+                ).unwrap();
+            }
+            "lanjut"=>{
+                kirim.send(
+                    if !*dalam_fn{
+                        panic!()
+                    } else {
+                        perintah::lanjut
+                    }
+                    
                 ).unwrap()
             }
-            *jika_br = true;
-            //pengaman aktiv
-        }
-        "putar"=>{
-            kirim.send(
-                perintah::putar
-            ).unwrap();
-        }
-        "putar_batas"=>{
-            kirim.send(
-                perintah::batas
-            ).unwrap();
-        }
-        "lanjut"=>{
-            kirim.send(
-                if !*dalam_fn{
-                    panic!()
-                } else {
-                    perintah::lanjut
-                }
-                
-            ).unwrap()
-        }
-        "putus"=>{
-            kirim.send(
-                if !*dalam_fn{
-                    panic!()
-                } else {
-                    perintah::putus
-                }
-                
-            ).unwrap()
-        }
-        "$putus"|"$lanjut"=>{
-            kirim.send(
-                perintah::br(buf[1].clone())
-            ).unwrap()
-        }
-        "cetak"=>{
-            kirim.send(
-                if !*dalam_fn{
-                    panic!()
-                } else {
-                    perintah::cetak(buf[1].clone())
-                }
-                
-            ).unwrap()
-        }
-        "halaman"=>{
-            kirim.send(
-                perintah::halaman({
-                    let mut v = buf[1].clone();
-                    v.remove(0);
-                    v.pop();
-                    v
-                })
-            ).unwrap()
-        }
-        "cpu"=>{
-            let (nama,publik) = if buf[0].as_str() == "pub"{
-                (buf[2].clone(),true)
-            } else {
-                (buf[1].clone(),false)
-            };
-            *dalam_fn = true;
-            kirim.send(
-                perintah::cpu(nama,publik)
-            ).unwrap()
-        }
-        "{"=>{
-            kirim.send(
-                perintah::blok_buka
-            ).unwrap();
-        }
-        "}"=>{
-            //sementara jika
-            if *jika_br {
-                //keluar dari if
+            "putus"=>{
                 kirim.send(
-                    perintah::br("$if".to_string())
+                    if !*dalam_fn{
+                        panic!()
+                    } else {
+                        perintah::putus
+                    }
+                    
+                ).unwrap()
+            }
+            "$putus"|"$lanjut"=>{
+                kirim.send(
+                    perintah::br(buf[1].clone())
+                ).unwrap()
+            }
+            "cetak"=>{
+                kirim.send(
+                    if !*dalam_fn{
+                        panic!()
+                    } else {
+                        perintah::cetak(buf[1].clone())
+                    }
+                    
+                ).unwrap()
+            }
+            "halaman"=>{
+                kirim.send(
+                    perintah::halaman(buf[1].clone())
+                ).unwrap()
+            }
+            "."=>{
+                match perintah_terakhir {
+                    perintah::tombol(o)=>{
+                        match buf[1].as_str() {
+                            "isi"=>{
+                                if buf[2] == "="{
+                                    if buf[3].starts_with("\"") && buf[3].ends_with("\"") {
+                                        buf[3].remove(0);
+                                        buf[3].pop();
+                                        kirim.send(
+                                            perintah::isi(o.clone(),buf[3].clone())
+                                        ).unwrap()
+                                    } else {
+                                        panic!()
+                                    }
+                                } else {
+                                    panic!("{:?}",buf)
+                                }
+                            }
+                            "warna" =>{
+                                //document.getElementById("button").style.background='#000000';
+                                if buf[2] == "="{
+                                    if buf[3].starts_with("\"") && buf[3].ends_with("\"") {
+                                        buf[3].remove(0);
+                                        buf[3].pop();
+                                        //
+                                        kirim.send(
+                                            perintah::warna(o.clone(),buf[3].clone())
+                                        ).unwrap()
+                                    } else {
+                                        panic!()
+                                    }
+                                } else {
+                                    panic!("{:?}",buf)
+                                }
+                            }
+                            "warnalatarbelakang"=>{
+                                if buf[2] == "="{
+                                    if buf[3].starts_with("\"") && buf[3].ends_with("\"") {
+                                        buf[3].remove(0);
+                                        buf[3].pop();
+                                        //
+                                        kirim.send(
+                                            perintah::warnalatarbelakangid(o.clone(),buf[3].clone())
+                                        ).unwrap()
+                                    } else {
+                                        panic!()
+                                    }
+                                } else {
+                                    panic!("{:?}",buf)
+                                }
+                            }
+                            "ukurankata"=>{
+                                if buf[2] == "="{
+                                    if buf[3].starts_with("\"") && buf[3].ends_with("\"") {
+                                        buf[3].remove(0);
+                                        buf[3].pop();
+                                        //
+                                        kirim.send(
+                                            perintah::ukurankata(o.clone(),buf[3].clone())
+                                        ).unwrap()
+                                    } else {
+                                        panic!()
+                                    }
+                                } else {
+                                    panic!("{:?}",buf)
+                                }
+                            }
+                            "klik" =>{
+                                if buf[2] == "="{
+                                    let mut nama_modul_fn = Vec::with_capacity(2);
+                                    let mut i = 3 ;
+                                    loop {
+                                        match buf[i].as_str(){
+                                            ":"=>{
+                                                i += 1 ;
+                                                if buf[i] == ":" {
+                                                    i += 1 ;
+                                                    nama_modul_fn.push(buf[i].clone());
+                                                    i += 1 ;
+                                                } else {
+                                                    panic!()
+                                                }
+                                            }
+                                            "("=>{
+                                                i += 1 ;
+                                                if buf[i] == ")" {
+                                                    break
+                                                }
+                                            }
+                                            _ =>{
+                                                nama_modul_fn.push(buf[i].clone());
+                                                i += 1 ;
+                                            }
+                                        }
+                                    }
+                                    kirim.send(
+                                        perintah::klik(o.to_string(),nama_modul_fn)
+                                    ).unwrap();
+                                } else {
+                                    panic!()
+                                }
+                            }
+                            _=>{panic!()}
+                        }
+                        println!("{:?}",buf)
+                    }
+                    _=>{panic!()}
+                }
+                
+                
+            }
+            "app"=>{
+                if buf[1] == "." {
+                    match buf[2].as_str() {
+                        "gambarlatarbelakang"=>{
+                            if buf[3] == "="{
+                                if buf[4].ends_with('"') && buf[4][0..1] == *"\"" {
+                                    kirim.send(
+                                        perintah::gambarlatarbelakang(
+                                            {
+                                                let mut v = buf[4].clone();
+                                                v.remove(0);
+                                                v.pop();
+                                                v
+                                            }
+                                        )
+                                    ).unwrap()
+                                } else {
+                                    panic!()
+                                }
+                            }else {
+                                panic!()
+                            }
+                        }
+                        "warnalatarbelakang" =>{
+                            if buf[3] == "="{
+                                kirim.send(
+                                    match buf[4].as_str(){
+                                        x if x.starts_with('"') && x.ends_with('"')=>{
+                                            perintah::warnalatarbelakang(
+                                                {
+                                                    let mut v = buf[4].clone();
+                                                    v.remove(0);
+                                                    v.pop();
+                                                    v
+                                                }
+                                            )
+                                        }
+                                        _=>{
+                                            panic!()
+                                        }
+                                    }    
+                                ).unwrap();
+                            }else {
+                                panic!()
+                            }
+                        }
+                        "judul"=>{
+                            if buf[3] == "="{
+                                if buf[4].ends_with('"') && buf[4][0..1] == *"\"" {
+                                    kirim.send(
+                                        perintah::judul(
+                                            {
+                                                let mut v = buf[4].clone();
+                                                v.remove(0);
+                                                v.pop();
+                                                v
+                                            }
+                                        )
+                                    ).unwrap()
+                                } else {
+                                    panic!()
+                                }
+                            }else {
+                                panic!()
+                            }
+                        }
+                        "tombol"=>{
+                            if buf[3] == "(" {
+                                let mut i = 4 ;
+                                if buf[i].ends_with('"') && buf[i][0..1] == *"\"" {
+                                    buf[i].remove(0);
+                                    buf[i].pop();
+                                    *perintah_terakhir = perintah::tombol(buf[i].clone()) ;
+                                    kirim.send(
+                                       perintah::tombol( buf[i].clone())
+                                    ).unwrap();
+                                    i += 1
+                                } else {
+                                    panic!()
+                                }
+                                //???                                
+                            } else {
+                                panic!()
+                            }
+                        }
+                        "id"=>{
+                            if buf[3] == "(" {
+                                if buf[4].ends_with("\"") && buf[4].starts_with("\""){
+                                    buf[4].remove(0);
+                                    buf[4].pop();
+                                    if buf[5] == ")" {
+                                        if buf[6] == "." {
+                                            match buf[7].as_str(){
+                                                "isi"=>{
+                                                    if buf[8] == "=" {
+                                                        if buf[9].ends_with("\"") && buf[9].starts_with("\""){
+                                                            buf[9].remove(0);
+                                                            buf[9].pop();
+                                                            kirim.send(
+                                                                perintah::isi(buf[4].clone(),buf[9].clone())
+                                                            ).unwrap()
+                                                        } else {
+                                                            panic!()
+                                                        }
+                                                    } else {
+                                                        panic!()
+                                                    }
+                                                }
+                                                _=>{panic!()}
+                                            }
+                                        } else {
+                                            panic!()
+                                        }
+                                    } else {
+                                        panic!()
+                                    }
+                                    
+                                } else {
+                                    panic!()
+                                }
+                            } else {
+                                panic!()
+                            }
+                        }
+                        _=>{panic!()}
+                    }
+                } else {
+                    panic!()
+                }
+                /*
+                loop{
+                    match buf[i].as_str(){
+                        "."=>{}
+                        "gambarlatarbelakang"=>{
+                            i += 1 ;
+                            if buf[i] == "=" {
+                                i += 1 ;
+                                if buf[i].ends_with('"') && buf[i][0..1] == *"\"" {
+                                    //testing
+                                    kirim.send(
+                                        perintah::gambarlatarbelakang(
+                                            {
+                                                let mut v = buf[i].clone();
+                                                v.remove(0);
+                                                v.pop();
+                                                v
+                                            }
+                                        )
+                                    ).unwrap()
+                                } else {
+                                    panic!()
+                                }
+                            } else {
+                                panic!()
+                            }
+                            break
+                        }
+                        "warnalatarbelakang" =>{
+                            // document.body.style.backgroundColor = "red"; 
+                            i += 1 ;
+                            if buf[i] == "=" {
+                                i += 1 ;
+                                if buf[i].ends_with('"') && buf[i][0..1] == *"\"" {
+                                    //testing
+                                    kirim.send(
+                                        perintah::warnalatarbelakang(
+                                            {
+                                                let mut v = buf[i].clone();
+                                                v.remove(0);
+                                                v.pop();
+                                                v
+                                            }
+                                        )
+                                    ).unwrap()
+                                } else {
+                                    panic!()
+                                }
+                            } else {
+                                panic!()
+                            }
+                            break
+                        }
+                        "judul"=>{
+                            i += 1 ;
+                            if buf[i] == "=" {
+                                i += 1 ;
+                                if buf[i].ends_with('"') && buf[i][0..1] == *"\"" {
+                                    //testing
+                                    kirim.send(
+                                        perintah::judul(
+                                            {
+                                                let mut v = buf[i].clone();
+                                                v.remove(0);
+                                                v.pop();
+                                                v
+                                            }
+                                        )
+                                    ).unwrap()
+                                } else {
+                                    panic!()
+                                }
+                            } else {
+                                panic!()
+                            }
+                            break
+                        }
+                        "tombol"=>{
+                            i += 1 ;
+                            if buf[i] == "("{
+                                kirim.send(
+                                    perintah::tombol(
+                                        if buf[i].ends_with('"') && buf[i][0..1] == *"\"" {
+                                            buf[i].pop();
+                                            buf[i].remove(0);
+                                            i += 1 ;
+                                            buf[i].clone()
+                                        } else {
+                                            panic!()
+                                        }
+                                        ,
+                                        if buf[i] == ","{
+                                            i += 1 ;
+                                            if let Ok(o) = buf[i].parse::<u64>() {
+                                                o
+                                            } else {
+                                                panic!()
+                                            }
+                                        } else {
+                                            panic!()
+                                        }
+                                    )
+                                ).unwrap();
+                                break
+                            }
+                            
+                        }
+                        _=>{
+                            panic!()
+                        }
+                    }
+                    i += 1 ;
+                    if i >= buf.len() { break }
+                }
+                */
+            }
+            
+            "cpu"|"fn"=>{
+                let (nama,publik) = if buf[0].as_str() == "pub"{
+                    (buf[2].clone(),true)
+                } else {
+                    (buf[1].clone(),false)
+                };
+                *dalam_fn = true;
+                kirim.send(
+                    perintah::cpu(nama,publik)
+                ).unwrap()
+            }
+            "{"=>{
+                lapisan += 1 ;
+                kirim.send(
+                    perintah::blok_buka
                 ).unwrap();
-                kirim.send(perintah::blok_tutup).unwrap();
-                //
-                //kirim.send(perintah::blok_tutup).unwrap();
-                //
-                kirim.send(perintah::jika_tutup).unwrap();
-                //
-                *jika_br = false;
-            } else {
-                kirim.send(perintah::blok_tutup).unwrap();
+            }
+            "}"=>{
+                /*
+                //sementara jika
+                if *jika_br {
+                    //keluar dari if
+                    /*
+                    kirim.send(
+                        perintah::br("$if".to_string())
+                    ).unwrap();
+                    
+                    kirim.send(perintah::blok_tutup).unwrap();
+                    */
+                    //
+                    //kirim.send(perintah::blok_tutup).unwrap();
+                    //
+                    kirim.send(perintah::jika_tutup).unwrap();
+                    //
+                    *jika_br = false;
+                } else {
+                    kirim.send(perintah::blok_tutup).unwrap();
+                }
+                */
+                kirim.send(
+                    perintah::blok_tutup
+                ).unwrap();
+                lapisan -= 1 ;
+    
+            }
+            "blok"=>{
+                kirim.send(
+                    perintah::blok(buf[1].clone())   
+                ).unwrap();
+            }
+            "blok_"=>{
+                kirim.send(
+                    perintah::blok_   
+                ).unwrap();
+            }
+            _ if buf[0] == "!" && buf[1] == "("=> {
+                //belum siap
+                //fungsi arg
+                if !*dalam_fn {
+                    println!("token tidak sesuai");
+                    std::process::exit(1);
+                }
+            }
+            _ if buf[0] == "<" && buf[1] == "mod"=> {
+
+                kirim.send(
+                    perintah::modul_masuk(buf[2].clone())
+                ).expect("parse_");
+            }
+            /*
+            _ if buf[0] == "<" && buf[1] == "mod"=> {
+                kirim.send(
+                    perintah::modul_masuk(buf[2].clone())
+                ).expect("parse_");
+            }
+            */
+            _ if buf[0] == "mod" && buf[1] == ">"=> {
+                *dalam_fn = false;
+                kirim.send(
+                    perintah::modul_keluar
+                ).unwrap()
+            }
+            _=>{
+                //memanggil fungsi
+                if buf.len() > 3 {
+                    if buf[1] == ":"&&buf[2] == ":"{
+                        kirim.send(
+                            perintah::panggil_fn({
+                                let mut v = Vec::new();
+                                    v.push(buf[0].clone());
+                                    v.push(buf[3].clone());
+                                v
+                            },
+                            {
+                                //uji coba
+                                //argumen
+                                let v = Vec::new();
+
+                                v
+                            }
+                            )
+                        ).unwrap();
+                        
+                    }
+                } else {
+                    println!("salah token {:?}",buf);
+                    std::process::exit(1);
+                }            
+                
             }
         }
-        "blok"=>{
-            kirim.send(
-                perintah::blok(buf[1].clone())   
-            ).unwrap();
-        }
-        "blok_"=>{
-            kirim.send(
-                perintah::blok_   
-            ).unwrap();
-        }
-        _ if buf[0] == "!" && buf[1] == "("=> {
-            //belum siap
-            //fungsi arg
-            if !*dalam_fn {
-                println!("token tidak sesuai");
-                std::process::exit(1);
-            }
-        }
-        _ if buf[0] == "<" && buf[1] == "mod"=> {
-            kirim.send(
-                perintah::modul_masuk(buf[2].clone())
-            ).expect("parse_");
-        }
-        _ if buf[0] == "<" && buf[1] == "mod"=> {
-            kirim.send(
-                perintah::modul_masuk(buf[2].clone())
-            ).expect("parse_");
-        }
-        _ if buf[0] == "mod" && buf[1] == ">"=> {
-            *dalam_fn = false;
-            kirim.send(
-                perintah::modul_keluar
-            ).unwrap()
-        }
-        _=>{
-            println!("salah token {:?}",buf);
-            std::process::exit(1);
-        }
+        break
     }
+    
     /*versi lama
     match (buf[0].as_str(),buf[1].as_str()){
         ("<","mod")=>{
@@ -370,6 +1282,7 @@ fn token(buf:&Vec<String>,jika_br:&mut bool,terima:&std::sync::mpsc::Receiver<Ve
     }
     */
 }
+//belum selesai
 fn duplikat(
     terima:&std::sync::mpsc::Receiver<Vec<String>>,
     kirim:&std::sync::mpsc::Sender<perintah>,
@@ -384,8 +1297,10 @@ fn duplikat(
         //token(&,&mut jika_br, &terima,&kirim, &mut dalam_fn);
         buf.push(v);
     }
-    for i in 0..jumlah{
-
+    for _ in 0..jumlah{
+        for x in &buf {
+            //token()
+        }
     }
 }
 //parse
@@ -393,19 +1308,34 @@ pub fn parse(
     terima:std::sync::mpsc::Receiver<Vec<String>>
     ,kirim:std::sync::mpsc::Sender<perintah>,
 ){
-
+    //let mut buf = terima.recv().expect("");
     let mut dalam_fn = false;
-    let mut buf :Vec<String> =  Vec::with_capacity(20);
     let mut jika_br = false;
-    while { buf = terima.recv().expect(""); buf.len() != 0 }  {
+    let mut perintah_terakhir = perintah::selesai;
+    terima.iter().for_each(|buff|{
+        if !buff.is_empty() {
+            if buff[0] != "duplikat" {
+                token(buff,&mut jika_br, &terima,&kirim, &mut dalam_fn,&mut perintah_terakhir);
+            } else {
+                duplikat(&terima,&kirim,buff[1].parse::<u64>().unwrap());    
+            }
+        } else {
+            kirim.send(perintah::selesai).expect("parse gagal selesai");
+            return
+        }
+    });
+    /*
+    while buf.len() != 0  {
         if buf[0] == "duplikat" {
             //belum selesai
             duplikat(&terima,&kirim,buf[1].parse::<u64>().unwrap());
+            buf = terima.recv().expect("");
             continue
         }
-        token(&buf,&mut jika_br, &terima,&kirim, &mut dalam_fn);
+        token(&mut buf,&mut jika_br, &terima,&kirim, &mut dalam_fn,&mut perintah_terakhir);
+        buf = terima.recv().expect("");
     }
-    kirim.send(perintah::selesai).expect("parse gagal selesai");
+    */
 }
 /*versi lama 0.7.0
 pub fn parse(

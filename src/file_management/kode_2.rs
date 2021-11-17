@@ -26,7 +26,9 @@ impl Data<'_>{
             }
             buf.clear()
         }
-        self.kirim.send("mod>\n".to_string()).expect("msg: &str");
+        self.kirim.send(
+            "mod>\n".to_string()
+        ).expect("msg: &str");
     }
     fn selesai(self){
         self.kirim.send("".to_string()).unwrap()

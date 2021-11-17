@@ -100,6 +100,16 @@ pub fn seting(buf:&mut String,proyek:&usize ,args:&Vec<String>) -> (Vec<String>,
             futures::executor::block_on(bangun_proyek(&args[*proyek]));
             (true,true,true)
         },
+        "inter" =>{
+            let bin :std::vec::Vec<crate::parsing::parse_3::Pohon> = 
+                bincode::deserialize_from(
+                    std::fs::OpenOptions::new().read(true).open(&args[*proyek]).unwrap()
+                    //std::fs::File::open(&args[*proyek]).unwrap()
+            ).unwrap();
+            
+            crate::konversi::interperetasi::kode(bin);
+            std::process::exit(0);
+        }
         "bangun" => (false,true,true),
         "instan" => (false,false,true),
         "optimal" => (false,true,false),

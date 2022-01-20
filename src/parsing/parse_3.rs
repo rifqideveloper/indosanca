@@ -1,14 +1,9 @@
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize };
 use serde_json::json;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::BufWriter;
-#[allow(non_camel_case_types)]
-#[derive(Serialize, Deserialize, Debug)]
-pub enum Tipe {
-    _u8(Option<u8>),
-    _String(Option<String>),
-}
+use crate::parsing::Tipe;
 #[derive(Debug)]
 struct Data {
     tipe: String,
@@ -32,33 +27,19 @@ pub enum Nilai {
     lansung_str(String),
     lansung_int(u64),
     lansung_float(f64),
-    penujuk(Variabel),
     penujuk_(u64),
-    minta(Variabel),
+    minta(u64),
     None,
 }
-/*
-#[allow(non_camel_case_types)]
-#[derive(Serialize, Deserialize, Debug)]
-pub enum Arit {
-    tambah(u64 ,Nilai,Nilai),
-    kurang(u64,Nilai,Nilai),
-    kali(u64,Nilai,Nilai),
-    bagi(u64,Nilai,Nilai),
-    modus(u64,Nilai,Nilai),
-    sin(u64,Nilai),
-    cos(u64,Nilai),
-    Tan(u64,Nilai)
-}
-*/
-#[allow(non_camel_case_types)]
+
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Pohon {
     fungsi(String),
     panggil_fn(String),
     cetak(Nilai),
-    _let(u64, Tipe),
+    _let(u64, Tipe , bool , bool ),
     var(u64, Tipe),
+    panggil_var(u64),
     tulis(u64, Tipe),
     konst_str(u64, String),
     const_32(i32),
@@ -105,7 +86,9 @@ enum operasi_logika_aritmatika {
     tidak_sama,
     lebih_besar,
     lebih_kecil,
-    nama_var(String),
+    nama_var(u64),
+    tambah,
+
 }
 //
 #[derive(rust_embed::RustEmbed)]
@@ -126,7 +109,7 @@ pub fn parse_2(
         Vec::from([["main".to_string(), "main".to_string(), "".to_string()]]);
     let mut jika: Vec<u8> = Vec::new();
     let mut lalu = false;
-    let mut _data_var: HashMap<String, (u64, Tipe)> = HashMap::new();
+    let mut _data_var: HashMap<String, (u64, Tipe, usize , bool)> = HashMap::new();
     let mut swict: Vec<(u8, bool, bool, String, bool)> = Vec::with_capacity(1);
     for y in 0.. {
         kirim.send((lokasi[y].clone(), false)).unwrap();
@@ -154,6 +137,7 @@ pub fn parse_2(
                                     o["nilai"][i]["nilai"].as_str().unwrap().to_string(),
                                 )),
                                 "blok_" => pohon.push(Pohon::blok_),
+                                /*
                                 "konst" => {
                                     let mut v =
                                         o["nilai"][i]["nilai"].as_str().unwrap().to_string();
@@ -164,16 +148,20 @@ pub fn parse_2(
                                         v.pop();
                                         v.pop();
                                         //println!("dibuat varible ");
+                                        id += 1;
                                         _data_var
-                                            .insert(nama, (id + 1, Tipe::_String(Some(v.clone()))));
-                                        pohon.push(Pohon::konst_str(
-                                            {
-                                                id += 1;
-                                                id
-                                            },
-                                            v.clone(),
-                                        ))
+                                            .insert(nama, (id , Tipe::_String(Some(v.clone()))));
+                                        pohon.push(Pohon::konst_str(id,v.clone()))
+                                    }else if v.ends_with("nomer") {
+                                        v.pop();
+                                        v.pop();
+                                        v.pop();
+                                        v.pop();
+                                        v.pop();
+                                        id += 1;
+                                        _data_var.insert(nama, (id,Tipe::nomer(v.parse().unwrap())));
                                     } else if v.ends_with("u8") {
+
                                     } else {
                                         panic!()
                                     }
@@ -182,20 +170,40 @@ pub fn parse_2(
                                     //???
                                     panic!();
                                 }
+                                */
                                 "let" => {
                                     //panic!();
                                     id += 1;
-                                    pohon.push(Pohon::_let(
-                                        id,
-                                        match o["nilai"][i]["tipe_"].as_str().unwrap() {
-                                            "u8" => Tipe::_u8(None),
-                                            _ => {
-                                                panic!()
-                                            }
-                                        },
-                                    ));
+                                    let data = match o["nilai"][i]["tipe_"].as_str().unwrap() {
+                                        "str" => crate::parsing::Tipe::_string(crate::parsing::Str::None),
+                                            "str_" => crate::parsing::Tipe::_string(crate::parsing::Str::Some(o["nilai"][i]["nilai"].as_str().unwrap().to_string())),
+                                            "u8" => crate::parsing::Tipe::_u8(None),
+                                            "u8_" => crate::parsing::Tipe::_u8(Some( o["nilai"][i]["nilai"].as_str().unwrap().parse().unwrap() )),
+                                            "i8" => crate::parsing::Tipe::_i8(None),
+                                            "i8_" => crate::parsing::Tipe::_i8(Some( o["nilai"][i]["nilai"].as_str().unwrap().parse().unwrap() )),
+                                            "i16" => crate::parsing::Tipe::_i16(None),
+                                            "i16_" => crate::parsing::Tipe::_i16(Some( o["nilai"][i]["nilai"].as_str().unwrap().parse().unwrap() )),
+                                            "u16" => crate::parsing::Tipe::_u16(None),
+                                            "u16_" => crate::parsing::Tipe::_u16(Some( o["nilai"][i]["nilai"].as_str().unwrap().parse().unwrap() )),
+                                            "i32" => crate::parsing::Tipe::_i32(None),
+                                            "i32_" => crate::parsing::Tipe::_i32(Some( o["nilai"][i]["nilai"].as_str().unwrap().parse().unwrap() )),
+                                            "u32" => crate::parsing::Tipe::_u32(None),
+                                            "u32_" => crate::parsing::Tipe::_u32(Some( o["nilai"][i]["nilai"].as_str().unwrap().parse().unwrap() )),
+                                            "u64" => crate::parsing::Tipe::_u64(None),
+                                            "u64_" => crate::parsing::Tipe::_u64(Some( o["nilai"][i]["nilai"].as_str().unwrap().parse().unwrap() )),
+                                            "i64" => crate::parsing::Tipe::_i64(None),
+                                            "i64_" => crate::parsing::Tipe::_i64(Some( o["nilai"][i]["nilai"].as_str().unwrap().parse().unwrap() )),
+                                            
+                                        _=>{
+                                            panic!()
+                                        }
+                                    };
+                                    let _mut = if let Some(_) = o["nilai"][i]["mut"].as_str() {true} else {false};
+                                    _data_var.insert(o["nilai"][i]["nama"].as_str().unwrap().to_string(), (id , data.clone(), pohon.len(),_mut.clone()));
+                                    pohon.push( Pohon::_let( id , data ,_mut,false) );
                                     //???
                                 }
+                                /*
                                 "var" => {
                                     //sementara
                                     _var.push(Var {
@@ -206,10 +214,63 @@ pub fn parse_2(
                                     pohon.push(Pohon::var(id, Tipe::_u8(None)));
                                     id += 1;
                                 }
+                                */
                                 "tulis" => {
                                     //belum selesai
-                                    let nama = o["nilai"][i]["nama"].as_str().unwrap();
-                                    let nilai = &o["nilai"][i]["nilai"];
+                                        //mengecek jika var ada
+                                    if let Some(nama) = _data_var.get_key_value(&o["nilai"][i]["nama"].as_str().unwrap().to_string()) {
+                                        //mengecek jika var mut
+                                        if nama.1.3 {
+                                            /*
+                                            let i = 0 ;
+                                            loop {
+                                                let x = o["nilai"][i]["nilai"][i].as_str().unwrap().to_string();
+                                                break
+                                            }
+                                            */
+                                            let mut v : Vec<&str> = Vec::new(); 
+                                            for x in 0..{
+                                                if let Some(x) = o["nilai"][i]["nilai"][x].as_str() {
+                                                    v.push(x)
+                                                } else {
+                                                    break
+                                                }
+                                            }
+                                            match nama.1.1 {
+                                                Tipe::_u8(_)=>{
+                                                    //if v.len() == 1 {
+                                                        pohon.push(
+                                                            Pohon::tulis(
+                                                                nama.1.0,
+                                                                Tipe::_u8(
+                                                                    if let Ok(o) = v[0].parse() {
+                                                                        Some(o)
+                                                                    } else {
+                                                                        panic!()
+                                                                    }
+                                                                )
+                                                            )
+                                                        );
+                                                    //} 
+                                                }
+                                                _=>{}
+                                            }
+                                            /*
+                                            pohon.push(
+                                                Pohon::tulis(
+                                                    nama.1.0,
+                                                    nama.1.1.clone()
+                                                )
+                                            );
+                                            */
+                                        } else {
+                                            panic!()
+                                        }
+                                    } else {
+                                        panic!()
+                                    }
+                                    //let nilai = &o["nilai"][i]["nilai"];
+                                    /*
                                     for i in _var.iter() {
                                         if i.nama == nama {
                                             if nilai[1] == json!(null) {
@@ -313,7 +374,7 @@ pub fn parse_2(
                                                     i.id.try_into().unwrap(),
                                                 ))
                                             }
-                                            print!("testing {:?}", v);
+                                            //#[cfg(debug_assertions)]print!("testing {:?}", v);
                                             /*
                                             let v = serde_json::from_str::<Vec<String>>(
                                                 nilai.as_str().unwrap()
@@ -336,6 +397,7 @@ pub fn parse_2(
                                             */
                                         }
                                     }
+                                    */
                                 }
                                 "br" => pohon.push(Pohon::br(
                                     o["nilai"][i]["nilai"].as_str().unwrap().to_string(),
@@ -380,7 +442,9 @@ pub fn parse_2(
                                                 panic!()
                                             }
                                         }
+                                        
                                         2 => {
+                                            
                                             let mut v =
                                                 Vec::<operasi_logika_aritmatika>::with_capacity(1);
                                             let mut x = 0;
@@ -389,6 +453,11 @@ pub fn parse_2(
                                                 if let Some(b) = o["nilai"][i]["nilai"][x].as_str()
                                                 {
                                                     match b {
+                                                        "+"=>{
+                                                            v.push(
+                                                                operasi_logika_aritmatika::tambah
+                                                            )
+                                                        }
                                                         "benar" => v.push(
                                                             operasi_logika_aritmatika::Bool(true),
                                                         ),
@@ -411,10 +480,10 @@ pub fn parse_2(
                                                                     } else if let Some(d) =
                                                                         _data_var.get(l)
                                                                     {
-                                                                        if let Tipe::_String(d) =
+                                                                        if let Tipe::_string(d) =
                                                                             &d.1
                                                                         {
-                                                                            if let Some(d) = d {
+                                                                            if let crate::parsing::Str::Some(d) = d {
                                                                                 println!("testing {:?}",(d,s));
                                                                                 y -= 1;
                                                                                 v[y] = operasi_logika_aritmatika::Bool(d == s);
@@ -439,11 +508,7 @@ pub fn parse_2(
                                                                 o,
                                                             ))
                                                         }
-                                                        o if _data_var.get(o).is_some() => v.push(
-                                                            operasi_logika_aritmatika::nama_var(
-                                                                o.to_string(),
-                                                            ),
-                                                        ),
+                                                        o if matches!(_data_var.get(o) ,Some(s) if {v.push(operasi_logika_aritmatika::nama_var(s.0)); true} ) /* let Some(s) =  _data_var.get(o) */ => {} 
                                                         _ => {}
                                                     }
                                                 } else {
@@ -457,6 +522,14 @@ pub fn parse_2(
                                                             v.push_str("\n");
                                                             pohon.push(Pohon::main(v));
                                                         }
+                                                        operasi_logika_aritmatika::nama_var(nama)=>{
+                                                            pohon.push(
+                                                                Pohon::panggil_var(
+                                                                    *nama
+                                                                )
+                                                            )
+                                                        }
+
                                                         _ => {}
                                                     });
                                                     pohon.push(Pohon::if_br(
@@ -543,10 +616,10 @@ pub fn parse_2(
                                                     .unwrap()
                                                     .to_string();
                                                 if nilai.ends_with('"') == nilai.starts_with('"') {
-                                                    if let Tipe::_String(y) = &y.1 {
+                                                    if let Tipe::_string(y) = &y.1 {
                                                         nilai.remove(0);
                                                         nilai.pop();
-                                                        if let Some(y) = y {
+                                                        if let crate::parsing::Str::Some(y) = y {
                                                             if y == &nilai {
                                                                 x.4 = true;
                                                                 let mut stop = false;
@@ -607,6 +680,7 @@ pub fn parse_2(
                                     pohon.push(Pohon::blok("if".to_string()));
                                 }
                                 */
+                                /*
                                 "blok_t_tutup" => {
                                     pohon.push(Pohon::blok_);
                                 }
@@ -619,6 +693,7 @@ pub fn parse_2(
                                         jika.pop();
                                     }
                                 }
+                                */
                                 "_i32_eqz" => pohon.push(Pohon::i32_eqz),
                                 "_i32_eq" => {
                                     /*
@@ -650,7 +725,8 @@ pub fn parse_2(
                                 }
                                 "halaman" => {
                                     //println!("<<testing {}>>",o["nilai"][i]["nilai"].as_str().unwrap().to_string().as_str());
-                                    pohon.push(Pohon::halaman(
+                                    pohon.push(
+                                        Pohon::halaman(
                                         match o["nilai"][i]["var"]
                                             .as_str()
                                             .unwrap()
@@ -669,6 +745,14 @@ pub fn parse_2(
                                                     .unwrap()
                                                     .to_string();
                                                 if let Some(o) = _data_var.get(&nama) {
+                                                    /*
+                                                    if let Tipe::_string(_) = o.1 {
+                                                        Nilai::penujuk_(o.0)
+                                                    } else {
+                                                        println!("variable '{}' harus string", nama);
+                                                        panic!()
+                                                    }
+                                                    */
                                                     Nilai::penujuk_(o.0)
                                                 } else {
                                                     println!("variable '{}' tidak ada", nama);
@@ -680,27 +764,6 @@ pub fn parse_2(
                                             }
                                         },
                                     ));
-                                    /*
-                                    pohon.push(
-                                        Pohon::halaman(
-                                        match o["nilai"][i]["langsung"].as_str().unwrap().to_string().as_str(){
-                                            "0"=>{
-                                                Nilai::lansung_str( o["nilai"][i]["nilai"].as_str().unwrap().to_string() )
-                                            }
-                                            "1"=>{
-                                                let nama = o["nilai"][i]["nilai"].as_str().unwrap().to_string();
-                                                println!("<<{}>>",nama);
-                                                if let Some(o) = _data_var.get(&nama) {
-                                                    Nilai::penujuk_(*o)
-                                                } else {
-                                                    panic!()
-                                                }
-                                            }
-                                            _=>{panic!("<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>")}
-                                        }
-                                        )
-                                    );
-                                    */
                                 }
                                 "klik" => {
                                     let id = o["nilai"][i]["nilai"].as_str().unwrap().to_string();
@@ -777,26 +840,6 @@ pub fn parse_2(
                                     o["nilai"][i]["nilai"][1].as_str().unwrap().to_string(),
                                 )),
                                 "cetak" => {
-                                    /* prototipe
-                                    let mut x = 0;
-                                    loop{
-                                        match o["nilai"][i]["nilai"][x].as_str(){
-                                            Some(_)=>{
-                                                match o["nilai"][i]["nilai"][0].as_str().unwrap() {
-                                                    "lansung"=>{
-                                                        pohon.push(
-                                                            Pohon::cetak(Nilai::lansung(
-                                                                o["nilai"][i]["nilai"][x + 1].as_str().unwrap().to_string()
-                                                            ))
-                                                        );
-                                                    }
-                                                    _=>{}
-                                                }
-                                            }
-                                            None=>{break}
-                                        }
-                                        x += 2
-                                    }*/
                                     match o["nilai"][i]["nilai"][0].as_str().unwrap() {
                                         "lansung" => {
                                             pohon.push(Pohon::cetak(Nilai::lansung_str(
@@ -824,6 +867,7 @@ pub fn parse_2(
                                                     .unwrap(),
                                             )));
                                         }
+                                        /*
                                         "var" => {
                                             for x in &_var {
                                                 if o["nilai"][i]["nilai"][1].as_str().unwrap()
@@ -840,6 +884,7 @@ pub fn parse_2(
                                                 }
                                             }
                                         }
+                                        */
                                         _ => {}
                                     }
                                 }
@@ -870,11 +915,10 @@ pub fn parse_2(
             v
         }))
     }
-
     kirim
         .send((["".to_string(), "".to_string(), "".to_string()], true))
         .unwrap();
-    println!("{:#?}", pohon);
+    //#[cfg(debug_assertions)]println!("{:#?}", pohon);
     bincode::serialize_into(
         BufWriter::with_capacity(
             1000,
@@ -884,265 +928,3 @@ pub fn parse_2(
     )
     .unwrap();
 }
-/*
-pub fn parse(
-    kirim:std::sync::mpsc::Sender<([String; 3],bool)>,
-    terima:std::sync::mpsc::Receiver<std::option::Option<serde_json::Value>>,
-    path:&String,
-    pohon :&mut Vec<Pohon>,
-){
-    let lokasi :Vec<[String; 3]>= Vec::from([["main".to_string(),"main".to_string(),"".to_string()]]);
-    let mut id :u64 = 1;
-    let mut _var:Vec<Var>= Vec::with_capacity(2);
-    let mut _data_ : HashMap<u64, Data> = HashMap::with_capacity(2);
-    let mut bahaya = false;
-    let mut alokasi = ([0u64,0u64],false);
-    let mut nesting = 0u64;
-    let mut _null = false;
-    // standar library
-    //let _std : std::borrow::Cow<[u8]> = STD::get("prefix/parse_2").unwrap() ;
-    let _std = serde_json::from_str::<serde_json::Value>( std::str::from_utf8( STD::get("prefix/parse_2").unwrap().as_ref() ).unwrap());
-    //println!("{:#?}",_std);
-    //
-    kirim.send((lokasi[0].clone(),false)).unwrap();
-    match terima.recv().expect("msg: &str") {
-        Some(_data)=>{
-            'main:for i in 0.. {
-                if _data["nilai"][i]["tipe"].to_string() == "\"blok\""{
-                    nesting += 1
-                } else if _data["nilai"][i]["tipe"].to_string() == "\"cetak\"" {
-                    pohon.push(
-                        Pohon::cetak(
-                            Nilai::lansung(
-                                {
-                                    if _data["nilai"][i]["nilai"][0] != "lansung"{
-                                        panic!();
-                                    }
-                                    let mut t = _data["nilai"][i]["nilai"][1].to_string();
-                                    t.remove(0);
-                                    t.pop();
-                                    t
-                                }
-                            )
-                        )
-                    );
-                    //println!("{:#?}",pohon);
-                }else if _data["nilai"][i]["tipe"].to_string().starts_with("\"var_") {
-                    //print!("test");
-                    if _data["nilai"][i]["nilai"] == json!(null){
-                        println!("null !!!");
-                        let v = Var{
-                            id:id,
-                            tipe:_data["nilai"][i]["data"].to_string(),
-                            nama:_data["nilai"][i]["nama"].to_string(),
-                            data:(false,0),
-                            dibaca:[true,false],
-                            ditulis:[true,false],
-                            rumah:lokasi[lokasi.len()-1].to_vec(),
-                            nesting:nesting
-                        };
-                        id+=1;
-                        println!("{:?}",v);
-                        _var.push(v);
-                        _null = true;
-                        continue
-                    }
-                    if _data["nilai"][i]["nilai"]["tipe"] == "minta"{
-                        //dalam proses
-                        //println!("{} {}",_data["nilai"][i]["nilai"],_var[0].nama);
-                        for n in 0.._var.len()  {
-                            if _data["nilai"][i]["nilai"]["nilai"].to_string() == _var[n].nama{
-                                //println!("ketemu");
-                                let (data,dibaca,ditulis) = if _data["nilai"][i]["tipe"] == "var_mut"{
-                                    (false,false,true)
-                                } else if _data["nilai"][i]["tipe"] == "var_mutex" {
-                                    (false,true,true)
-                                } else if _data["nilai"][i]["tipe"] == "var_atom" {
-                                    (true,true,true)
-                                } else {
-                                    (false,true,false)
-                                };
-                                if !_var[n].sudah_dibaca(){
-                                    alokasi.0[0] += 1 ;
-                                    match _var[n].tipe.as_str(){
-                                        "\"u8\""|"\"i8\""=>{
-                                            alokasi.0[1] += 8
-                                        }
-                                        _=>{}
-                                    }
-                                }
-                                _var[n] = Var{
-                                    id:_var[n].id,
-                                    tipe:_data["nilai"][i]["data"].to_string(),
-                                    nama:_data["nilai"][i]["nama"].to_string(),
-                                    data:(data,_var[n].data.1),
-                                    dibaca:[true,dibaca],
-                                    ditulis:[true,ditulis],
-                                    rumah:lokasi[lokasi.len()-1].to_vec(),
-                                    nesting:nesting
-                                };
-                                let t = _data_.get(&_var[n].data.1).unwrap();
-                                if _var[n].tipe != t.tipe {
-                                    panic!()
-                                }
-                                //belum selesai
-                                pohon.push(
-                                    Pohon::var(
-                                        Variabel{
-                                            id:_var[n].id,
-                                            nilai: if _var[n].tipe != t.tipe {
-                                                panic!()
-                                            } else if t.tipe == "\"u8\"" {
-                                                Tipe::_u8(
-                                                    Some(t.nilai.parse::<u8>().unwrap())
-                                                )
-                                            } else {
-                                                panic!()
-                                            },
-                                        }
-                                    )
-                                );
-                                //println!("{:#?}",_var);
-                            }
-                        }
-                    } else {//_data["nilai"][i]["nilai"].to_string() //_data["nilai"][i]["data"].to_string()
-                        _data_.insert(id,Data{
-                            tipe: match _data["nilai"][i]["data"].as_str() {
-                                Some("u8")=>{
-                                    if _data["nilai"][i]["nilai"]["tipe"].as_str() == Some("nomer") || _data["nilai"][i]["nilai"]["tipe"].as_str() == _data["nilai"][i]["data"].as_str(){
-                                        _data["nilai"][i]["data"].to_string()
-                                    } else {
-                                        println!("kode/{}.is/{}\n\n\
-                                        tipe data tidak sesuai\n\
-                                        butuh u8 dapat {:?}",lokasi[0][0],lokasi[0][1],_data["nilai"][i]["data"].as_str());
-                                        std::process::exit(18);
-                                    }
-                                }
-                                _=>{
-                                    println!("erro{}",_data);
-                                    println!(">> kode/{}.is/{}\ntipe data tidak tidak diketahui ?",lokasi[0][0],lokasi[0][1]);
-                                    std::process::exit(18);
-                                }
-                            },
-                            nilai: {
-                                let mut t = _data["nilai"][i]["nilai"]["nilai"].to_string();
-                                t.remove(0);
-                                t.pop();
-                                if t == "null"{
-                                    println!("null terdeteksi");
-                                    std::process::abort()
-                                } else {
-                                    t
-                                }
-                            },
-                        });
-                        id += 1 ;
-                        let (data,dibaca,ditulis) = if _data["nilai"][i]["tipe"] == "var_mut"{
-                            (false,false,true)
-                        } else if _data["nilai"][i]["tipe"] == "var_mutex" {
-                            (false,true,true)
-                        } else if _data["nilai"][i]["tipe"] == "var_atom" {
-                            (true,true,true)
-                        } else {
-                            (false,true,false)
-                        };
-                        _var.push(Var{
-                            id:id,
-                            tipe:_data["nilai"][i]["data"].to_string(),
-                            nama:_data["nilai"][i]["nama"].to_string(),
-                            data:(data,id-1),
-                            dibaca:[false,dibaca],
-                            ditulis:[false,ditulis],
-                            rumah:lokasi[lokasi.len()-1].to_vec(),
-                            nesting:nesting
-                        });
-                        //sementara
-                        //hanya untuk u8
-                        pohon.push(
-                            Pohon::var(
-                                Variabel{
-                                    nilai:Tipe::_u8(Some( _data_.get(&(&id-1)).unwrap().nilai.parse::<u8>().unwrap())),
-                                    id:id-1
-                                }
-                            )
-                        );
-                        id += 1 ;
-
-                    }
-                    //println!("{:?}\n{:?}",_data_,_var);
-                    //std::process::exit(0);
-                } else if _data["nilai"][i]["tipe"] == "tulis" {
-                    let t = _data["nilai"][i]["var"].to_string();
-                    //println!("test");
-                    for mut _i in &mut _var {
-                        if _i.nama == t {
-                            if _i.boleh_ditulis() {
-                                //print!("{}",_i.ditulis.1);
-                                if _i.data.0 {
-                                    if !bahaya {
-                                        println!("\
-                                        kode/{}.is/{}\n\
-                                        bahaya terdeteksi\n\
-                                        atom harus digunakan dengan hati-hati\n\
-                                        bantuan : tambahkan peringatan\n\
-                                        contoh :\n\
-                                        |→ #[bahaya] \n\
-                                        |  let atom <_> _ = _\n\
-                                        |",lokasi[0][0],lokasi[0][1]);
-                                        std::process::exit(18);
-                                    }
-                                    bahaya = false;
-                                }
-                                if let Some(x) =_data_.get_mut(&_i.data.1)   {
-                                    if _data["nilai"][i]["nilai"]["tipe"] == "nomer"{
-                                        *x = Data{
-                                        tipe:x.tipe.to_string(),
-                                        nilai:_data["nilai"][i]["nilai"]["nilai"].to_string()
-                                        };
-                                        if _i.dibaca[0] {
-                                            //
-                                        }
-                                        #[cfg(debug_assertions)]
-                                        println!("[_data_,HashMap]\n{:#?}",_data_);
-                                    }else {
-                                        std::process::exit(18);
-                                    }
-                                }
-                                _i.ditulis[0] = true;
-                                continue 'main
-                            }else{
-                                println!("kode/{}.is/{}\n\n\
-                                varabel {2} tidak boleh berubah\n\
-                                bantuan : tambahkan mut dalam variabel {2}\n\
-                                contoh  :\n\
-                                |\n\
-                                |   let mut <_> _ = _\n\
-                                |       ↑↑↑\n"
-                                ,lokasi[0][0],lokasi[0][1],t);
-                                std::process::exit(18);
-                                //quit::with_code(18)
-                            }
-                        }
-                    }
-                    println!("kode/{}.is/{}\n\n\
-                    varabel {} tidak ditemuakan\nmungkin sudah jatuh sebelum ditulis ?"
-                    ,lokasi[0][0],lokasi[0][1],t);
-                    std::process::exit(18);
-                } else if _data[i] == json!(null) {break}
-            }
-        }
-        None=>{}
-    }
-    #[allow(unreachable_code)]
-    kirim.send((["".to_string(),"".to_string(),"".to_string()],true)).unwrap();
-    //println!("{:#?}",pohon);
-    bincode::serialize_into(
-        BufWriter::with_capacity(
-            1000,
-            File::create(
-                format!("{}/parsing/pohon.bin",path)
-            ).unwrap()
-        ), &pohon).unwrap();
-    println!("[\n(sebelum optimalisasi)\nalokasi = {}\nmemory = {}{}/bit\n",alokasi.0[0],alokasi.0[1],if alokasi.1 { "+" } else { "" });
-}
-*/

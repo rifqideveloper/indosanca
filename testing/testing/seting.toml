@@ -2,6 +2,6 @@
 nama_app = "app"
 versi = "0.1.0"
 pembuat = ["?"]
-kompilasi = ["wasm","interperetasi"]
+kompilasi = ["pwa"]
 turbo = false
 [dep]

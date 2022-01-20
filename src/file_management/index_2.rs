@@ -63,62 +63,7 @@ pub fn baca(
                     
                 }
             }
-            /*
-            println!("mudul '{0}' tidak ditemukan\nfungsi '{1}'\nbantuan : buat file '{0}.is' di forder 'kode'",data.0[0],data.0[1]);
-            std::process::exit(17);
-            */
         }
-        //File::with_options().create(true).read(true).write(true).open(format!("{}\\parsing\\parse_2",path)).unwrap()
-        /*
-        'main:loop{
-            let mut reader = BufReader::with_capacity(1000,&file);
-            let data = terima_parse_3.recv().unwrap();
-            if data.0 == ["".to_string(),"".to_string(),"".to_string()] {break}
-            loop{
-                buf.clear();
-                if reader.read_line(buf).expect("") == 0 {break}
-                let u :Value = match serde_json::from_str(&buf){
-                    Ok(o)=>{o}
-                    Err(_)=>{
-                        println!("json format error");
-                        std::process::exit(1);           
-                    }
-                };
-                //println!("{}",u);
-                if u["mod"] == data.0[0] {
-                    let mut i  = 0 ;
-                    loop{
-                        if u["nilai"][i]["fn"] ==  data.0[1]{
-                            //println!("{}",u["nilai"][i]);
-                            if u["nilai"][i]["publik"] != json!(data.1) {
-                                println!("\
-                                {1}/{0}\n\n\
-                                fungsi '{0}' pribadi \n\
-                                info    : fungsi pribadi hanya dapat diakses oleh fungsi lokal\n\
-                                bantuan : ubah fungsi ke pulik\n\
-                                contoh  :\n\
-                                |   \n\
-                                |   cpu pub {0}\n\
-                                |   \n",data.0[1],data.0[0]);
-                                std::process::exit(17);
-                            }
-                            kirim_parse_3.send(Some(u["nilai"][i].clone())).expect("msg: &str");
-                            continue 'main
-                        }
-                        if u["nilai"][i] == json!(null){
-                            println!("funsi '{0}' tidak ditemukan di modul '{1}'\nbantuan : tambahkan 'fn {0}' di modul '{1}'",data.0[1],data.0[0]);
-                            
-                            std::process::exit(17);
-                        }
-                        i += 1
-                    }
-                } 
-                
-            } 
-            println!("mudul '{0}' tidak ditemukan\nfungsi '{1}'\nbantuan : buat file '{0}.is' di forder 'kode'",data.0[0],data.0[1]);
-            std::process::exit(17);
-        }
-        */
     } else {
         //turbo gagal
         //buf.clear();
@@ -146,51 +91,5 @@ pub fn baca(
             }
             
         }
-        /*
-        for data in terima_parse_3.iter(){
-
-            println!("mudul '{0}' tidak ditemukan\nmaka fungsi '{1}' tidak ada\nbantuan : buat file '{0}.is' di forder 'kode'",data.0[0],data.0[1]);
-            std::process::exit(17);
-        }
-        */
-        /*
-        'main_:loop{
-            if data.0 == ["".to_string(),"".to_string(),"".to_string()] {break}
-            for u in &r {
-                if u["mod"] == data.0[0] {
-                    let mut i  = 0 ;
-                    loop{
-                        if u["nilai"][i]["fn"] ==  data.0[1]{
-                            //println!("{}",u["nilai"][i]);
-                            if u["nilai"][i]["publik"] != json!(data.1) {
-                                println!("\
-                                {1}/{0}\n\n\
-                                fungsi '{0}' pribadi \n\
-                                info    : fungsi pribadi hanya dapat diakses oleh fungsi lokal\n\
-                                bantuan : ubah fungsi ke pulik\n\
-                                contoh  :\n\
-                                |   \n\
-                                |   cpu pub {0}\n\
-                                |   \n",data.0[1],data.0[0]);
-                                std::process::exit(17);
-                            }
-                            kirim_parse_3.send(Some(u["nilai"][i].clone())).unwrap();
-                            continue 'main_
-                        }
-                        if u["nilai"][i] == json!(null){
-                            println!("fungsi '{0}' tidak ditemukan di modul '{1}'\nbantuan : tambahkan 'fn {0}' di modul '{1}'",data.0[1],data.0[0]);
-                            std::process::exit(17);
-                        }
-                        i += 1
-                    }
-                }
-            }
-            println!("mudul '{0}' tidak ditemukan\nbantuan : buat file '{0}.is' di forder 'kode'",data.0[0]);
-            std::process::exit(17);
-        }
-        buf.clear();
-        data = terima_parse_3.recv().unwrap();
-        //println!("{:?}",data);
-        */
     } 
 }

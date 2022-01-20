@@ -12,7 +12,7 @@ struct Data<'a>{
 impl Data<'_>{
     fn file(&self,x:&str,buf:&mut String){
         self.kirim.send(
-            format!("<mod {}\n",
+            format!("modul {}\n",
                 x.clone().split(&['\\','/'][..]).last().expect("").replace(".is","")
             )
         ).expect("msg: &str");
@@ -27,7 +27,7 @@ impl Data<'_>{
             buf.clear()
         }
         self.kirim.send(
-            "mod>\n".to_string()
+            "modul_\n".to_string()
         ).expect("msg: &str");
     }
     fn selesai(self){
@@ -39,13 +39,6 @@ pub fn baca(
     path:&String,
     kirim:std::sync::mpsc::Sender<std::string::String>
 ){
-    //let t = Asset::get("prefix/std.txt").unwrap();
-    //kirim.send("<mod std\n".to_string()).unwrap();
-    
-    //for file in Asset::get("prefix/std.txt").unwrap() {
-     //   println!("{}", file.as_ref());
-    //}
-    //kirim.send("mod>\n".to_string()).unwrap();
     let data = Data{
         kirim:&kirim
     };

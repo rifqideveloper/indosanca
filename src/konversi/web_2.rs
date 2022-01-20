@@ -339,10 +339,13 @@ impl web {
         self.import_lib[13] = true;
     }
 }
+pub enum varibel {
+    konstan_str([u64; 2]),
+    konstan_nomer(i128),
+}
 use std::collections::HashMap;
-
 //
-pub fn app_3(pohon: &std::vec::Vec<crate::parsing::parse_3::Pohon>, path: &String) {
+pub fn app_3(pohon: &std::vec::Vec<crate::parsing::parse_3::Pohon>, path: &String) -> u64 {
     let mut web = web {
         //path:path.to_string(),
         offset: 0usize,
@@ -354,7 +357,8 @@ pub fn app_3(pohon: &std::vec::Vec<crate::parsing::parse_3::Pohon>, path: &Strin
                            css:[]
                           */
     };
-    let mut konst_str: HashMap<u64, [u64; 2]> = HashMap::new();
+    let mut koleksi_varibel: HashMap<u64,varibel> = HashMap::with_capacity(10);
+    //let mut konst_str: HashMap<u64, [u64; 2]> = HashMap::new();
     let mut _main = std::io::BufWriter::new(
         match std::fs::File::create(format!("{}\\parsing\\www\\main", path)) {
             Ok(o) => o,
@@ -409,6 +413,18 @@ pub fn app_3(pohon: &std::vec::Vec<crate::parsing::parse_3::Pohon>, path: &Strin
                 }
                 _main.write({ format!(":fn:{}\n", o) }.as_bytes()).unwrap();
             }
+            Pohon::panggil_var(o)=>{
+                if let Some(o) = koleksi_varibel.get(&o) {
+                    match o {
+                        varibel::konstan_str(o)=>{
+
+                        }
+                        varibel::konstan_nomer(o)=>{
+                            
+                        }
+                    }
+                } 
+            }
             Pohon::panggil_fn(o) => {
                 //memanggil fungsi
                 _main
@@ -416,7 +432,7 @@ pub fn app_3(pohon: &std::vec::Vec<crate::parsing::parse_3::Pohon>, path: &Strin
                     .unwrap();
             }
             Pohon::konst_str(id, l) => {
-                konst_str.insert(*id, [web.offset as u64, l.len() as u64]);
+                koleksi_varibel.insert(*id, varibel::konstan_str( [web.offset as u64, l.len() as u64] ));
                 web.offset += l.len();
                 _data.write(l.as_bytes()).unwrap();
             }
@@ -468,8 +484,9 @@ pub fn app_3(pohon: &std::vec::Vec<crate::parsing::parse_3::Pohon>, path: &Strin
                         _data.write(o.as_bytes()).unwrap();
                     }
                     Nilai::penujuk_(o) => {
-                        if let Some(o) = konst_str.get(&o) {
-                            _main
+                        if let Some(o) = koleksi_varibel.get(&o) {
+                            if let varibel::konstan_str(o) = o {
+                                _main
                                 .write(
                                     {
                                         format!(
@@ -480,7 +497,10 @@ pub fn app_3(pohon: &std::vec::Vec<crate::parsing::parse_3::Pohon>, path: &Strin
                                     .as_bytes(),
                                 )
                                 .unwrap();
-                            web.import_lib[3] = true;
+                                web.import_lib[3] = true;
+                            } else {
+                                panic!()
+                            }
                         } else {
                             panic!()
                         }
@@ -567,6 +587,9 @@ pub fn app_3(pohon: &std::vec::Vec<crate::parsing::parse_3::Pohon>, path: &Strin
                         panic!()
                     }
                 }
+                Tipe::nomer(_)=>{
+                    panic!()
+                }
                 Tipe::_String(_) => {}
             },
             Pohon::var(a, b) => match b {
@@ -575,6 +598,7 @@ pub fn app_3(pohon: &std::vec::Vec<crate::parsing::parse_3::Pohon>, path: &Strin
                         .write({ format!("(local ${} i32)\n", a) }.as_bytes())
                         .unwrap();
                 }
+                Tipe::nomer(_)=>{panic!()}
                 Tipe::_String(_) => {}
             },
             Pohon::blok(o) => {
@@ -815,7 +839,9 @@ pub fn app_3(pohon: &std::vec::Vec<crate::parsing::parse_3::Pohon>, path: &Strin
         Err(_) => {
             panic!()
         }
+        
     }
+    0
     //css
     //
     //import

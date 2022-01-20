@@ -293,6 +293,7 @@ fn rv(buf:&Vec<String>,kirim:&std::sync::mpsc::Sender<perintah>,x:usize)
     }
     */
 }
+/*
 fn jika(i:usize,buf:&mut std::vec::Vec<std::string::String>,kirim:&std::sync::mpsc::Sender<perintah>){
     let mut tidak = false;
     for i in i..buf.len() {
@@ -329,25 +330,69 @@ fn jika(i:usize,buf:&mut std::vec::Vec<std::string::String>,kirim:&std::sync::mp
         perintah::jika_
     ).unwrap()
 }
-
+*/
 use crate::parsing::perintah;
-use crate::parsing::tipe;
+use crate::parsing::Tipe;
 //use crate::parsing::tipe;
-fn glob_tipe(nama:&String,_mut:bool,tipe:tipe,kirim:&std::sync::mpsc::Sender<perintah>){
+/*
+fn glob_tipe(nama:&String,_mut:bool,tipe:Tipe,kirim:&std::sync::mpsc::Sender<perintah>){
     kirim.send(
         perintah::glob_var(nama.to_string(),_mut,tipe)
     ).unwrap()
 }
-fn let_(nama:&String,_mut:bool,tipe:tipe,kirim:&std::sync::mpsc::Sender<perintah>){
+*/
+fn let_(nama:&String,_mut:bool,tipe:Tipe,kirim:&std::sync::mpsc::Sender<perintah>){
     kirim.send(
         perintah::_let(nama.to_string(),_mut,tipe)
     ).unwrap()
 }
+fn cek_jika_nama_var_sesuai(nama:String,i:&mut usize) -> String{
+    *i += 1 ;
+    nama
+}
+fn cek_tipe_var(buf:&Vec<String>,i:&mut usize) -> Tipe {
+    match buf[*i].as_str() {
+        "u8" =>{
+            Tipe::_u8({
+                *i += 1 ;
+                if buf[*i] == "="{
+                    if let Ok(o) = buf[*i+1].parse::<u8>() {
+                        Some(o)
+                    } else {
+                        panic!()
+                    }
+                } else {
+                    None
+                }
+            })
+        }
+        "str" =>{
+            Tipe::_string({
+                *i += 1 ;
+                if buf[*i] == "="{
+                    let mut v = buf[*i+1].clone();
+                    if v.starts_with('"') && v.ends_with('"') {
+                        v.remove(0);
+                        v.pop();
+                    } else {
+                        panic!()
+                    }
+                    crate::parsing::Str::Some(v)
+                } else {
+                    crate::parsing::Str::None
+                }
+            })
+
+        }
+        _=>{panic!()}
+    }
+}
 fn token(mut buf: Vec<String>,jika_br:&mut bool,terima:&std::sync::mpsc::Receiver<Vec<String>>,kirim:&std::sync::mpsc::Sender<perintah>,dalam_fn:&mut bool,perintah_terakhir:&mut perintah){
-    let mut var = Vec::new();
-    let mut lapisan = 0 ;
+    //let mut var = Vec::new();
+    //let mut lapisan = 0 ;
     loop{
         match buf[0].as_str(){
+            /*
             "konst"=>{
 
                 /*
@@ -368,54 +413,86 @@ fn token(mut buf: Vec<String>,jika_br:&mut bool,terima:&std::sync::mpsc::Receive
                     "str"=>{
                         //print!("testing!!!");
                         kirim.send(
-                            perintah::konst(buf[1].clone(),tipe::_string(buf[4].clone()))
+                            perintah::konst(buf[1].clone(),Tipe::_string( Some( buf[4].clone() ) ))
+                        ).unwrap()
+                    }
+                    "nomer"=>{
+                        kirim.send(
+                            perintah::konst(buf[1].clone(),Tipe::nomer(buf[4].clone()))
                         ).unwrap()
                     }
                     "i8"=>{}
                     _=>{panic!()}
                 }
-            }
+            }*/
             "let"=>{
-                if buf[1] == "mut" {
-                    match buf[3].as_str(){
-                        "str"=>{
-                            //???
-                            /*aturan ( prototipe )
-                                str tidak dapat diubah
-                                maka jika str mut maka akan error
-                            */
-                            panic!() 
-                        }
-                        "i8"=>{
-                            let_(&buf[2], true , tipe::_i8 , kirim)
-                        }
-                        "u8"=>{
-                            let_(&buf[2], true , tipe::_u8 , kirim)
-                        }
-                        "i16"=>{
-                            let_(&buf[2], true , tipe::_i16 , kirim)
-                        }
-                        "u16"=>{
-                            let_(&buf[2], true , tipe::_u16 , kirim)
-                        }
-                        "i32"=>{
-                            let_(&buf[2], true , tipe::_i32 , kirim)
-                        }
-                        "u32"=>{
-                            let_(&buf[2], true , tipe::_u32 , kirim)
-                        }
-                        "i64"=>{
-                            let_(&buf[2], true , tipe::_i64 , kirim)
-                        }
-                        "u64"=>{
-                            let_(&buf[2], true , tipe::_u64 , kirim)
-                        }
-                        _=>{panic!()}
-                    }
+                let (mut i ,_mut) = if buf[1] == "mut" {
+                    (2 , true)
                 } else {
+                    (1 , false)
+                };
+                kirim.send(
+                    perintah::_let(
+                        cek_jika_nama_var_sesuai(buf[i].clone(),&mut i),
+                        _mut,
+                        cek_tipe_var(&buf, &mut i)
+                    )
+                ).unwrap()
+                /*
+                let mut i = 1 ;
+                let _mut = if buf[i] == "mut" {
+                    i += 1 ;
+                    true
+                } else {
+                    false
+                };
+                let nama = if true {
+                    buf[i].clone()
+                }else {
+                    panic!()
+                };
+                i += 1;
+                let tipe = match buf[i].as_str() {
+                    "u8" =>{
+                        Tipe::_u8({
+                            i += 1 ;
+                            if buf[i] == "="{
+                                if let Ok(o) = buf[i+1].parse::<u8>() {
+                                    Some(o)
+                                } else {
+                                    panic!()
+                                }
+                            } else {
+                                None
+                            }
+                        })
+                    }
+                    "str" =>{
+                        Tipe::_string({
+                            i += 1 ;
+                            if buf[i] == "="{
+                                let mut v = buf[i+1].clone();
+                                if v.starts_with('"') && v.ends_with('"') {
+                                    v.remove(0);
+                                    v.pop();
+                                } else {
+                                    panic!()
+                                }
+                                crate::parsing::Str::Some(v)
+                            } else {
+                                crate::parsing::Str::None
+                            }
+                        })
 
-                }
+                    }
+                    _=>{panic!()}
+                };
+                kirim.send(
+                    perintah::_let(nama,_mut,tipe)
+                ).unwrap()
+                */
             }
+            /*
             "global"=>{
                 //(local $index i32)
                 // 0 = String
@@ -441,33 +518,33 @@ fn token(mut buf: Vec<String>,jika_br:&mut bool,terima:&std::sync::mpsc::Receive
                             panic!() 
                         }
                         "i8"=>{
-                            glob_tipe(&buf[2], true , tipe::_i8 , kirim)
+                            glob_tipe(&buf[2], true , Tipe::_i8(None) , kirim)
                         }
                         "u8"=>{
-                            glob_tipe(&buf[2], true , tipe::_u8 , kirim)
+                            glob_tipe(&buf[2], true , Tipe::_u8(None) , kirim)
                         }
                         "i16"=>{
-                            glob_tipe(&buf[2], true , tipe::_i16 , kirim)
+                            glob_tipe(&buf[2], true , Tipe::_i16(None) , kirim)
 
                         }
                         "u16"=>{
-                            glob_tipe(&buf[2], true , tipe::_u16 , kirim)
+                            glob_tipe(&buf[2], true , Tipe::_u16(None) , kirim)
 
                         }
                         "i32"=>{
-                            glob_tipe(&buf[2], true , tipe::_i32 , kirim)
+                            glob_tipe(&buf[2], true , Tipe::_i32(None) , kirim)
 
                         }
                         "u32"=>{
-                            glob_tipe(&buf[2], true , tipe::_u32 , kirim)
+                            glob_tipe(&buf[2], true , Tipe::_u32(None) , kirim)
 
                         }
                         "i64"=>{
-                            glob_tipe(&buf[2], true , tipe::_i64 , kirim)
+                            glob_tipe(&buf[2], true , Tipe::_i64(None) , kirim)
 
                         }
                         "u64"=>{
-                            glob_tipe(&buf[2], true , tipe::_u64 , kirim)
+                            glob_tipe(&buf[2], true , Tipe::_u64(None) , kirim)
                         }
                         _=>{panic!()}
                     }
@@ -475,7 +552,7 @@ fn token(mut buf: Vec<String>,jika_br:&mut bool,terima:&std::sync::mpsc::Receive
                     //??
                 }
             }
-            /*
+            
             "jika"=>{
                 kirim.send(
                     perintah::jika_b(lapisan)  
@@ -642,6 +719,7 @@ fn token(mut buf: Vec<String>,jika_br:&mut bool,terima:&std::sync::mpsc::Receive
                 }
             }
             */
+            /*
             "let"=>{
                 let (indx,nama) = if !*dalam_fn {
                     std::process::exit(1);
@@ -667,12 +745,13 @@ fn token(mut buf: Vec<String>,jika_br:&mut bool,terima:&std::sync::mpsc::Receive
                 *jika_br = true;
                 //pengaman aktiv
             }
+            */
             "putar"=>{
                 kirim.send(
                     perintah::putar
                 ).unwrap();
             }
-            "putar_batas"=>{
+            "putar_"=>{
                 kirim.send(
                     perintah::batas
                 ).unwrap();
@@ -697,11 +776,13 @@ fn token(mut buf: Vec<String>,jika_br:&mut bool,terima:&std::sync::mpsc::Receive
                     
                 ).unwrap()
             }
+            /*
             "$putus"|"$lanjut"=>{
                 kirim.send(
                     perintah::br(buf[1].clone())
                 ).unwrap()
             }
+            */
             "cetak"=>{
                 kirim.send(
                     if !*dalam_fn{
@@ -719,6 +800,38 @@ fn token(mut buf: Vec<String>,jika_br:&mut bool,terima:&std::sync::mpsc::Receive
             }
             "."=>{
                 match perintah_terakhir {
+                    perintah::navbar(id)=>{
+                        match buf[1].as_str(){
+                            "tombol"=>{
+                                if buf[2] == "(" {
+                                    if buf[3].starts_with('"') && buf[3].ends_with('"') {
+                                        if buf[4] == "," {
+                                            let mut _fungsi = Vec::with_capacity(2);
+                                            for i in 5..{
+                                                match buf[i].as_str(){
+                                                    ":"=>{}
+                                                    "("=>{break}
+                                                    _=>{
+                                                        _fungsi.push(buf[i].clone())
+                                                    }
+                                                }
+                                            }
+                                            kirim.send(
+                                                perintah::navbar_tombol({buf[3].pop();buf[3].remove(0);buf[3].clone()},id.to_string(),_fungsi)
+                                            ).unwrap()
+                                        } else {
+                                            panic!()
+                                        }
+                                    } else {
+                                        panic!()
+                                    }
+                                } else {
+                                    panic!()
+                                }
+                            }
+                            _=>{panic!()}
+                        }
+                    }
                     perintah::tombol(o)=>{
                         match buf[1].as_str() {
                             "isi"=>{
@@ -832,6 +945,26 @@ fn token(mut buf: Vec<String>,jika_br:&mut bool,terima:&std::sync::mpsc::Receive
             "app"=>{
                 if buf[1] == "." {
                     match buf[2].as_str() {
+                        "navbar"=>{
+                            if buf[3] == "(" {
+                                if buf[4].starts_with('"') && buf[4].ends_with('"'){
+                                    if buf[5] == ")" {
+                                        buf[4].pop();
+                                        buf[4].remove(0);
+                                        *perintah_terakhir = perintah::navbar(buf[4].clone());
+                                        kirim.send(
+                                            perintah::navbar(buf[4].clone())
+                                        ).unwrap()
+                                    } else {
+                                        panic!()
+                                    }
+                                } else {
+                                    panic!()
+                                }
+                            } else {
+                                panic!()
+                            }
+                        }
                         "gambarlatarbelakang"=>{
                             if buf[3] == "="{
                                 if buf[4].ends_with('"') && buf[4][0..1] == *"\"" {
@@ -1074,8 +1207,7 @@ fn token(mut buf: Vec<String>,jika_br:&mut bool,terima:&std::sync::mpsc::Receive
                 }
                 */
             }
-            
-            "cpu"|"fn"=>{
+            "fn"=>{
                 let (nama,publik) = if buf[0].as_str() == "pub"{
                     (buf[2].clone(),true)
                 } else {
@@ -1087,12 +1219,14 @@ fn token(mut buf: Vec<String>,jika_br:&mut bool,terima:&std::sync::mpsc::Receive
                 ).unwrap()
             }
             "{"=>{
-                lapisan += 1 ;
                 kirim.send(
-                    perintah::blok_buka
-                ).unwrap();
+                    perintah::blok("blok".to_string())
+                ).unwrap()
             }
             "}"=>{
+                kirim.send(
+                    perintah::blok_
+                ).unwrap()
                 /*
                 //sementara jika
                 if *jika_br {
@@ -1114,12 +1248,14 @@ fn token(mut buf: Vec<String>,jika_br:&mut bool,terima:&std::sync::mpsc::Receive
                     kirim.send(perintah::blok_tutup).unwrap();
                 }
                 */
+                /*
                 kirim.send(
                     perintah::blok_tutup
                 ).unwrap();
                 lapisan -= 1 ;
-    
+                */
             }
+            /*
             "blok"=>{
                 kirim.send(
                     perintah::blok(buf[1].clone())   
@@ -1130,6 +1266,9 @@ fn token(mut buf: Vec<String>,jika_br:&mut bool,terima:&std::sync::mpsc::Receive
                     perintah::blok_   
                 ).unwrap();
             }
+            */
+            
+            /*
             _ if buf[0] == "!" && buf[1] == "("=> {
                 //belum siap
                 //fungsi arg
@@ -1138,11 +1277,20 @@ fn token(mut buf: Vec<String>,jika_br:&mut bool,terima:&std::sync::mpsc::Receive
                     std::process::exit(1);
                 }
             }
-            _ if buf[0] == "<" && buf[1] == "mod"=> {
-
+            */
+            "modul" =>{
                 kirim.send(
-                    perintah::modul_masuk(buf[2].clone())
-                ).expect("parse_");
+                    if buf.len() == 2 {
+                        perintah::modul_masuk(buf[1].clone())
+                    } else {
+                        panic!()
+                    }
+                ).unwrap()
+            }
+            "modul_"=>{
+                kirim.send(
+                    perintah::modul_keluar
+                ).unwrap()
             }
             /*
             _ if buf[0] == "<" && buf[1] == "mod"=> {
@@ -1150,12 +1298,33 @@ fn token(mut buf: Vec<String>,jika_br:&mut bool,terima:&std::sync::mpsc::Receive
                     perintah::modul_masuk(buf[2].clone())
                 ).expect("parse_");
             }
-            */
             _ if buf[0] == "mod" && buf[1] == ">"=> {
                 *dalam_fn = false;
                 kirim.send(
                     perintah::modul_keluar
                 ).unwrap()
+            }
+            */
+            _ if buf[1] == "="=>{
+                kirim.send(
+                    perintah::tulis(
+                        if !buf[0].contains("\""){
+                            buf[0].clone()
+                        } else {
+                            panic!()
+                        },
+                        {
+                            let mut v = Vec::new();
+                            for i in 2..buf.len() {
+                                v.push(
+                                    buf[i].clone()
+                                )
+                            }
+                            if v.is_empty() { panic!() }
+                            v
+                        }
+                    )
+                ).unwrap();
             }
             _=>{
                 //memanggil fungsi
@@ -1188,99 +1357,6 @@ fn token(mut buf: Vec<String>,jika_br:&mut bool,terima:&std::sync::mpsc::Receive
         }
         break
     }
-    
-    /*versi lama
-    match (buf[0].as_str(),buf[1].as_str()){
-        ("<","mod")=>{
-            
-        }
-        ("mod",">")=>{
-            *dalam_fn = false;
-            kirim.send(
-                perintah::modul_keluar
-            ).unwrap()
-        }
-        ("cetak",_)=>{
-            
-        }
-        ("cpu",_)=>{
-            let (nama,publik) = if buf[0].as_str() == "pub"{
-                (buf[2].clone(),true)
-            } else {
-                (buf[1].clone(),false)
-            };
-            *dalam_fn = true;
-            kirim.send(
-                perintah::cpu(nama,publik)
-            ).unwrap()
-        }
-        ("!","(")=>{
-            //belum siap
-            //fungsi arg
-            if !*dalam_fn {
-                println!("token tidak sesuai");
-                std::process::exit(1);
-            }
-        }
-        ("let",_)=>{
-            let  (indx,nama) = if !*dalam_fn {
-                std::process::exit(1);
-            } else if buf[1] == "<"{
-                (2,buf[4].clone())
-            } else {
-                (3, buf[5].clone()  )
-            };
-            kirim.send(
-                perintah::variabel_null(buf[indx].clone(),nama.clone())
-            ).unwrap();
-            if indx + 2 < buf.len()-1{
-                let mut v = Vec::new();
-                for i in indx+4..buf.len() {
-                    v.push(buf[i].clone())
-                }
-                kirim.send(
-                    perintah::tulis(nama,v)
-                ).unwrap()
-            }
-            //pengaman aktiv
-        }
-        (_,"=")=>{
-            /*
-            kirim.send(
-                perintah::tulis(buf[0].clone(),
-                    if apa._str(&buf[2]) {
-                        //belum siap
-                        format!("")
-                    } else if apa.nomer(&buf[2]) {
-                        format!("{{\"tipe\":\"nomer\",\"nilai\":\"{}\" }}",buf[2])
-                    } else {
-                        std::process::exit(1);
-                    }
-                )
-            ).unwrap()
-            */
-        }
-        ("jika",_)=>{
-            //uji coba
-            let mut log :Vec<String> = Vec::with_capacity(1); 
-            for i in 1..buf.len()- 1 {
-                match buf[i].as_str(){
-                    "benar"=>{
-                        log.push("benar".to_string());
-                    }
-                    "salah"=>{
-                        log.push("salah".to_string());
-                    }
-                    _=>{}
-                }
-            }
-        }
-        _=>{
-            println!("salah token");
-            std::process::exit(1);
-        }
-    }
-    */
 }
 //belum selesai
 fn duplikat(
@@ -1324,236 +1400,4 @@ pub fn parse(
             return
         }
     });
-    /*
-    while buf.len() != 0  {
-        if buf[0] == "duplikat" {
-            //belum selesai
-            duplikat(&terima,&kirim,buf[1].parse::<u64>().unwrap());
-            buf = terima.recv().expect("");
-            continue
-        }
-        token(&mut buf,&mut jika_br, &terima,&kirim, &mut dalam_fn,&mut perintah_terakhir);
-        buf = terima.recv().expect("");
-    }
-    */
 }
-/*versi lama 0.7.0
-pub fn parse(
-    terima:std::sync::mpsc::Receiver<Vec<String>>
-    ,kirim:std::sync::mpsc::Sender<perintah>,
-
-){
-    //kirim.send(format!("{{\"tipe\":\"program\",\"nama\":\"{nama}\"}}\n",nama = nama_app)).expect("parse_");
-    #[allow(unused_assignments)]
-    let mut buf :Vec<String> =  Vec::with_capacity(20);
-    let mut dalam_fn = false;
-    let mut duplikat:(bool,u64,Vec<Vec<String>>,bool,bool) = (false,0,Vec::with_capacity(2),false,false);
-    let mut jika_br = [false,false];
-    while { buf = terima.recv().expect(""); buf.len() != 0 }  {
-        if buf[0] == "duplikat" {
-            if let Ok(o) = buf[1].parse::<u64>() {
-                duplikat.1 = o;
-                duplikat.0 = true;
-            } else {
-                panic!()
-            }
-        } else if buf[0] == "duplikat_batas" {
-            if duplikat.3 && duplikat.4 {
-                token(&Vec::from(["blok".to_string(),"d0".to_string()]),&mut jika_br, &terima,&kirim,&mut dalam_fn);
-                for i in 0..duplikat.1{
-                    token(&Vec::from(["blok".to_string(),"d1".to_string()]),&mut jika_br,&terima,&kirim,&mut dalam_fn);
-                    for x in &duplikat.2{
-                        let mut v :Vec<String>= Vec::with_capacity(x.len());
-                        for y in x{
-                            if y == "$!" {
-                                v.push(format!("{}",i))
-                            } else if y == "$putus"{
-                                v.push("$putus".to_string());
-                                v.push("$d0".to_string())
-                            } else if y == "$lanjut"{
-                                v.push("$lanjut".to_string());
-                                v.push("$d1".to_string())
-                            } else {
-                                v.push(y.clone())
-                            }
-                        }
-                        token(&v, &mut jika_br,&terima,&kirim, &mut dalam_fn)
-                    }
-                    token(&Vec::from(["blok_".to_string()]),&mut jika_br, &terima,&kirim,&mut dalam_fn);
-                }
-                token(&Vec::from(["blok_".to_string()]),&mut jika_br, &terima,&kirim,&mut dalam_fn);
-                duplikat.3 = false;
-                duplikat.4 = false;
-            }else if duplikat.3 {
-                token(&Vec::from(["blok".to_string(),"d0".to_string()]),&mut jika_br,&terima, &kirim,&mut dalam_fn);
-                for i in 0..duplikat.1{
-                    for x in &duplikat.2{
-                        let mut v :Vec<String>= Vec::with_capacity(x.len());
-                        for y in x{
-                            if y == "$!" {
-                                v.push(format!("{}",i))
-                            } else if y == "$putus" {
-                                v.push("$putus".to_string());
-                                v.push("$d0".to_string())
-                            } else {
-                                v.push(y.clone())
-                            }
-                        }
-                        token(&v,&mut jika_br, &terima,&kirim, &mut dalam_fn)
-                    }
-                }
-                token(&Vec::from(["blok_".to_string()]),&mut jika_br,&terima, &kirim,&mut dalam_fn);
-                
-                duplikat.3 = false;
-            }else if duplikat.4 {
-                for i in 0..duplikat.1{
-                    token(&Vec::from(["blok".to_string(),"d1".to_string()]),&mut jika_br,&terima, &kirim,&mut dalam_fn);
-                    for x in &duplikat.2{
-                        let mut v :Vec<String>= Vec::with_capacity(x.len());
-                        for y in x{
-                            if y == "$!" {
-                                v.push(format!("{}",i))
-                            } else if y == "$lanjut" {
-                                v.push("$lanjut".to_string());
-                                v.push("$d1".to_string())
-                            } else {
-                                v.push(y.clone())
-                            }
-                        }
-                        token(&v,&mut jika_br, &terima,&kirim, &mut dalam_fn)
-                    }
-                    token(&Vec::from(["blok_".to_string()]),&mut jika_br,&terima, &kirim,&mut dalam_fn);
-                }
-                duplikat.4 = false;
-            } else {
-                for i in 0..duplikat.1{
-                    for x in &duplikat.2{
-                        let mut v :Vec<String>= Vec::with_capacity(x.len());
-                        for y in x{
-                            if y == "$!" {
-                                v.push(format!("{}",i))
-                            } else {
-                                v.push(y.clone())
-                            }
-                        }
-                        token(&v,&mut jika_br, &terima,&kirim, &mut dalam_fn)
-                    }
-                }
-                
-            }
-            duplikat.0 = false;
-            duplikat.2.clear();
-        } else if duplikat.0 {
-            if buf[0] == "$"{
-                match buf[1].as_str() {
-                    "putus"=>{
-                        duplikat.2.push(Vec::from(["$putus".to_string()]));
-                        duplikat.3 = true
-                    }
-                    "lanjut"=>{
-                        duplikat.2.push(Vec::from(["$lanjut".to_string()]));
-                        duplikat.4 = true
-                    }
-                    _=>{}
-                }
-            } else {
-                duplikat.2.push(buf);
-            }
-            //println!("{:?}",duplikat.2)
-        } else {
-            token(&buf,&mut jika_br, &terima,&kirim, &mut dalam_fn);
-        }
-    }
-    //sementara
-    
-    
-    /*
-    while buf.len() != 0 {
-        match (buf[0].as_str(),buf[1].as_str()){
-            ("let",_)=>{
-                let  (indx,tipe) = if buf[1] == "<"{
-                    (2,"var_".to_string())
-                } else {
-                    (3, format!{ "var_{}" , buf[1] }  )
-                };
-                match buf[indx].as_str(){
-                    "u8"=>{
-                        kirim.send(format!("{{\"tipe\":\"{}\",\"data\":\"{}\",\"nama\":\"{}\",\"nilai\":{}}}",tipe,buf[indx],buf[indx+2],
-                            _int!(u8,buf[indx+4])
-                        )).expect("parse_u8");
-                    }
-                    "u16"=>{
-                        kirim.send(format!("{{\"tipe\":\"{}\",\"data\":\"{}\",\"nama\":\"{}\",\"nilai\":{}}}",tipe,buf[indx],buf[indx+2],
-                            _int!(u16,buf[indx+4])
-                        )).expect("parse_u16");
-                    }
-                    "u32"=>{
-                        kirim.send(format!("{{\"tipe\":\"{}\",\"data\":\"{}\",\"nama\":\"{}\",\"nilai\":{}}}",tipe,buf[indx],buf[indx+2],
-                            _int!(u32,buf[indx+4])
-                        )).expect("parse_u32");
-                    }
-                    "u64"=>{
-                        kirim.send(format!("{{\"tipe\":\"{}\",\"data\":\"{}\",\"nama\":\"{}\",\"nilai\":{}}}",tipe,buf[indx],buf[indx+2],
-                            _int!(u64,buf[indx+4])
-                        )).expect("parse_u64");
-                    }
-                    "i8"=>{
-                        kirim.send(format!("{{\"tipe\":\"{}\",\"data\":\"{}\",\"nama\":\"{}\",\"nilai\":{}}}",tipe,buf[indx],buf[indx+2],
-                            _int!(i8,buf[indx+4])
-                        )).expect("parse_i8");
-                    }
-                    "i16"=>{
-                        kirim.send(format!("{{\"tipe\":\"{}\",\"data\":\"{}\",\"nama\":\"{}\",\"nilai\":{}}}",tipe,buf[indx],buf[indx+2],
-                            _int!(i16,buf[indx+4])
-                        )).expect("parse_i16");
-                    }
-                    "i32"=>{
-                        kirim.send(format!("{{\"tipe\":\"{}\",\"data\":\"{}\",\"nama\":\"{}\",\"nilai\":{}}}",tipe,buf[indx],buf[indx+2],
-                            _int!(i32,buf[indx+4])
-                        )).expect("parse_i32");
-                    }
-                    "i64"=>{
-                        kirim.send(format!("{{\"tipe\":\"{}\",\"data\":\"{}\",\"nama\":\"{}\",\"nilai\":{}}}",tipe,buf[indx],buf[indx+2],
-                            _int!(i64,buf[indx+4])
-                        )).expect("parse_i64");
-                    }
-                    ">"=>{
-                        kirim.send(format!("{{\"tipe\":\"{}\",\"data\":\"auto\",\"nama\":\"{}\",\"nilai\":\"{}\"}}",tipe,buf[indx+1],buf[indx+3])).expect("parse_");
-                    }
-                    _=>{}
-                }
-            }
-            (_,"=")=>{
-                //pemulaan
-                if buf[2].parse::<f64>().is_ok(){
-                    kirim.send(format!("{{\"tipe\":\"tulis\",\"var\":\"{0}\",\"nilai\": {{ \"tipe\":\"nomer\",\"nilai\":\"{1}\" }} }}",buf[0],buf[2])).expect("parse_");
-                } else if apa_str(&buf[2]) {
-                    kirim.send(format!("{{\"tipe\":\"tulis\",\"var\":\"{0}\",\"nilai\": {{ \"tipe\":\"str\",\"nilai\":\"{1}\" }} }}",buf[0],buf[2])).expect("parse_");
-                } else {
-                    kirim.send(format!("{{\"tipe\":\"tulis\",\"var\":\"{0}\",\"nilai\": {{ \"tipe\":\"minta\",\"nilai\":\"{1}\" }} }}",buf[0],buf[2])).expect("parse_");
-                }
-                
-            }
-            ("cetak",_)=>{
-                kirim.send(format!("{{\"tipe\":\"cetak\",\"nilai\":\"{}\"}}",buf[1])).expect("parse_");
-            }
-            ("<","mod")=>{
-                kirim.send(format!("{{\"tipe\":\"modul_masuk\",\"nama\":\"{nama}\"}}",nama = buf[2])).expect("parse_");
-            }
-            ("mod",">")=>{
-                kirim.send(format!("{{\"tipe\":\"modul_keluar\"}}")).expect("parse_");
-            }
-            ("cpu",_)=>{
-                kirim.send(format!("{{\"tipe\":\"fn_cpu\",\"nama\":\"{}\"}}",buf[1])).expect("parse_");
-            }
-            _=>{}
-        }
-        buf =  terima.recv().expect("") ;
-    }
-    */
-    //println!("testting");
-    kirim.send(perintah::blok_tutup).unwrap();
-    kirim.send(perintah::selesai).expect("parse gagal selesai");
-    
-}
-*/

@@ -106,16 +106,20 @@ pub fn seting(buf:&mut String,proyek:&usize ,args:&Vec<String>) -> (Vec<String>,
                     std::fs::OpenOptions::new().read(true).open(&args[*proyek]).unwrap()
                     //std::fs::File::open(&args[*proyek]).unwrap()
             ).unwrap();
-            
             crate::konversi::interperetasi::kode(bin);
             std::process::exit(0);
         }
         "bangun" => (false,true,true),
         "instan" => (false,false,true),
         "optimal" => (false,true,false),
+        "--v" => {
+            println!("indosanca versi {}",env!("CARGO_PKG_VERSION"));
+            std::process::exit(0);
+        }
         _ => (true,true,true),
     };
     //let mut pembuat:Vec<String>= vec!["?".to_string()];
+    
     let file = format!("{}\\seting.toml",args[*proyek]);
     let perpus:Vec<String>= vec!["std".to_string()];
     if !Path::new(&file).exists() {buat_seting_file(&args[*proyek])}

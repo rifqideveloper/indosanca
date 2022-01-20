@@ -2,7 +2,7 @@ use rust_embed::RustEmbed;
 #[derive(RustEmbed)]
 #[folder = "asset/"]
 #[prefix = "prefix/"]
-struct Asset;
+pub struct Asset;
 pub fn bantuan(){
     let beranda : std::borrow::Cow<[u8]> = Asset::get("prefix/bantuan.txt").unwrap();
     println!("{}", std::str::from_utf8(beranda.as_ref()).unwrap());

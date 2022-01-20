@@ -1,0 +1,17 @@
+const express = require('express')
+const app = express()
+const PORT = process.env.PORT || 3000
+const opsi = {
+
+}
+app.use(express.json()) 
+
+app.use(express.static("publik",opsi))
+
+app.get('/', (req, res) => {
+
+}
+
+app.listen(PORT, () => {
+    console.log(`server berjalan di http://localhost:${PORT}`)
+}

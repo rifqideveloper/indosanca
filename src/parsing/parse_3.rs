@@ -24,15 +24,15 @@ pub struct Variabel {
 #[allow(non_camel_case_types)]
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Nilai {
-    lansung_str(String),
-    lansung_int(u64),
-    lansung_float(f64),
+    langsung_str(String),
+    langsung_int(u64),
+    langsung_float(f64),
     penujuk_(u64),
     minta(u64),
     None,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug )]
 pub enum Pohon {
     fungsi(String),
     panggil_fn(String),
@@ -174,6 +174,7 @@ pub fn parse_2(
                                 "let" => {
                                     //panic!();
                                     id += 1;
+                                    /*
                                     let data = match o["nilai"][i]["tipe_"].as_str().unwrap() {
                                         "str" => crate::parsing::Tipe::_string(crate::parsing::Str::None),
                                             "str_" => crate::parsing::Tipe::_string(crate::parsing::Str::Some(o["nilai"][i]["nilai"].as_str().unwrap().to_string())),
@@ -201,6 +202,149 @@ pub fn parse_2(
                                     let _mut = if let Some(_) = o["nilai"][i]["mut"].as_str() {true} else {false};
                                     _data_var.insert(o["nilai"][i]["nama"].as_str().unwrap().to_string(), (id , data.clone(), pohon.len(),_mut.clone()));
                                     pohon.push( Pohon::_let( id , data ,_mut,false) );
+                                    */
+                                    //let len = o["nilai"][i]["len"].as_str().unwrap().parse::<usize>().unwrap();
+                                    /*
+                                    match o["nilai"][i]["tipe_"].as_str().unwrap() {
+                                        "str"=>{                                   
+                                            pohon.push( Pohon::_let(id,crate::parsing::Tipe::_string(crate::parsing::Str::None),if let Some(_) = o["nilai"][i]["mut"].as_str() {true} else {false},false) )
+                                        }
+                                        "str_" =>{
+                                            pohon.push( Pohon::_let(id,crate::parsing::Tipe::_string(crate::parsing::Str::Some(o["nilai"][i]["nilai"].as_str().unwrap().to_string())),if let Some(_) = o["nilai"][i]["mut"].as_str() {true} else {false},false) )
+                                        }
+                                        "u8" =>{
+                                            //pohon.push( Pohon::_let(id,crate::parsing::Tipe::_string(crate::parsing::Str::None),if let Some(_) = o["nilai"][i]["mut"].as_str() {true} else {false},false) )
+                                        }
+                                        _=>{ panic!() }
+                                    }*/
+                                    let data ;
+                                    let _mut ;
+                                    pohon.push( Pohon::_let(
+                                        id,
+                                        match o["nilai"][i]["tipe_"].as_str().unwrap(){
+                                            "str" =>{
+                                                data = crate::parsing::Tipe::_string(crate::parsing::Str::None);
+                                                
+                                                crate::parsing::Tipe::_string(crate::parsing::Str::None)
+                                            }
+                                            "str_" =>{
+                                                data = crate::parsing::Tipe::_string(crate::parsing::Str::None);
+
+                                                crate::parsing::Tipe::_string(crate::parsing::Str::Some(o["nilai"][i]["nilai"].as_str().unwrap().to_string()))
+                                            }
+                                            /*versi lama
+                                            "u8" => crate::parsing::Tipe::_u8(false,{
+                                                panic!();
+                                                let len = o["nilai"][i]["len"].as_str().unwrap().parse::<usize>().unwrap();
+                                                let mut v = Vec::with_capacity(len);
+                                                //let k = serde_json::Deserializer::from_str(o["nilai"][i]["nilai"].as_str().unwrap());
+                                                data = crate::parsing::Tipe::_u8(false,Vec::with_capacity(len+4));
+                                                v.push(Some(0));
+                                                v.push(Some(0));
+                                                v.push(Some(0));
+                                                /*
+                                                for x in 0..v.capacity() {
+                                                    if let Ok(o) = o["nilai"][i]["nilai"][x].as_str().unwrap().parse::<u8>() {
+                                                        v.push(Some(o))
+                                                    } else {
+                                                        v.push(None)
+                                                    }
+                                                    //v.push(o["nilai"][i]["nilai"][x].as_str().unwrap().parse::<u8>().unwrap())
+                                                    //v.push(None)
+                                                }
+                                                */                                
+                                                v
+                                            }),
+                                            */
+                                            "u8_" => {
+                                                    if let serde_json::Value::Number(n) = &o["nilai"][i]["cap"] {
+                                                        let mut v = Vec::with_capacity(n.as_u64().unwrap() as usize);
+                                                        for x in 0..v.capacity() {
+                                                            if let serde_json::Value::Number(n) = &o["nilai"][i]["cap"][x] {
+                                                                v.push(Some(n.as_u64().unwrap() as u8));
+                                                            } else {
+                                                                break
+                                                            }
+                                                        }
+                                                        data = crate::parsing::Tipe::_u8(true,v);
+                                                    } else if let serde_json::Value::Array(arr) = &o["nilai"][i]["nilai"] {
+                                                        let mut x = Vec::with_capacity(arr.len());
+                                                        (0..arr.capacity()).into_iter().for_each(|f|{
+                                                            x.push(Some( arr[f].as_u64().unwrap() as u8 ));
+                                                        });
+                                                        
+                                                        data = crate::parsing::Tipe::_u8(false,x)
+                                                    } else if let serde_json::Value::Number(n) = &o["nilai"][i]["nilai"] {
+                                                        let x = vec![Some( n.as_u64().unwrap() as u8 )];
+                                                        data = crate::parsing::Tipe::_u8(false,x);
+                                                    } else {
+                                                        panic!()
+                                                    }
+                                                    data.clone()
+                                                }
+                                                /*versi lama
+                                                crate::parsing::Tipe::_u8(false,{
+                                                let len = o["nilai"][i]["len"].as_str().unwrap().parse::<usize>().unwrap();
+                                                data = crate::parsing::Tipe::_u8(false,Vec::with_capacity(len));
+                                                let mut v = Vec::with_capacity(len);
+                                                if len == 1 {
+                                                    v.push(Some(
+                                                        o["nilai"][i]["nilai"].as_str().unwrap().parse().unwrap()
+                                                    ))
+                                                } else {
+                                                    //println!("testing");
+                                                    //println!("{:?}",o["nilai"][i]["nilai"]);
+                                                    for x in 0.. {
+                                                        if let serde_json::Value::Number(n) = &o["nilai"][i]["nilai"][x] {
+                                                            let kk = n.as_u64();
+                                                            if let Some(kk) = kk {
+                                                                v.push(Some(kk as u8))
+                                                            } else {
+                                                                panic!()
+                                                            }
+                                                        } else {
+                                                            break
+                                                        }
+                                                    }
+                                                
+                                                    /*
+                                                    for x in 0..{
+                                                        if let Some(x) = o["nilai"][i]["nilai"][x] {
+                                                            println!("{}",x)
+                                                        } else {
+                                                            break
+                                                        }
+                                                    }
+                                                    */
+                                                    //panic!();
+                                                    /*
+                                                    for x in 0..len {
+                                                        if let Some(k) = o["nilai"][i]["nilai"][x].as_str() {
+                                                            v.push(
+                                                                Some(k.parse().unwrap())
+                                                            )
+                                                        } else {
+                                                            for i in x..len {
+                                                                v.push(None)
+                                                            }
+                                                            break
+                                                        }
+                                                    }
+                                                    */
+                                                }
+                                                v    
+                                                }
+                                                */
+                                            ,
+                                            _=>{ panic!() }
+                                        },
+                                        if let Some(_) = o["nilai"][i]["mut"].as_str() {_mut = true; true} else {_mut = false; false},
+                                        false) 
+                                    );
+                                    //let x = data.clone();
+                                    //_data_var.insert(o["nilai"][i]["nama"].as_str().unwrap().to_string(), (id , x , pohon.len(),_mut.clone()));
+                                    _data_var.insert(o["nilai"][i]["nama"].as_str().unwrap().to_string(), (id , data , pohon.len(),_mut.clone()));
+
                                     //???
                                 }
                                 /*
@@ -236,6 +380,42 @@ pub fn parse_2(
                                                     break
                                                 }
                                             }
+                                            match &nama.1.1 {
+                                                Tipe::_u8(vec,_t) =>{
+                                                    /*
+                                                    if let Some(k) = _data_var.get_mut(nama.0) {
+                                                        if k.3 {
+                                                            if let Tipe::_u8(len) = k.1 {
+                                                                if len.capacity() == 1 {
+                                                                    if let Ok(hasil) = v[0].parse::<u8>() {
+                                                                        pohon.push(
+                                                                            Pohon::tulis(
+                                                                                nama.1.0,
+                                                                                Tipe::_u8(
+                                                                                    Vec::from([Some(hasil)])
+                                                                                )
+                                                                            )
+                                                                        )
+                                                                    } else {
+                                                                        panic!()
+                                                                    }
+                                                                } else {
+                                                                    panic!()
+                                                                }
+                                                            } else {
+                                                                panic!()
+                                                            }
+                                                        } else {
+                                                            panic!()
+                                                        }
+                                                    } else {
+                                                        panic!()
+                                                    }
+                                                    */
+                                                }
+                                                _=> panic!() ,
+                                            }
+                                            /*
                                             match nama.1.1 {
                                                 Tipe::_u8(_)=>{
                                                     //if v.len() == 1 {
@@ -255,6 +435,7 @@ pub fn parse_2(
                                                 }
                                                 _=>{}
                                             }
+                                            */
                                             /*
                                             pohon.push(
                                                 Pohon::tulis(
@@ -733,7 +914,7 @@ pub fn parse_2(
                                             .to_string()
                                             .as_str()
                                         {
-                                            "0" => Nilai::lansung_str(
+                                            "0" => Nilai::langsung_str(
                                                 o["nilai"][i]["nilai"]
                                                     .as_str()
                                                     .unwrap()
@@ -841,8 +1022,8 @@ pub fn parse_2(
                                 )),
                                 "cetak" => {
                                     match o["nilai"][i]["nilai"][0].as_str().unwrap() {
-                                        "lansung" => {
-                                            pohon.push(Pohon::cetak(Nilai::lansung_str(
+                                        "langsung" => {
+                                            pohon.push(Pohon::cetak(Nilai::langsung_str(
                                                 o["nilai"][i]["nilai"][1]
                                                     .as_str()
                                                     .unwrap()
@@ -850,7 +1031,7 @@ pub fn parse_2(
                                             )));
                                         }
                                         "langsung_int" => {
-                                            pohon.push(Pohon::cetak(Nilai::lansung_int(
+                                            pohon.push(Pohon::cetak(Nilai::langsung_int(
                                                 o["nilai"][i]["nilai"][1]
                                                     .as_str()
                                                     .unwrap()
@@ -859,7 +1040,7 @@ pub fn parse_2(
                                             )));
                                         }
                                         "langsung_f" => {
-                                            pohon.push(Pohon::cetak(Nilai::lansung_float(
+                                            pohon.push(Pohon::cetak(Nilai::langsung_float(
                                                 o["nilai"][i]["nilai"][1]
                                                     .as_str()
                                                     .unwrap()

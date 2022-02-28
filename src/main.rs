@@ -1,4 +1,5 @@
 #![feature(with_options)]
+#![feature(io_read_to_string)]
 use std::sync::mpsc::channel;
 extern crate wat;
 mod codeart;
@@ -56,9 +57,8 @@ fn kopilasi() -> Result<(),u64> {
     //let foo = Arc::new(String::with_capacity(100));
     //kode error 1
     #[allow(unused_variables)]
-    let (perpus, kompilasi, versi, nama_app, turbo, pola) =
+    let (perpus, kompilasi, versi, nama_app, turbo, pola,kom) =
         file_management::seting::seting(&mut BUFF.lock().unwrap(), &PROYEK, &ARGS.to_vec());
-    static mut POHON: std::vec::Vec<crate::parsing::parse_3::Pohon> = Vec::new();
     if pola.0 {
         /*
         **versi lama 0.1.0**
@@ -89,6 +89,7 @@ fn kopilasi() -> Result<(),u64> {
         }).expect("").join().expect("");
         */
         //gabung_kode::kode(&ARGS[PROYEK]);
+
         let (test1, test2) = channel();
         let (a, b) = channel();
         //let (c,d) = channel();
@@ -96,6 +97,12 @@ fn kopilasi() -> Result<(),u64> {
         let (x, y) = channel();
         let (m, p) = channel();
         let (k, r) = channel();
+        static mut POHON: std::vec::Vec<crate::parsing::parse_3::Pohon> = Vec::new();
+        unsafe { POHON.reserve(10); }
+        
+        let (tunggu_pohon,t) = channel();
+        let (tunggu_pohon_2,t_2) = channel();
+        //let (Pohon,akar) = std::sync::mpsc::sync_channel(bound: usize);
         //
         //let (mulai,tunggu) = channel();
         //let (mulai2,tunggu2) = channel();
@@ -118,24 +125,52 @@ fn kopilasi() -> Result<(),u64> {
             {file_management::index_2::baca(&mut BUFF.lock().unwrap(), y, &ARGS[PROYEK], p, k,turbo)},"inx2".to_string(),inx2,
              //kode error 18
             {
-                parsing::parse_3::parse_2(m,r,&ARGS[PROYEK],unsafe{ &mut POHON })
+                parsing::parse_3::parse_2(m,r,&ARGS[PROYEK],unsafe{ &mut POHON });
+                println!(
+                    "parsing selesai : {}/detik\n]\n",
+                    waktu.elapsed().as_secs_f32()
+                );
+                #[cfg(debug_assertions)]
+                println!("[pohon]\n{:#?}", unsafe { &POHON });
+                if pola.1 {
+                    //kode error 20
+                    println!(
+                        "[ optimalisasi selesai : {}/detik ]",
+                        waktu.elapsed().as_secs_f32()
+                    );
+                }
+                if kom.0 { tunggu_pohon.send(()).unwrap();}
+                if kom.1 { tunggu_pohon_2.send(()).unwrap();}
+
                 //parsing::parse_3::parse(m,r,&ARGS[PROYEK],unsafe{ &mut POHON })
             },"tulis_parse_3".to_string(),tulis_parse_2,
             //{},"pohon".to_string(),pohon
+            {
+                if kom.0 {
+                    t.recv().unwrap();
+                    println!(
+                        "[ was selesai : {}/detik ]",
+                        waktu.elapsed().as_secs_f32()
+                    );
+                }
+            },"was_".to_string(),was_,
+            {
+                if kom.1 {
+                    t_2.recv().unwrap();
+                    //let nama_app = nama_app.clone();
+                    konversi::pwa::app(unsafe { &POHON }, &ARGS[PROYEK], nama_app.clone());
+                    println!(
+                        "[ pwa selesai : {}/detik ]",
+                        waktu.elapsed().as_secs_f32()
+                    );
+                }
+            },"pwa_".to_string(),pwa_,
         };
-        println!(
-            "parsing selesai : {}/detik\n]\n",
-            waktu.elapsed().as_secs_f32()
-        );
+        
     }
-    if pola.1 {
-        //kode error 20
-        println!(
-            "[optimalisasi selesai : {}/detik]",
-            waktu.elapsed().as_secs_f32()
-        );
-    }
+    /*
     if pola.2 {
+        // versi lama 0.8.1
         #[cfg(debug_assertions)]
         println!("[pohon]\n{:#?}", unsafe { &POHON });
         let mut tread : Vec<std::thread::JoinHandle<(crate::error::ErrorKode,&str)>>  = Vec::with_capacity(1);
@@ -232,6 +267,7 @@ fn kopilasi() -> Result<(),u64> {
             }
         });
     }
+    */
     println!("[ selesai : {}/detik ]", waktu.elapsed().as_secs_f32());
     Ok(())
 }

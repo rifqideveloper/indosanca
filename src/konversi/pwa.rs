@@ -15,11 +15,12 @@ struct manifest {
     icons: Vec<[String; 3]>,
     screenshots: Vec<[String; 3]>,
 }
+
 struct AppObjek {
     manifest: manifest,
     offset: usize,
     main_selesai: bool,
-    alokasi_mem : Vec<(String,String)>,
+    alokasi_mem : HashMap<u64, Tipe>,
     import: (
         bool,
         bool,
@@ -38,20 +39,27 @@ struct AppObjek {
         bool,
     ),
     chace: Vec<String>,
-    var_: HashMap<u64, Tipe>,
     data: std::fs::File,
     was_main: std::io::BufWriter<std::fs::File>,
     html: std::io::BufWriter<std::fs::File>,
     swj: std::io::BufWriter<std::fs::File>,
     wat: std::io::BufWriter<std::fs::File>,
     lib: std::io::BufWriter<std::fs::File>,
+    string_: Vec<String>,
+    arr_:(bool,bool,bool),
 }
 impl AppObjek {
     fn awal(&mut self) {
+        
+        /*
+        self.alokasi_mem.1.into_iter().for_each(|i|{
+
+        });
+        */
         self.tambah_data(&"./sw.js".to_string());
         self.html.write(b"<!DOCTYPE html><head><meta name=\"viewport\"content=\"width=device-width\"><link rel=\"apple-touch-icon\" href=\"aset/icon512.png\"><link rel=\"manifest\"href=\"./manifest.json\"><script>if('serviceWorker' in navigator){").unwrap();
     }
-    fn akhir_(mut self, path: &String) -> (std::io::BufWriter<std::fs::File>,std::vec::Vec<(String,String)> ) {
+    fn akhir_(mut self, path: &String) -> (std::io::BufWriter<std::fs::File>,HashMap<u64,Tipe>,String) {
         //self.html.write(b"}else{}</script>").unwrap();
         std::fs::write(format!("{}\\target\\debug\\pwa\\manifest.json", path), {format!("{{\"name\":{:?},\"short-name\":{:?},\"start_url\":{:?},\"scope\":\".\",\"display\":{:?},\"background_color\":{:?},\"theme_color\":{:?},\"description\":{:?},\"icons\":{:?}}}",self.manifest.nama,self.manifest.nama_pendek,self.manifest.url_mulai,self.manifest.display,self.manifest.warna_latarbelakan,self.manifest.warna_tema,self.manifest.description,{
             let mut v = "{".to_string();
@@ -101,16 +109,33 @@ impl AppObjek {
         //
         self.swj.write(b"])}))});self.addEventListener('activate',()=>console.log('SW Activated'));self.addEventListener('fetch',(e)=>e.respondWith(caches.match(e.request).then((r)=>r|fetch(e.request))));").unwrap();
         //
-        self.html.write({format!("const o_={{import:{{mem: new WebAssembly.Memory({{initial:{}}}),woker_in:(o, l)=>navigator.serviceWorker.register(new TextDecoder('utf8').decode(new Uint8Array(o_.import.mem.buffer,o,l))).then((r)=>console.log('Service worker registration succeeded:', r),(e)=>console.log('Service worker registration failed:',e))",1,)}.as_bytes()).unwrap();
+        self.html.write({format!("{} o_={{import:{{mem: new WebAssembly.Memory({{initial:{}}}),woker_in:(o, l)=>navigator.serviceWorker.register(new TextDecoder('utf8').decode(new Uint8Array(o_.import.mem.buffer,o,l))).then((r)=>console.log('Service worker registration succeeded:', r),(e)=>console.log('Service worker registration failed:',e))",if self.string_.is_empty() {"const"} else {"let"},1,)}.as_bytes()).unwrap();
+        if !self.string_.is_empty() {
+            self.html.write(b",_string:[").unwrap();
+            let mut i = 0 ;
+            loop {
+                self.html.write(
+                    format!("\"{}\"",self.string_[i]).as_bytes()
+                ).unwrap();
+                i += 1 ;
+                if i == self.string_.len() {
+                    self.html.write(b"]").unwrap();
+                    break
+                }
+                self.html.write(b",").unwrap();
+            }
+        }
         //lib
         self.wat.write(b"(module\n(import\"import\"\"woker_in\"(func $woker_in(param i32 i32)))\n(import\"import\"\"mem\"(memory 1))\n").unwrap();
-        self.wat.write({format!("(data(i32.const 0)\"{}\")\n",{
-            //self.data.flush().unwrap();
-            self.data = std::fs::File::open(format!("{}\\parsing\\pwa\\data", path)).unwrap();
-            let mut buf = String::with_capacity(30);
-            self.data.read_to_string(&mut buf).unwrap();
-            buf
-        })}.as_bytes()).unwrap();
+        self.data = std::fs::File::open(format!("{}\\parsing\\pwa\\data", path)).unwrap();
+        let mut buf = String::with_capacity(1000);
+        if self.data.read_to_string(&mut buf).unwrap() != 0 {
+            self.wat.write({format!("(data(i32.const 0)\"{}\")\n",{
+                //self.data.flush().unwrap();
+                &buf
+            })}.as_bytes()).unwrap();
+            buf.clear();
+        }
         if self.import.0 {
             self.html.write(b",\"log\":(o,l)=>console.log(new TextDecoder('utf8').decode(new Uint8Array(o_.import.mem.buffer,o,l)))").unwrap();
             self.wat.write(b"(import\"import\"\"log\"(func $log(param i32 i32)))\n")
@@ -173,7 +198,192 @@ impl AppObjek {
         //
         self.html.write(b"}).catch(console.error)}else{console.log('Service workers are not supported.')}</script>").unwrap();
         //
-        (self.wat,self.alokasi_mem)
+        if self.arr_.0 {
+            self.wat.write(
+                b"\
+                (func $arr(param i32 i32)\n\
+                    (set_local 1 (i32.load (i32.const 0)))\n\
+                    (i32.store (i32.const 0)\n\
+                        (i32.add \n\
+                            (i32.add \n\
+                                (get_local 1)\n\
+                                (i32.mul\n\
+                                    (get_local 0)\n\
+                                    (i32.const 4)\n\
+                                )\n\
+                            )\n\
+                            (i32.const 4)\n\
+                        )\n\
+                    )\n\
+                )\n\
+                (func $offset(param i32 i32)(result i32)\n\
+                    (i32.add\n\
+                        (i32.add (get_local 0) (i32.const 4))\n\
+                        (i32.mul (i32.const 4) (get_local 1))\n\
+                    )\n\
+                )\n\
+                (func $set (param i32 i32 i32)\n\
+                    (i32.store\n\
+                        (call $offset (get_local 0) (get_local 1))\n\
+                        (get_local 2)\n\
+                    )\n\
+                )\n\
+                (func $get (param i32 i32) (result i32)\n\
+                    get_local 0\n\
+                    get_local 1\n\
+                    call $offset\n\
+                    i32.load\n\
+                )\n\
+                "
+            ).unwrap();
+            /*versi lama
+            self.wat.write(b"(func $arr(param i32 i32)\n\
+            (local $off i32)\n\
+            (set_local $off (i32.load (i32.const 0)))\n\
+            (i32.store (i32.const 0)\n\
+                (i32.add\n\
+                    (i32.add\n\
+                        (get_local $off)\n\
+                        (i32.mul\n\
+                            (get_local 0)\n\
+                            (i32.const 4)\n\
+                        )\n\
+                    )\n\
+                    (i32.const 4) \n\
+                )\n\
+            )\n\
+            get_local $off\n\
+            set_local 1\n\
+            )\n\
+            (func $offset(param i32 i32)(result i32)\n\
+                (i32.add\n\
+                    (i32.add (get_local 0) (i32.const 4))\n\
+                    (i32.mul (i32.const 4) (get_local 1))\n\
+                )\n\
+            )\n\
+            (func $set (param i32 i32 i32)\n\
+                (i32.store\n\
+                    (call $offset (get_local 0) (get_local 1))\n\
+                    (get_local 2)\n\
+                )\n\
+            )\n\
+            (func $get (param i32 i32) (result i32)\n\
+                get_local 0\n\
+                get_local 1\n\
+                call $offset\n\
+                i32.load\n\
+            )\n\
+            ").unwrap();
+            */
+            if true {
+                self.wat.write(b"(func $len(param i32)(result i32)\n\
+                 (i32.load\n\
+                    get_local 0\n\
+                )\n\
+             )\n").unwrap();
+            }
+            /*versi lama
+            self.wat.write(b"\
+            (func $arr (param $len i32) (result i32)\n\
+            (local $offset i32)\n\
+            (set_local $offset (i32.load (i32.const 0)))\n     
+                (i32.store (get_local $offset)\n 
+                   (get_local $len)
+                ) \n
+                (i32.store (i32.const 0)\n                               
+                   (i32.add \n
+                       (i32.add\n
+                           (get_local $offset)\n
+                           (i32.mul \n
+                               (get_local $len) \n
+                               (i32.const 4)\n
+                           )\n
+                       )\n
+                       (i32.const 4) \n                    
+                   )\n
+                )\n
+                (get_local $offset)\n                      
+            )
+            (func $offset (param $arr i32) (param $i i32) (result i32)\n
+                (i32.add
+                (i32.add (get_local $arr) (i32.const 4))    ;; The first i32 is the array length 
+                (i32.mul (i32.const 4) (get_local $i))      ;; one i32 is 4 bytes
+                )
+            )
+            (func $set (param $arr i32) (param $i i32) (param $value i32)
+            (i32.store (call $offset (get_local $arr) (get_local $i)) (get_local $value) ) 
+            )
+            ").unwrap();
+            if self.arr_.1 {
+                self.wat.write(b"
+                (func $get (param $arr i32) (param $i i32) (result i32)
+                (i32.load 
+                (call $offset (get_local $arr) (get_local $i)) 
+                )
+                )
+                ").unwrap();
+                
+            }
+            if self.arr_.2 {
+                self.wat.write(b"
+                (func $len (param $arr i32) (result i32)
+                (i32.load (get_local $arr))
+                )
+                ").unwrap();
+            }
+            */
+            /*versi lama
+            self.wat.write(
+                b"
+                (func $arr (param $len i32) (result i32)
+                (local $offset i32)                              
+                (set_local $offset (i32.load (i32.const 0)))     
+                (i32.store (get_local $offset)                   
+                   (get_local $len)
+                ) 
+                (i32.store (i32.const 0)                                            
+                   (i32.add 
+                       (i32.add
+                           (get_local $offset)
+                           (i32.mul 
+                               (get_local $len) 
+                               (i32.const 4)
+                           )
+                       )
+                       (i32.const 4)                     
+                   )
+                )
+                (get_local $offset)                      
+                )
+                ;; return the array length
+                (func $len (param $arr i32) (result i32)
+                (i32.load (get_local $arr))
+                )
+                ;; convert an element index to the offset of memory
+                (func $offset (param $arr i32) (param $i i32) (result i32)
+                (i32.add
+                (i32.add (get_local $arr) (i32.const 4))    ;; The first i32 is the array length 
+                (i32.mul (i32.const 4) (get_local $i))      ;; one i32 is 4 bytes
+                )
+                )
+                ;; set a value at the index 
+                (func $set (param $arr i32) (param $i i32) (param $value i32)
+                (i32.store 
+                (call $offset (get_local $arr) (get_local $i)) 
+                (get_local $value)
+                ) 
+                )
+                ;; get a value at the index 
+                (func $get (param $arr i32) (param $i i32) (result i32)
+                (i32.load 
+                (call $offset (get_local $arr) (get_local $i)) 
+                )
+                )
+                "
+            ).unwrap();
+            */
+        }
+        (self.wat,self.alokasi_mem,buf)
     }
     /*
     fn akhir(
@@ -301,13 +511,107 @@ impl AppObjek {
         self.offset += kata.len();
         v
     }
+    fn tambah_arr(&mut self, data:&Vec<Option<u8>> ,id:u64)  {
+        self.was_main.write(
+            format!(/*"(i32.store (i32.const 0) (i32.const {}))\n"*/"i32.const {}\nget_local $_{}\ncall $arr\n",data.len(),id).as_bytes()
+        ).unwrap();
+        for i in 0..data.len() {
+            if let Some(o) = data[i] {
+                self.was_main.write(
+                    format!("get_local $_{}\ni32.const {}\ni32.const {}\ncall $set\n",id,i,o).as_bytes()
+                ).unwrap();
+            }
+        }
+        self.arr_.0 = true;
+        /*
+        //test 
+        //get
+        self.import.1 = true;
+        self.arr_.1 = true;
+        self.was_main.write(
+            format!("get_local $_{}\ni32.const 3\ncall $get\ncall $log_\n",id).as_bytes()
+        ).unwrap();
+        */
+        //get
+        /*
+        self.was_main.write(
+            format!("(i32.load (get_local $_{}))\ncall $log_\n",id).as_bytes()
+        ).unwrap();
+        */
+        /*versi lama
+        self.arr_.0 = true;
+        self.was_main.write(
+            format!("(i32.store (i32.const 0) (i32.const {2}))\n(set_local $_{0} (call $arr (i32.const {1})))\n",id,data.len(),data.len()-1).as_bytes()
+        ).unwrap();
+        for i in 0..data.len() {
+            if let Some(o) = data[i] {
+                self.was_main.write(
+                    format!("(call $set (get_local $_{}) (i32.const {}) (i32.const {}))\n",id,i+1,o).as_bytes()
+                ).unwrap();
+            }
+        }
+         */      
+    }
+    
+    fn tambah_vec<T:Sized + std::fmt::Display + Copy>(&mut self, id: &u64 , data:&std::vec::Vec<std::option::Option<T>>) -> std::vec::Vec<std::option::Option<T>> {
+        //self.alokasi_mem.insert(*id, Tipe::_u8(true,data.clone()));
+        //len dan kapasitas vector
+        self.was_main.write(
+            format!("\
+            i32.const {0}\n\
+            get_local $_{1}\n\
+            call $arr\n\
+            get_local $_{1}\n\
+            i32.const 0\n\
+            i32.const {2}\n\
+            call $set\n\
+            get_local $_{1}\n\
+            i32.const 1\n\
+            i32.const {3}\n\
+            call $set\n\
+            ",data.capacity()+2,id,data.len(),data.capacity()).as_bytes()
+        ).unwrap();
+        let mut i = 2 ;
+        data.into_iter().for_each(|f|{
+            if let Some(o) = f {
+                    self.was_main.write(
+                        format!("get_local $_{}\ni32.const {}\ni32.const {}\ncall $set\n",id,i,o).as_bytes()
+                    ).unwrap();
+                i += 1 ;
+            } else {
+                panic!()
+            }
+        });
+        self.arr_.0 = true;
+        data.to_vec()
+    }
     fn tambah_var(&mut self, data: &Tipe, id: u64) {
+        /*
+        if let Tipe::_string(data) = data {
+            match data {
+                crate::parsing::Str::Some(kata)=>{
+                    let x = self.tambah_data(&kata);
+                    self.var_
+                        .insert(id, Tipe::_string(crate::parsing::Str::arr([x, kata.len()])));
+                }
+                crate::parsing::Str::arr(o)=>{
+
+                }
+                crate::parsing::Str::None=>{}
+            }
+            return
+        }
+        if let Tipe::_u8(data) = data {
+
+        }
+        */
+        
         match data {
             Tipe::_string(data) => {
                 match data {
                     crate::parsing::Str::Some(kata)=>{
                         let x = self.tambah_data(&kata);
-                        self.var_
+                        self.alokasi_mem
                             .insert(id, Tipe::_string(crate::parsing::Str::arr([x, kata.len()])));
                     }
                     crate::parsing::Str::arr(o)=>{
@@ -326,29 +630,84 @@ impl AppObjek {
                 }
                 */
             }
-            Tipe::_u8(data_) => {
+            
+            Tipe::_u8(vec,data_) => {
+                if *vec {
+                    let v = self.tambah_vec(&id,data_) ;
+                    self.alokasi_mem.insert(id, Tipe::_u8(true,v));
+                } else if let Some(data) = data_[0] {
+                    self.alokasi_mem
+                    .insert(id, Tipe::_u8(*vec,data_.clone()));
+                    if data_.len() == 1 {
+                        self.was_main.write(
+                            format!("i32.const {:?}\nset_local $_{:?}\n",data,id).as_bytes()
+                        ).unwrap();
+                    } else {
+                        /*
+                        for i in &self.alokasi_mem.1 {
+                            println!("{}",i.0)
+                        }
+                        */
+                        //panic!();
+                        
+                        self.tambah_arr(data_,id);
+                        //test
+                        //self.halaman_(&crate::parsing::parse_3::Nilai::penujuk_(id)) ;
+                    }
+                } else {
+                    panic!()
+                }
+                
+                /*
+                self.alokasi_mem.0.push((
+                    "i32".to_string(),
+                    id.to_string()
+                ));
+                */
+                /*
+                self.alokasi_mem.push((
+                    "i32".to_string(),
+                    id.to_string()
+                ));
                 if let Some(data_) = data_ {
                     self.was_main.write(
                         format!("i32.const {:?}\nset_local $_{:?}\n",data_,id).as_bytes()
                     ).unwrap();
-                    self.alokasi_mem.push((
-                        "i32".to_string(),
-                        id.to_string()
-                    ));
                     self.var_
                             .insert(id, Tipe::_u8(Some(*data_)));
-                } else {
-
                 }
+                */
                 /*
                 self.var_
                     .insert(id, Tipe::_u8(if let Some(_) = data { *data } else { None }));
                 */
-                }
-            Tipe::nomer(data) => {}
-            _ => {}
+            }
+            /*
+            Tipe::nomer(data) => {
+
+            }
+            */
+            _ => {
+                panic!()
+            }
         }
+        
         //self.var_.insert(id,data);
+    }
+    fn tulis(&mut self,id:&u64,tipe_:&Tipe ) {
+        match tipe_ {
+            Tipe::_u8(vec,data_) => {
+                if data_.len() == 1 {
+                    self.was_main.write(
+                        format!("i32.const {:?}\nset_local $_{:?}\n" ,data_[0].unwrap() ,id ).as_bytes()
+                    ).unwrap();
+                } else {
+                    panic!()
+                }
+                
+            }
+            _ => { panic!() }
+        }
     }
     /*
     fn tambah_data_var(&mut self, kata: &String, id: u64) {
@@ -378,7 +737,7 @@ impl AppObjek {
     */
     fn halaman_(&mut self , in_:&crate::parsing::parse_3::Nilai) {
         match in_ {
-            crate::parsing::parse_3::Nilai::lansung_str(kata)=>{
+            crate::parsing::parse_3::Nilai::langsung_str(kata)=>{
                 let off = self.tambah_data(kata);
                 self.was_main
                     .write(format!("i32.const {}\ni32.const {}\ncall $body\n", off, kata.len()).as_bytes())
@@ -386,7 +745,7 @@ impl AppObjek {
                 self.import.2 = true
             }
             crate::parsing::parse_3::Nilai::penujuk_(k)=>{
-                if let Some(o) = self.var_.get(k) {
+                if let Some(o) = self.alokasi_mem.get(k) {
                     match o {
                         crate::parsing::Tipe::_string(o)=>{
                             match o {
@@ -400,18 +759,24 @@ impl AppObjek {
                                 _=>{}
                             }
                         }
-                        crate::parsing::Tipe::_u8(o)=>{
-                            if let Some(_) = o {
+                        crate::parsing::Tipe::_u8(vec,_)=>{
+                            //if o.len() == 1 {
+                                /*
+                                if let None = o[1] {
+                                    panic!()
+                                }
+                                */
                                 self.was_main
-                                    .write(
-                                        format!("local.get $_{}\ncall $body_\n",k).as_bytes()
-                                    ).unwrap();
-                                    self.import.3 = true;
-                            } else {
-
-                            }
+                                .write(
+                                    format!("local.get $_{}\ncall $body_\n",k).as_bytes()
+                                ).unwrap();
+                                self.import.3 = true;
+                            //} else {
+                              //  panic!()
+                            //}
+                            
                         }
-                        _=>{}
+                        _=>{ panic!() }
                     }
                 } else {
                     panic!()
@@ -422,7 +787,9 @@ impl AppObjek {
     }
     fn tambah_ke_stak(&mut self,nama:&crate::parsing::Tipe,konst:bool) {
         match nama {
-            Tipe::_i32(nomer) =>{
+            Tipe::_i32(vec,nomer) =>{
+                panic!();
+                /*
                 if let Some(nomer) = nomer {
                     self.was_main.write(
                         format!("local ${:?} i32\n(local.set ${:?} i32.const {})\n",nama,nama,nomer).as_bytes()
@@ -432,13 +799,16 @@ impl AppObjek {
                         format!("local ${:?} i32\n",nama).as_bytes()
                     ).unwrap();
                 }
+                */
             }
             _=>{panic!()}
         }
     }
     fn set_stak(&mut self,nama:&crate::parsing::Tipe) {
         match nama {
-            Tipe::_i32(nomer) =>{
+            Tipe::_i32(vec,nomer) =>{
+                panic!();
+                /*
                 if let Some(nomer) = nomer {
                     self.was_main.write(
                         format!("(local.set ${:?} i32.const {})\n",nama,nomer).as_bytes()
@@ -446,6 +816,7 @@ impl AppObjek {
                 } else {
                     panic!()
                 }
+                */
             }
             _=>{panic!()}
         }
@@ -467,9 +838,23 @@ impl AppObjek {
             .write({ format!(":fn:{}\n", nama) }.as_bytes())
             .unwrap();
     }
+    fn panggil_fn(&mut self , nama:&String)  {
+        self.was_main.write(
+            format!("{}call ${}\n","",nama).as_bytes()
+        ).unwrap();
+    }
+    fn tambah_string(&mut self , data:Option<String>) {
+        self.string_.push(
+            if let Some(o) = data {
+                o
+            } else {
+                "".to_string()
+            }
+        );
+    }
 }
 pub fn app(pohon: &std::vec::Vec<Pohon>, path: &String, nama: String) -> crate::error::ErrorKode {
-    let mut app = AppObjek {
+    let mut App = AppObjek {
         manifest: manifest {
             nama: nama.clone(),
             nama_pendek: nama,
@@ -481,15 +866,16 @@ pub fn app(pohon: &std::vec::Vec<Pohon>, path: &String, nama: String) -> crate::
             icons: Vec::with_capacity(3),
             screenshots: Vec::with_capacity(3),
         },
+        string_: Vec::new(),/*from(["".to_string(),"test".to_string()]),*/
         offset: 0,
         main_selesai: false,
-        alokasi_mem : Vec::new(),
+        alokasi_mem : HashMap::with_capacity(2),
         import: (
             false, false, false, false, false, false, false, false, false, false, false, false,
             false, false, false
         ),
         chace: Vec::with_capacity(2),
-        var_: HashMap::with_capacity(3),
+        //var_: HashMap::with_capacity(3),
         data: match std::fs::File::with_options().read(true).write(true).create(true).open(format!("{}\\parsing\\pwa\\data", path)) {
             Ok(o) => o,
             Err(_) => {
@@ -529,44 +915,87 @@ pub fn app(pohon: &std::vec::Vec<Pohon>, path: &String, nama: String) -> crate::
         ),
         lib: std::io::BufWriter::new(
             std::fs::File::create(format!("{}\\parsing\\pwa\\lib", path)).unwrap()
-        )
+        ),
+        arr_: (false,false,false)
     };
-    app.awal();
+    App.awal();
     for i in pohon {
         match i {
             Pohon::_let(id,data,_,_) =>{
-                app.tambah_var(&data, *id );
+                App.tambah_var(&data, *id );
+            }
+            Pohon::tulis(a,b)=>{
+                App.tulis(a,b);
             }
             Pohon::halaman(o)=>{
-                app.halaman_(o);
+                App.halaman_(o);
+            }
+            //
+            Pohon::fungsi(nama) => {
+                App.tambah_fn(&nama, path);
+            }
+            Pohon::panggil_fn(nama) =>{
+                App.panggil_fn(nama)
             }
             _ => {}
         }
     }
     use std::io::BufRead;
-    let (mut wat,alokasi_mem) = app.akhir_(path) ;
-    let mut _main = std::io::BufReader::new( std::fs::File::open( format!("{}\\parsing\\pwa\\main", path) ).unwrap());
+    let (mut wat,alokasi_mem,mut buf) = App.akhir_(path) ;
+    //let mut _main = std::io::BufReader::new( std::fs::File::open( format!("{}\\parsing\\pwa\\main", path) ).unwrap());
     let mut _data = std::io::BufReader::new( std::fs::File::open( format!("{}\\parsing\\pwa\\data", path) ).unwrap());
     let mut _lib = std::io::BufReader::new( std::fs::File::open( format!("{}\\parsing\\pwa\\lib", path) ).unwrap());
-    let mut buf = String::with_capacity(100);
     //lib
-    while _lib.read_line(&mut buf ).unwrap() != 0 {
-        buf.clear()
+    let mut x = false ;
+    loop {
+        if _lib.read_line(&mut buf).unwrap() != 0 {
+            if buf.starts_with(":fn") {
+                if x  {
+                    wat.write(
+                        {format!(")(func ${}\n",buf.split(":").collect::<Vec<&str>>()[2].trim_end())}.as_bytes()
+                    ).unwrap();
+                } else {
+                    wat.write(
+                        {format!("(func ${}\n",buf.split(":").collect::<Vec<&str>>()[2].trim_end())}.as_bytes()
+                    ).unwrap();
+                    x = true ;
+                }
+            } else {
+                wat.write(buf.as_bytes()).unwrap();
+                /*
+                wat.write(
+                    {format!("(func ${}\n",buf.split(":").collect::<Vec<&str>>()[2].trim_end())}.as_bytes()
+                ).unwrap();
+                */
+            }
+            buf.clear();
+        } else if x {
+            wat.write(b")(func(export\"main\")\n").unwrap();
+            break
+        } else {
+            wat.write(b"(func(export\"main\")\n").unwrap();
+            break
+        }
     }
+    drop((x,buf,_data,_lib));
     //main
-    wat.write(b"(func(export\"main\")\n").unwrap();
-    for i in alokasi_mem {
-        wat.write(
-            {format!("(local $_{} {})\n",i.1,i.0)}.as_bytes()
-        ).unwrap();
-    }
+    //buf.push_str("(func(export\"main\")\n");
+    //read&drop
+    {alokasi_mem}.into_iter().for_each(|i|{wat.write(
+        format!("(local $_{} {})\n",i.0,"i32").as_bytes()
+    ).unwrap();});
     wat.write(b"i32.const 0\ni32.const 7\ncall $woker_in\n").unwrap();
-    while _main.read_line(&mut buf ).unwrap() != 0 {
+    wat.write(
+        std::io::read_to_string(&mut std::fs::File::open( format!("{}\\parsing\\pwa\\main", path) ).unwrap()).unwrap().as_bytes()
+    ).unwrap(); 
+    /*
+    loop {
         wat.write(buf.as_bytes()).unwrap();
-        buf.clear()
+        buf.clear();
+        if _main.read_line(&mut buf ).unwrap() == 0 { break }
     }
-    {wat}.write(b"\n)\n)").unwrap();
-    drop((_main,_data,_lib));
+    */
+    drop( {wat}.write(b"\n)\n)").unwrap() );
     std::fs::write(
         format!("{}\\target\\debug\\pwa\\main.wasm", path),
         wat::parse_file(format!("{}\\parsing\\pwa\\main.wat", path)).unwrap(),

@@ -6,7 +6,7 @@ pub fn kode( bin: std::vec::Vec<crate::parsing::parse_3::Pohon> ){
         match i {
             crate::parsing::parse_3::Pohon::cetak(o) => {
                     match o {
-                        crate::parsing::parse_3::Nilai::lansung_str(o) =>{
+                        crate::parsing::parse_3::Nilai::langsung_str(o) =>{
                             print!("{}",o)
                         }
                         _=>{}

@@ -57,25 +57,33 @@ macro_rules! operasi_logika_aritmatik {
         }
     };
 }
-pub fn parse(baris: std::sync::mpsc::Receiver<perintah>, kirim: std::sync::mpsc::Sender<String>) {
+pub fn parse(
+    baris: std::sync::mpsc::Receiver<(u64, String, perintah)>,
+    kirim: std::sync::mpsc::Sender<String>,
+) {
     let mut fn_ = [false, false];
     //let mut blok = 0;
     let mut lewati_jika = (false, 0);
     'l0: loop {
-        match baris.recv().unwrap() {
+        let perintah_masuk = baris.recv().unwrap();
+        let nomer_baris = perintah_masuk.0;
+        let nama_file = perintah_masuk.1;
+        match perintah_masuk.2 {
             //perintah::konst(_,_)|perintah::glob_var(_,_,_)=>{}
             //perintah::_i32_konst(_)=>{}
             perintah::_let(nama, _mut, tipe) => {
                 //panic!();
                 kirim
                     .send(format!(
-                        "{}{{\"tipe\":\"let\",\"tipe_\":\"{},\"nama\":\"{}\"{}}}",
+                        "{}{{\"nomer_baris\":{},\"nama_file\":\"{}\",\"tipe\":\"let\",\"tipe_\":\"{},\"nama\":\"{}\"{}}}",
                         if fn_[1] {
                             ","
                         } else {
                             fn_[1] = true;
                             ""
                         },
+                        nomer_baris,
+                        nama_file,
                         match tipe {
                             Tipe::_string(o) => {
                                 if let crate::parsing::Str::Some(o) = o {
@@ -87,10 +95,19 @@ pub fn parse(baris: std::sync::mpsc::Receiver<perintah>, kirim: std::sync::mpsc:
                             Tipe::nomer(_) => {
                                 "nomer\"".to_string()
                             }
-                            Tipe::_u8(vec, o) => {
+                            Tipe::_u8(o) => {
                                 let mut v = String::with_capacity(100);
-                                v.push_str(&format!("u8_\",\"len\":\"{}\",", o.len()));
-                                if !vec {
+                                v.push_str("u8_\",");
+                                //v.push_str(&format!("u8_\",\"len\":\"{}\",", o.len()));
+                                if o.len() == 1 {
+                                    v.push_str("\"nilai\":");
+                                    if let Some(d) = o[0] {
+                                        v.push_str(&format!("{}",d))
+                                    }
+                                    //panic!()
+                                }
+                                /*
+                                if o.len() > 1 {
                                     v.push_str("\"nilai\":");
                                     if o.len() == 1 {
                                         v.push_str(&format!("{}", o[0].unwrap()))
@@ -111,30 +128,32 @@ pub fn parse(baris: std::sync::mpsc::Receiver<perintah>, kirim: std::sync::mpsc:
                                         }
                                         v.push_str("]");
                                     }
-                                }else if o.len() == 0 {
+                                } else if o.len() == 0 {
                                     v.push_str(&format!("\"cap\":{},\"nilai\":[]", o.capacity()));
-                                }else {
+                                } else {
                                     if let Some(s) = o[0] {
                                         v.push_str(&format!("\"cap\":{},\"nilai\":[", s));
-                                            let mut i = 0;
-                                            loop {
-                                                if let Some(o) = o[i] {
-                                                    v.push_str(&format!("{}", o))
-                                                } else {
-                                                    break;
-                                                    //v.push_str("None")
-                                                }
-                                                i += 1;
-                                                if i >= o.len() {
-                                                    break;
-                                                }
-                                                v.push_str(",")
+                                        let mut i = 0;
+                                        loop {
+                                            if let Some(o) = o[i] {
+                                                v.push_str(&format!("{}", o))
+                                            } else {
+                                                break;
+                                                //v.push_str("None")
                                             }
+                                            i += 1;
+                                            if i >= o.len() {
+                                                break;
+                                            }
+                                            v.push_str(",")
+                                        }
                                         v.push(']');
+                                        println!("{}",v)
                                     } else {
                                         panic!()
                                     }
                                 }
+                                */
                                 /*
                                 v.push_str("u8_\",\"len\":\"");
                                 // v.push_str(&format!("{}\",", o.len()));
@@ -496,15 +515,27 @@ pub fn parse(baris: std::sync::mpsc::Receiver<perintah>, kirim: std::sync::mpsc:
                                 format!("\"i64_ar\",\"nilai\":[{},{:?}]", len, v)
                             }
                             */
-                            Tipe::penujuk_(o,index) => {
-                                format!("penujuk_\",\"nilai\":\"{}\"{}", o , if let Some(ind) = index {
-                                    format!(",\"index\":{}",ind)
-                                } else {"".to_string()})
+                            Tipe::penujuk_(o, index) => {
+                                format!(
+                                    "penujuk_\",\"nilai\":\"{}\"{}",
+                                    o,
+                                    if let Some(ind) = index {
+                                        format!(",\"index\":{}", ind)
+                                    } else {
+                                        "".to_string()
+                                    }
+                                )
                             }
-                            Tipe::minta(o,index) => {
-                                format!("minta\",\"nilai\":\"{}\"{}", o, if let Some(ind) = index {
-                                    format!(",\"index\":{}",ind)
-                                } else {"".to_string()})
+                            Tipe::minta(o, index) => {
+                                format!(
+                                    "minta\",\"nilai\":\"{}\"{}",
+                                    o,
+                                    if let Some(ind) = index {
+                                        format!(",\"index\":{}", ind)
+                                    } else {
+                                        "".to_string()
+                                    }
+                                )
                             }
                             Tipe::None => {
                                 format!("None\"")
@@ -569,82 +600,101 @@ pub fn parse(baris: std::sync::mpsc::Receiver<perintah>, kirim: std::sync::mpsc:
             */
             perintah::putar => kirim
                 .send(format!(
-                    "{}{{\"tipe\":\"putar\"}}",
+                    "{}{{\"nomer_baris\":{},\"nama_file\":\"{}\",tipe\":\"putar\"}}",
                     if fn_[1] {
                         ","
                     } else {
                         fn_[1] = true;
                         ""
                     },
+                    nomer_baris,
+                    nama_file
                 ))
                 .unwrap(),
             perintah::putus => kirim
                 .send(format!(
-                    "{}{{\"tipe\":\"putus\"}}",
+                    "{}{{\"nomer_baris\":{},\"nama_file\":\"{}\",\"tipe\":\"putus\"}}",
                     if fn_[1] {
                         ","
                     } else {
                         fn_[1] = true;
                         ""
                     },
+                    nomer_baris,
+                    nama_file
                 ))
                 .unwrap(),
             perintah::lanjut => kirim
                 .send(format!(
-                    "{}{{\"tipe\":\"lanjut\"}}",
+                    "{}{{\"nomer_baris\":{},\"nama_file\":\"{}\",\"tipe\":\"lanjut\"}}",
                     if fn_[1] {
                         ","
                     } else {
                         fn_[1] = true;
                         ""
                     },
+                    nomer_baris,
+                    nama_file
                 ))
                 .unwrap(),
             perintah::batas => kirim
                 .send(format!(
-                    "{}{{\"tipe\":\"batas\"}}",
+                    "{}{{\"nomer_baris\":{},\"nama_file\":\"{}\",\"tipe\":\"batas\"}}",
                     if fn_[1] {
                         ","
                     } else {
                         fn_[1] = true;
                         ""
                     },
+                    nomer_baris,
+                    nama_file
                 ))
                 .unwrap(),
             perintah::variabel_null(a, b) => kirim
                 .send(format!(
-                    "{}{{ \"tipe\":\"var\",\"data\":\"{}\",\"nama\":\"{}\" }}",
+                    "{}{{\"nomer_baris\":{},\"nama_file\":\"{}\",\"tipe\":\"var\",\"data\":\"{}\",\"nama\":\"{}\" }}",
                     if fn_[1] {
                         ","
                     } else {
                         fn_[1] = true;
                         ""
                     },
+                    nomer_baris,
+                    nama_file,
                     a,
                     b
                 ))
                 .unwrap(),
             perintah::cetak(_nilai) => {
-                let mut v = format!("{}{{\"tipe\":\"cetak\",\"nilai\":[",if fn_[1] {","}else{""});
+                let mut v = format!(
+                    "{}{{\"nomer_baris\":{},\"nama_file\":\"{}\",\"tipe\":\"cetak\",\"nilai\":[",
+                    if fn_[1] { "," } else { "" },
+                    nomer_baris,
+                    nama_file
+                );
                 let mut _tipe_ = String::new();
                 let mut _nilai_ = String::new();
-                _nilai.iter().for_each(|f|{
+                _nilai.iter().for_each(|f| {
                     if f.starts_with("\"") {
-                        if !f.ends_with("\"") { panic!() }
-                        else if _tipe_.is_empty() { 
+                        if !f.ends_with("\"") {
+                            panic!()
+                        } else if _tipe_.is_empty() {
                             _tipe_.push_str("langsung")
                         } else if _tipe_ != "langsung" {
                             panic!()
                         }
-                        _nilai_.push_str(&f[1..f.len()-1]);
+                        _nilai_.push_str(&f[1..f.len() - 1]);
                     } else if f == "[" {
-
                     } else if let Ok(_) = f.parse::<u64>() {
-                        if !_tipe_.is_empty() {panic!()}
+                        if !_tipe_.is_empty() {
+                            panic!()
+                        }
                         _tipe_.push_str("langsung_int");
                         _nilai_.push_str(&f);
                     } else if let Ok(_) = f.parse::<f64>() {
-                        if !_tipe_.is_empty() {panic!()}
+                        if !_tipe_.is_empty() {
+                            panic!()
+                        }
                         _tipe_.push_str("langsung_f");
                         _nilai_.push_str(&f);
                     } else if _tipe_.is_empty() {
@@ -695,13 +745,15 @@ pub fn parse(baris: std::sync::mpsc::Receiver<perintah>, kirim: std::sync::mpsc:
             //}
             perintah::boolean(o) => kirim
                 .send(format!(
-                    "{}{{\"tipe\":\"{}\"}}",
+                    "{}{{\"nomer_baris\":{},\"nama_file\":\"{}\",\"tipe\":\"{}\"}}",
                     if fn_[1] {
                         ","
                     } else {
                         fn_[1] = true;
                         ""
                     },
+                    nomer_baris,
+                    nama_file,
                     if o { "benar" } else { "salah" }
                 ))
                 .unwrap(),
@@ -709,13 +761,15 @@ pub fn parse(baris: std::sync::mpsc::Receiver<perintah>, kirim: std::sync::mpsc:
                 operasi_logika_aritmatik!(y);
                 kirim
                     .send(format!(
-                        "{}{{\"tipe\":\"swict\",\"jenis\":\"{}\",\"nilai\":{:?}}}",
+                        "{}{{\"nomer_baris\":{},\"nama_file\":\"{}\",\"tipe\":\"swict\",\"jenis\":\"{}\",\"nilai\":{:?}}}",
                         if fn_[1] {
                             ","
                         } else {
                             fn_[1] = true;
                             ""
                         },
+                        nomer_baris,
+                        nama_file,
                         x,
                         y
                     ))
@@ -725,26 +779,30 @@ pub fn parse(baris: std::sync::mpsc::Receiver<perintah>, kirim: std::sync::mpsc:
                 if let Some(x) = x {
                     kirim
                         .send(format!(
-                            "{}{{\"tipe\":\"kasus\",\"lalu\":\"1\",\"nilai\":{:?}}}",
+                            "{}{{\"nomer_baris\":{},\"nama_file\":\"{}\",\"tipe\":\"kasus\",\"lalu\":\"1\",\"nilai\":{:?}}}",
                             if fn_[1] {
                                 ","
                             } else {
                                 fn_[1] = true;
                                 ""
                             },
+                            nomer_baris,
+                            nama_file,
                             x
                         ))
                         .unwrap();
                 } else {
                     kirim
                         .send(format!(
-                            "{}{{\"tipe\":\"kasus\",\"lalu\":\"0\"}}",
+                            "{}{{\"nomer_baris\":{},\"nama_file\":\"{}\",\"tipe\":\"kasus\",\"lalu\":\"0\"}}",
                             if fn_[1] {
                                 ","
                             } else {
                                 fn_[1] = true;
                                 ""
-                            }
+                            },
+                            nomer_baris,
+                            nama_file
                         ))
                         .unwrap();
                 }
@@ -752,37 +810,43 @@ pub fn parse(baris: std::sync::mpsc::Receiver<perintah>, kirim: std::sync::mpsc:
             perintah::swict_(x) => {
                 kirim
                     .send(format!(
-                        "{}{{\"tipe\":\"swict_tutup\",\"jenis\":\"{}\"}}",
+                        "{}{{\"nomer_baris\":{},\"nama_file\":\"{}\",\"tipe\":\"swict_tutup\",\"jenis\":\"{}\"}}",
                         if fn_[1] {
                             ","
                         } else {
                             fn_[1] = true;
                             ""
                         },
+                        nomer_baris,
+                        nama_file,
                         x
                     ))
                     .unwrap();
             }
             perintah::i32_eqz => kirim
                 .send(format!(
-                    "{}{{\"tipe\":\"_i32_eqz\"}}",
+                    "{}{{\"nomer_baris\":{},\"nama_file\":\"{}\",\"tipe\":\"_i32_eqz\"}}",
                     if fn_[1] {
                         ","
                     } else {
                         fn_[1] = true;
                         ""
-                    }
+                    },
+                    nomer_baris,
+                    nama_file
                 ))
                 .unwrap(),
             perintah::i32_eq => kirim
                 .send(format!(
-                    "{}{{\"tipe\":\"_i32_eq\"}}",
+                    "{}{{\"nomer_baris\":{},\"nama_file\":\"{}\",\"tipe\":\"_i32_eq\"}}",
                     if fn_[1] {
                         ","
                     } else {
                         fn_[1] = true;
                         ""
-                    }
+                    },
+                    nomer_baris,
+                    nama_file
                 ))
                 .unwrap(),
             perintah::sama_lebih_besar => {}
@@ -791,82 +855,96 @@ pub fn parse(baris: std::sync::mpsc::Receiver<perintah>, kirim: std::sync::mpsc:
             perintah::lebih_kecil => {}
             perintah::sama => kirim
                 .send(format!(
-                    "{}{{\"tipe\":\"sama\"}}",
-                    if fn_[1] {
-                        ","
-                    } else {
-                        fn_[1] = true;
-                        ""
-                    }
-                ))
-                .unwrap(),
-            perintah::tidak_sama => {}
-            perintah::sama_dengan => {}
-            perintah::_i32_konst(o) => kirim
-                .send(format!(
-                    "{}{{\"tipe\":\"_i32_konst\",\"nilai\":\"{}\"}}",
+                    "{}{{\"nomer_baris\":{},\"nama_file\":\"{}\",\"tipe\":\"sama\"}}",
                     if fn_[1] {
                         ","
                     } else {
                         fn_[1] = true;
                         ""
                     },
+                    nomer_baris,
+                    nama_file
+                ))
+                .unwrap(),
+            perintah::tidak_sama => {}
+            perintah::sama_dengan => {}
+            perintah::_i32_konst(o) => kirim
+                .send(format!(
+                    "{}{{\"nomer_baris\":{},\"nama_file\":\"{}\",\"tipe\":\"_i32_konst\",\"nilai\":\"{}\"}}",
+                    if fn_[1] {
+                        ","
+                    } else {
+                        fn_[1] = true;
+                        ""
+                    },
+                    nomer_baris,
+                    nama_file,
                     o
                 ))
                 .unwrap(),
             perintah::kurang => kirim
                 .send(format!(
-                    "{}{{\"tipe\":\"kurang\"}}",
+                    "{}{{\"nomer_baris\":{},\"nama_file\":\"{}\",\"tipe\":\"kurang\"}}",
                     if fn_[1] {
                         ","
                     } else {
                         fn_[1] = true;
                         ""
-                    }
+                    },
+                    nomer_baris,
+                    nama_file
                 ))
                 .unwrap(),
             perintah::tambah => kirim
                 .send(format!(
-                    "{}{{\"tipe\":\"tambah\"}}",
+                    "{}{{\"nomer_baris\":{},\"nama_file\":\"{}\",\"tipe\":\"tambah\"}}",
                     if fn_[1] {
                         ","
                     } else {
                         fn_[1] = true;
                         ""
-                    }
+                    },
+                    nomer_baris,
+                    nama_file
                 ))
                 .unwrap(),
             perintah::bagi => kirim
                 .send(format!(
-                    "{}{{\"tipe\":\"bagi\"}}",
+                    "{}{{\"nomer_baris\":{},\"nama_file\":\"{}\",\"tipe\":\"bagi\"}}",
                     if fn_[1] {
                         ","
                     } else {
                         fn_[1] = true;
                         ""
-                    }
+                    },
+                    nomer_baris,
+                    nama_file
                 ))
                 .unwrap(),
             perintah::kali => kirim
                 .send(format!(
-                    "{}{{\"tipe\":\"kali\"}}",
+                    "{}{{\"nomer_baris\":{},\"nama_file\":\"{}\",\"tipe\":\"kali\"}}",
                     if fn_[1] {
                         ","
                     } else {
                         fn_[1] = true;
                         ""
-                    }
+                    },
+                    nomer_baris,
+                    nama_file
                 ))
                 .unwrap(),
             perintah::modus => kirim
                 .send(format!(
-                    "{}{{\"tipe\":\"modus\"}}",
+                    "{}{{\"nomer_baris\":{},\"nama_file\":\"{}\",\"tipe\":\"modus\"}}",
                     if fn_[1] {
                         ","
                     } else {
                         fn_[1] = true;
                         ""
-                    }
+                    },
+                    nomer_baris,
+                    nama_file
                 ))
                 .unwrap(),
             perintah::halaman(o) => {
@@ -890,13 +968,15 @@ pub fn parse(baris: std::sync::mpsc::Receiver<perintah>, kirim: std::sync::mpsc:
                 };
                 kirim
                     .send(format!(
-                        "{}{{\"tipe\":\"halaman\",\"nilai\":\"{}\",\"var\":\"{}\"}}",
+                        "{}{{\"nomer_baris\":{},\"nama_file\":\"{}\",\"tipe\":\"halaman\",\"nilai\":\"{}\",\"var\":\"{}\"}}",
                         if fn_[1] {
                             ","
                         } else {
                             fn_[1] = true;
                             ""
                         },
+                        nomer_baris,
+                    nama_file,
                         y,
                         x
                     ))
@@ -906,133 +986,153 @@ pub fn parse(baris: std::sync::mpsc::Receiver<perintah>, kirim: std::sync::mpsc:
             perintah::navbar_tombol(id, nav_id, fn__) => {}
             perintah::warnalatarbelakang(o) => kirim
                 .send(format!(
-                    "{}{{\"tipe\":\"warnalatarbelakang\",\"nilai\":\"{}\"}}",
+                    "{}{{\"nomer_baris\":{},\"nama_file\":\"{}\",\"tipe\":\"warnalatarbelakang\",\"nilai\":\"{}\"}}",
                     if fn_[1] {
                         ","
                     } else {
                         fn_[1] = true;
                         ""
                     },
+                    nomer_baris,
+                    nama_file,
                     o
                 ))
                 .unwrap(),
             perintah::gambarlatarbelakang(o) => kirim
                 .send(format!(
-                    "{}{{\"tipe\":\"gambarlatarbelakang\",\"nilai\":\"{}\"}}",
+                    "{}{{\"nomer_baris\":{},\"nama_file\":\"{}\",\"tipe\":\"gambarlatarbelakang\",\"nilai\":\"{}\"}}",
                     if fn_[1] {
                         ","
                     } else {
                         fn_[1] = true;
                         ""
                     },
+                    nomer_baris,
+                    nama_file,
                     o
                 ))
                 .unwrap(),
             perintah::judul(o) => kirim
                 .send(format!(
-                    "{}{{\"tipe\":\"judul\",\"nilai\":\"{}\"}}",
+                    "{}{{\"nomer_baris\":{},\"nama_file\":\"{}\",\"tipe\":\"judul\",\"nilai\":\"{}\"}}",
                     if fn_[1] {
                         ","
                     } else {
                         fn_[1] = true;
                         ""
                     },
+                    nomer_baris,
+                    nama_file,
                     o
                 ))
                 .unwrap(),
             perintah::tombol(o) => kirim
                 .send(format!(
-                    "{}{{\"tipe\":\"tombol\",\"nilai\":\"{}\"}}",
+                    "{}{{\"nomer_baris\":{},\"nama_file\":\"{}\",\"tipe\":\"tombol\",\"nilai\":\"{}\"}}",
                     if fn_[1] {
                         ","
                     } else {
                         fn_[1] = true;
                         ""
                     },
+                    nomer_baris,
+                    nama_file,
                     o
                 ))
                 .unwrap(),
             perintah::klik(id, fungsi) => kirim
                 .send(format!(
-                    "{}{{\"tipe\":\"klik\",\"nilai\":\"{}\",\"fn\":{:?}}}",
+                    "{}{{\"nomer_baris\":{},\"nama_file\":\"{}\",\"tipe\":\"klik\",\"nilai\":\"{}\",\"fn\":{:?}}}",
                     if fn_[1] {
                         ","
                     } else {
                         fn_[1] = true;
                         ""
                     },
+                    nomer_baris,
+                    nama_file,
                     id,
                     fungsi
                 ))
                 .unwrap(),
             perintah::isi(o, l) => kirim
                 .send(format!(
-                    "{}{{\"tipe\":\"isi\",\"nilai\":[\"{}\",\"{}\"]}}",
+                    "{}{{\"nomer_baris\":{},\"nama_file\":\"{}\",\"tipe\":\"isi\",\"nilai\":[\"{}\",\"{}\"]}}",
                     if fn_[1] {
                         ","
                     } else {
                         fn_[1] = true;
                         ""
                     },
+                    nomer_baris,
+                    nama_file,
                     o,
                     l
                 ))
                 .unwrap(),
             perintah::warna(o, l) => kirim
                 .send(format!(
-                    "{}{{\"tipe\":\"warna\",\"nilai\":[\"{}\",\"{}\"]}}",
+                    "{}{{\"nomer_baris\":{},\"nama_file\":\"{}\",\"tipe\":\"warna\",\"nilai\":[\"{}\",\"{}\"]}}",
                     if fn_[1] {
                         ","
                     } else {
                         fn_[1] = true;
                         ""
                     },
+                    nomer_baris,
+                    nama_file,
                     o,
                     l
                 ))
                 .unwrap(),
             perintah::warnalatarbelakangid(o, l) => kirim
                 .send(format!(
-                    "{}{{\"tipe\":\"warnalatarbelakangid\",\"nilai\":[\"{}\",\"{}\"]}}",
+                    "{}{{\"nomer_baris\":{},\"nama_file\":\"{}\",\"tipe\":\"warnalatarbelakangid\",\"nilai\":[\"{}\",\"{}\"]}}",
                     if fn_[1] {
                         ","
                     } else {
                         fn_[1] = true;
                         ""
                     },
+                    nomer_baris,
+                    nama_file,
                     o,
                     l
                 ))
                 .unwrap(),
             perintah::ukurankata(o, l) => kirim
                 .send(format!(
-                    "{}{{\"tipe\":\"ukurankata\",\"nilai\":[\"{}\",\"{}\"]}}",
+                    "{}{{\"nomer_baris\":{},\"nama_file\":\"{}\",\"tipe\":\"ukurankata\",\"nilai\":[\"{}\",\"{}\"]}}",
                     if fn_[1] {
                         ","
                     } else {
                         fn_[1] = true;
                         ""
                     },
+                    nomer_baris,
+                    nama_file,
                     o,
                     l
                 ))
                 .unwrap(),
             perintah::tulis(a, b) => kirim
                 .send(format!(
-                    "{}{{\"tipe\":\"tulis\",\"nama\":\"{}\",\"nilai\":{:?}}}",
+                    "{}{{\"nomer_baris\":{},\"nama_file\":\"{}\",\"tipe\":\"tulis\",\"nama\":\"{}\",\"nilai\":{:?}}}",
                     if fn_[0] {
                         ","
                     } else {
                         fn_[0] = true;
                         ""
                     },
+                    nomer_baris,
+                    nama_file,
                     a,
                     b
                 ))
                 .unwrap(),
             perintah::cpu(nama, publik) => kirim
                 .send(format!(
-                    "{}{{\"fn\":\"{}\",\"publik\":{},\"nilai\":[",
+                    "{}{{\"nomer_baris\":{},\"nama_file\":\"{}\",\"fn\":\"{}\",\"publik\":{},\"nilai\":[",
                     if fn_[0] {
                         fn_[1] = false;
                         "]},"
@@ -1040,19 +1140,23 @@ pub fn parse(baris: std::sync::mpsc::Receiver<perintah>, kirim: std::sync::mpsc:
                         fn_[0] = true;
                         ""
                     },
+                    nomer_baris,
+                    nama_file,
                     nama,
                     publik
                 ))
                 .unwrap(),
             perintah::panggil_fn(nama, tipe) => kirim
                 .send(format!(
-                    "{}{{\"tipe\":\"panggil_fn\",\"nama\":\"{}\"}}",
+                    "{}{{\"nomer_baris\":{},\"nama_file\":\"{}\",\"tipe\":\"panggil_fn\",\"nama\":\"{}\"}}",
                     if fn_[1] {
                         ","
                     } else {
                         fn_[1] = true;
                         ""
                     },
+                    nomer_baris,
+                    nama_file,
                     {
                         let mut v = nama[0].clone();
                         for i in 1..nama.len() {
@@ -1064,7 +1168,10 @@ pub fn parse(baris: std::sync::mpsc::Receiver<perintah>, kirim: std::sync::mpsc:
                 ))
                 .unwrap(),
             perintah::modul_masuk(nama) => kirim
-                .send(format!("{{\"mod\":\"{}\",\"nilai\":[", nama))
+                .send(format!("{{\"nomer_baris\":{},\"nama_file\":\"{}\",\"mod\":\"{}\",\"nilai\":[", 
+                nomer_baris,
+                    nama_file,
+                nama))
                 .unwrap(),
             perintah::modul_keluar => kirim
                 .send(format!(
@@ -1079,54 +1186,67 @@ pub fn parse(baris: std::sync::mpsc::Receiver<perintah>, kirim: std::sync::mpsc:
                 .unwrap(),
             perintah::blok(a) => kirim
                 .send(format!(
-                    "{}{{\"tipe\":\"blok\",\"nilai\":\"{}\"}}",
+                    "{}{{\"nomer_baris\":{},\"nama_file\":\"{}\",\"tipe\":\"blok\",\"nilai\":\"{}\"}}",
                     if fn_[1] {
                         ","
                     } else {
                         fn_[1] = true;
                         ""
                     },
+                    nomer_baris,
+                    nama_file,
                     a
                 ))
                 .unwrap(),
             perintah::br(o) => kirim
                 .send(format!(
-                    "{}{{\"tipe\":\"br\",\"nilai\":\"{}\"}}",
+                    "{}{{\"nomer_baris\":{},\"nama_file\":\"{}\",\"tipe\":\"br\",\"nilai\":\"{}\"}}",
                     if fn_[1] {
                         ","
                     } else {
                         fn_[1] = true;
                         ""
                     },
+                    nomer_baris,
+                    nama_file,
                     o
                 ))
                 .unwrap(),
             perintah::if_br(a, b) => kirim
                 .send(format!(
-                    "{}{{\"tipe\":\"if_br\",\"nilai\":[\"{}\",\"{}\"]}}",
+                    "{}{{\"nomer_baris\":{},\"nama_file\":\"{}\",\"tipe\":\"if_br\",\"nilai\":[\"{}\",\"{}\"]}}",
                     if fn_[1] {
                         ","
                     } else {
                         fn_[1] = true;
                         ""
                     },
+                    nomer_baris,
+                    nama_file,
                     a,
                     b
                 ))
                 .unwrap(),
             perintah::blok_ => kirim
                 .send(format!(
-                    "{}{{\"tipe\":\"blok_\"}}",
+                    "{}{{\"nomer_baris\":{},\"nama_file\":\"{}\",\"tipe\":\"blok_\"}}",
                     if fn_[0] {
                         ","
                     } else {
                         fn_[0] = true;
                         ""
-                    }
+                    },
+                    nomer_baris,
+                    nama_file
                 ))
                 .unwrap(),
-            perintah::selesai => {
-                kirim.send("".to_string()).unwrap();
+            perintah::selesai(error) => {
+                if !error.is_empty() {
+                    kirim.send("".to_string()).unwrap();
+                    kirim.send(error).unwrap();
+                } else {
+                    kirim.send("".to_string()).unwrap();
+                }
                 break;
             } /*
               _ =>{

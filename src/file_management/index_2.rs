@@ -28,12 +28,30 @@ pub fn baca(
                 }
             }
         };
+        loop {
+            match terima.recv().unwrap() {
+                o if !o.is_empty() => {
+                    file.write(o.as_bytes()).unwrap();
+                }
+                _=>{
+                    if let Ok(error) = terima.recv_timeout(std::time::Duration::from_millis(10)) {
+
+                    }
+                    break
+                }
+            }
+        }
+        /* versi lama
         buf.push_str(&terima.recv().expect("")) ;
+        loop {
+            if buf.is_empty() {}
+        }
         while buf != ""{
             file.write(buf.as_bytes()).expect("");
             buf.clear();
             buf.push_str(&terima.recv().expect(""));
         }
+        */
         drop(file);
         //
         'main:for data in terima_parse_3.iter() {
@@ -67,6 +85,7 @@ pub fn baca(
     } else {
         //turbo gagal
         //buf.clear();
+        /*
         let mut r :Vec<Value> = Vec::with_capacity(2);
         loop{
             match terima.recv(){
@@ -91,5 +110,20 @@ pub fn baca(
             }
             
         }
+        */
+        let mut buff = String::with_capacity(1000);
+        loop {
+            if let Ok(t) = terima.recv() {
+                if !t.is_empty() {
+                    buff.push_str(t.as_str());
+                } else {
+
+                }
+            } else {
+                panic!()
+            }
+
+        }
+        //panic!();
     } 
 }

@@ -20,7 +20,7 @@ struct AppObjek {
     manifest: manifest,
     offset: usize,
     main_selesai: bool,
-    alokasi_mem : HashMap<u64, Tipe>,
+    alokasi_mem : HashMap<u64, (bool,Tipe)>,
     import: (
         bool,
         bool,
@@ -59,8 +59,15 @@ impl AppObjek {
         self.tambah_data(&"./sw.js".to_string());
         self.html.write(b"<!DOCTYPE html><head><meta name=\"viewport\"content=\"width=device-width\"><link rel=\"apple-touch-icon\" href=\"aset/icon512.png\"><link rel=\"manifest\"href=\"./manifest.json\"><script>if('serviceWorker' in navigator){").unwrap();
     }
-    fn akhir_(mut self, path: &String) -> (std::io::BufWriter<std::fs::File>,HashMap<u64,Tipe>,String) {
+
+    fn akhir_(mut self, path: &String) -> (std::io::BufWriter<std::fs::File>,HashMap<u64,(bool,Tipe)>,String) {
         //self.html.write(b"}else{}</script>").unwrap();
+        //self.alokasi_mem.into_iter().for_each(|f|{
+
+        //});
+        //for i in self.alokasi_mem.into_iter() {
+
+        //}
         std::fs::write(format!("{}\\target\\debug\\pwa\\manifest.json", path), {format!("{{\"name\":{:?},\"short-name\":{:?},\"start_url\":{:?},\"scope\":\".\",\"display\":{:?},\"background_color\":{:?},\"theme_color\":{:?},\"description\":{:?},\"icons\":{:?}}}",self.manifest.nama,self.manifest.nama_pendek,self.manifest.url_mulai,self.manifest.display,self.manifest.warna_latarbelakan,self.manifest.warna_tema,self.manifest.description,{
             let mut v = "{".to_string();
             if self.manifest.icons.is_empty() {
@@ -586,6 +593,11 @@ impl AppObjek {
         data.to_vec()
     }
     fn tambah_var(&mut self, data: &Tipe, id: u64) {
+        if let Some(_) = self.alokasi_mem.get(&id) {
+
+        } else {
+            self.alokasi_mem.insert(id, (false,data.clone()));
+        }
         /*
         if let Tipe::_string(data) = data {
             match data {
@@ -605,7 +617,7 @@ impl AppObjek {
 
         }
         */
-        
+        /*
         match data {
             Tipe::_string(data) => {
                 match data {
@@ -631,13 +643,21 @@ impl AppObjek {
                 */
             }
             
-            Tipe::_u8(vec,data_) => {
-                if *vec {
+            Tipe::_u8(data_) => {
+                println!("{:?}",data_);
+                if data_.len() == 1 {
                     let v = self.tambah_vec(&id,data_) ;
-                    self.alokasi_mem.insert(id, Tipe::_u8(true,v));
+                    self.alokasi_mem.insert(id, Tipe::_u8(v));
+                } else {
+                    panic!()
+                }
+                /*
+                if data_.len()  1 {
+                    let v = self.tambah_vec(&id,data_) ;
+                    self.alokasi_mem.insert(id, Tipe::_u8(v));
                 } else if let Some(data) = data_[0] {
                     self.alokasi_mem
-                    .insert(id, Tipe::_u8(*vec,data_.clone()));
+                    .insert(id, Tipe::_u8(data_.clone()));
                     if data_.len() == 1 {
                         self.was_main.write(
                             format!("i32.const {:?}\nset_local $_{:?}\n",data,id).as_bytes()
@@ -681,6 +701,7 @@ impl AppObjek {
                 self.var_
                     .insert(id, Tipe::_u8(if let Some(_) = data { *data } else { None }));
                 */
+                */
             }
             /*
             Tipe::nomer(data) => {
@@ -690,13 +711,13 @@ impl AppObjek {
             _ => {
                 panic!()
             }
-        }
+        }*/
         
         //self.var_.insert(id,data);
     }
     fn tulis(&mut self,id:&u64,tipe_:&Tipe ) {
         match tipe_ {
-            Tipe::_u8(vec,data_) => {
+            Tipe::_u8(data_) => {
                 if data_.len() == 1 {
                     self.was_main.write(
                         format!("i32.const {:?}\nset_local $_{:?}\n" ,data_[0].unwrap() ,id ).as_bytes()
@@ -745,8 +766,10 @@ impl AppObjek {
                 self.import.2 = true
             }
             crate::parsing::parse_3::Nilai::penujuk_(k)=>{
-                if let Some(o) = self.alokasi_mem.get(k) {
-                    match o {
+
+                if let Some(o) = self.alokasi_mem.get_mut(k) {
+                    o.0 = true;
+                    match &o.1 {
                         crate::parsing::Tipe::_string(o)=>{
                             match o {
                                 crate::parsing::Str::arr(data)=>{
@@ -759,7 +782,7 @@ impl AppObjek {
                                 _=>{}
                             }
                         }
-                        crate::parsing::Tipe::_u8(vec,_)=>{
+                        crate::parsing::Tipe::_u8(_)=>{
                             //if o.len() == 1 {
                                 /*
                                 if let None = o[1] {
@@ -787,7 +810,7 @@ impl AppObjek {
     }
     fn tambah_ke_stak(&mut self,nama:&crate::parsing::Tipe,konst:bool) {
         match nama {
-            Tipe::_i32(vec,nomer) =>{
+            Tipe::_i32(nomer) =>{
                 panic!();
                 /*
                 if let Some(nomer) = nomer {
@@ -806,7 +829,7 @@ impl AppObjek {
     }
     fn set_stak(&mut self,nama:&crate::parsing::Tipe) {
         match nama {
-            Tipe::_i32(vec,nomer) =>{
+            Tipe::_i32(nomer) =>{
                 panic!();
                 /*
                 if let Some(nomer) = nomer {
@@ -981,9 +1004,13 @@ pub fn app(pohon: &std::vec::Vec<Pohon>, path: &String, nama: String) -> crate::
     //main
     //buf.push_str("(func(export\"main\")\n");
     //read&drop
-    {alokasi_mem}.into_iter().for_each(|i|{wat.write(
-        format!("(local $_{} {})\n",i.0,"i32").as_bytes()
-    ).unwrap();});
+    {alokasi_mem}.into_iter().for_each(|i|{
+        if i.1.0 {
+            wat.write(
+                format!("(local $_{} {})\n",i.0,"i32").as_bytes()
+            ).unwrap();
+        }
+    });
     wat.write(b"i32.const 0\ni32.const 7\ncall $woker_in\n").unwrap();
     wat.write(
         std::io::read_to_string(&mut std::fs::File::open( format!("{}\\parsing\\pwa\\main", path) ).unwrap()).unwrap().as_bytes()

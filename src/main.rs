@@ -16,7 +16,7 @@ extern crate lazy_static;
 use std::sync::Mutex;
 lazy_static! {
     static ref BUFF: Mutex<String> = std::sync::Mutex::new(String::with_capacity(100));
-    static ref ARGS: Vec<String> = std::env::args().collect::<Vec<String>>();//
+    //static ref ARGS: Vec<String> = std::env::args().collect::<Vec<String>>();//
     //static ref BUF: String = String::with_capacity(100);
 }
 macro_rules! tread {
@@ -42,7 +42,7 @@ macro_rules! tread {
     }
 }
 
-fn kopilasi() -> Result<(),u64> {
+fn kopilasi(ARGS:&'static Vec<String>) -> Result<(),u64> {
     /*
         setiap untaiyan(thread) memiliki tugas masing2 dan akan saling
     berkomunikasi melalui kanal dibawah.
@@ -100,8 +100,9 @@ fn kopilasi() -> Result<(),u64> {
         static mut POHON: std::vec::Vec<crate::parsing::parse_3::Pohon> = Vec::new();
         unsafe { POHON.reserve(10); }
         
-        let (tunggu_pohon,t) = channel();
-        let (tunggu_pohon_2,t_2) = channel();
+        //let (tunggu_pohon,t) = channel();
+        //let (tunggu_pohon_2,t_2) = channel();
+        let (kirim_pwa,terima_pwa) = channel();
         //let (Pohon,akar) = std::sync::mpsc::sync_channel(bound: usize);
         //
         //let (mulai,tunggu) = channel();
@@ -110,10 +111,16 @@ fn kopilasi() -> Result<(),u64> {
             //kode error 10
             {file_management::kode_2::baca(&mut BUFF.lock().unwrap(),&ARGS[PROYEK], test1)},"test".to_string(),test1,
             //kode error 11
-            {parsing::lexer::baca_2(test2, a)},"test2".to_string(),test2,
+            {
+                parsing::lexer_2::baca(test2, a)
+                //parsing::lexer::baca_2(test2, a)
+            },"test2".to_string(),test2,
             //{ parsing::lexer::baca(&mut BUFF.lock().unwrap(),&ARGS[PROYEK], a) },"lexer".to_string(),lex,
             //kode error 12
-            { parsing::parse::parse( b , file_ind )},"parse".to_string(),parse,
+            { 
+                parsing::parse_1::parse(b , file_ind)
+            //    parsing::parse::parse( b , file_ind )
+            },"parse".to_string(),parse,
             //kode error 13
             //{file_management::parse::tulis(mulai,&ARGS[PROYEK],"parse",d)},"parse_f".to_string(),parse_f,
             //kode error 14
@@ -125,13 +132,15 @@ fn kopilasi() -> Result<(),u64> {
             {file_management::index_2::baca(&mut BUFF.lock().unwrap(), y, &ARGS[PROYEK], p, k,turbo)},"inx2".to_string(),inx2,
              //kode error 18
             {
-                parsing::parse_3::parse_2(m,r,&ARGS[PROYEK],unsafe{ &mut POHON });
+                //parsing::parse_3::parse_2(m,r,&ARGS[PROYEK],unsafe{ &mut POHON });
+                parsing::parse_3_1::parse(r,kirim_pwa,m,kom);
                 println!(
                     "parsing selesai : {}/detik\n]\n",
                     waktu.elapsed().as_secs_f32()
                 );
-                #[cfg(debug_assertions)]
-                println!("[pohon]\n{:#?}", unsafe { &POHON });
+                //#[cfg(debug_assertions)]
+                //println!("[pohon]\n{:#?}", unsafe { &POHON });
+                /*
                 if pola.1 {
                     //kode error 20
                     println!(
@@ -139,15 +148,16 @@ fn kopilasi() -> Result<(),u64> {
                         waktu.elapsed().as_secs_f32()
                     );
                 }
-                if kom.0 { tunggu_pohon.send(()).unwrap();}
-                if kom.1 { tunggu_pohon_2.send(()).unwrap();}
+                */
+                //if kom.0 { tunggu_pohon.send(()).unwrap();}
+                //if kom.1 { tunggu_pohon_2.send(()).unwrap();}
 
                 //parsing::parse_3::parse(m,r,&ARGS[PROYEK],unsafe{ &mut POHON })
             },"tulis_parse_3".to_string(),tulis_parse_2,
             //{},"pohon".to_string(),pohon
             {
-                if kom.0 {
-                    t.recv().unwrap();
+                if kom.0  {
+                    //t.recv().unwrap();
                     println!(
                         "[ was selesai : {}/detik ]",
                         waktu.elapsed().as_secs_f32()
@@ -155,10 +165,11 @@ fn kopilasi() -> Result<(),u64> {
                 }
             },"was_".to_string(),was_,
             {
-                if kom.1 {
-                    t_2.recv().unwrap();
+                if kom.1   {
+                    //t_2.recv().unwrap();
                     //let nama_app = nama_app.clone();
-                    konversi::pwa::app(unsafe { &POHON }, &ARGS[PROYEK], nama_app.clone());
+                    //konversi::pwa::app(unsafe { &POHON }, &ARGS[PROYEK], nama_app.clone());
+                    konversi::pwa_op::konversi(terima_pwa);
                     println!(
                         "[ pwa selesai : {}/detik ]",
                         waktu.elapsed().as_secs_f32()
@@ -282,8 +293,12 @@ fn main() -> Result<(),u64> {
         SET_BAWAAN
     };
     */
-    if ARGS.len() != 1 {
-        kopilasi()
+    static mut ARGS: Vec<String> = Vec::new();
+    unsafe {
+        ARGS = std::env::args().collect::<Vec<String>>();
+    }
+    if unsafe{ ARGS.len() != 1 } {
+        kopilasi(unsafe{&ARGS})
     } else {
         crate::codeart::gui()
     }
@@ -293,113 +308,12 @@ use std::process::Command;
 #[cfg(test)]
 mod tests {
     use super::*;
-    use Command;
     #[test]
-    #[ignore]
-    fn parsing_() {
-        if !Command::new("./target/debug/indosanca.exe")
-            .args(&["parsing", "testing/testing"])
-            .spawn()
-            .unwrap()
-            .wait()
-            .unwrap()
-            .success()
-        {
-            panic!("");
+    fn manual_test() {
+        static mut ARGS: Vec<String> = Vec::new();
+        unsafe {
+            ARGS = ["".to_string(),"konversi".to_string(),"testing/testing".to_string()].to_vec();
         }
-    }
-    #[test]
-    #[ignore]
-    fn proyek() {
-        // belum siap // cetak belum selesai
-        if !Command::new("./target/debug/indosanca.exe")
-            .args(&["proyek", "testing/proyek"])
-            .spawn()
-            .unwrap()
-            .wait()
-            .unwrap()
-            .success()
-        {
-            panic!("");
-        }
-    }
-    #[test]
-    //#[ignore]
-    fn token_slice() {
-        let _t = "hallo ".to_string();
-        let _x = 6;
-
-        println!("{}", &_t[5..])
-    }
-    #[test]
-    fn parsing_dekralasi() {
-        if !Command::new("./target/debug/indosanca.exe")
-            .args(&["parsing", "testing/var_deklarasi"])
-            .spawn()
-            .unwrap()
-            .wait()
-            .unwrap()
-            .success()
-        {
-            panic!("");
-        }
-    }
-    #[test]
-    #[should_panic]
-    fn parsing_tulis_ulang_gagal() {
-        if Command::new("./target/debug/indosanca.exe")
-            .args(&["parsing", "testing/var_tulis_ulang_gagal"])
-            .spawn()
-            .unwrap()
-            .wait()
-            .unwrap()
-            .code()
-            .unwrap()
-            == 18
-        {
-            panic!("");
-        }
-    }
-    #[test]
-    fn parsing_tulis_ulang_mut() {
-        if !Command::new("./target/debug/indosanca.exe")
-            .args(&["parsing", "testing/var_tulis_ulang_mut"])
-            .spawn()
-            .unwrap()
-            .wait()
-            .unwrap()
-            .success()
-        {
-            panic!("");
-        }
-    }
-    #[test]
-    fn parsing_kepemilikan_1() {
-        if !Command::new("./target/debug/indosanca.exe")
-            .args(&["parsing", "testing/parsing_kepemilikan_1"])
-            .spawn()
-            .unwrap()
-            .wait()
-            .unwrap()
-            .success()
-        {
-            panic!("");
-        }
-    }
-    #[test]
-    #[should_panic]
-    #[ignore]
-    fn parsing_salah_tipe() {
-        //belum siap
-        if Command::new("./target/debug/indosanca.exe")
-            .args(&["parsing", "testing/parsing_salah_tipe"])
-            .spawn()
-            .unwrap()
-            .wait()
-            .unwrap()
-            .success()
-        {
-            panic!("");
-        }
+        kopilasi(unsafe{&ARGS}).unwrap();
     }
 }

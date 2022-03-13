@@ -266,17 +266,17 @@ pub fn parse_2(
                                                                 break
                                                             }
                                                         }
-                                                        data = crate::parsing::Tipe::_u8(true,v);
+                                                        data = crate::parsing::Tipe::_u8(v);
                                                     } else if let serde_json::Value::Array(arr) = &o["nilai"][i]["nilai"] {
                                                         let mut x = Vec::with_capacity(arr.len());
                                                         (0..arr.capacity()).into_iter().for_each(|f|{
                                                             x.push(Some( arr[f].as_u64().unwrap() as u8 ));
                                                         });
                                                         
-                                                        data = crate::parsing::Tipe::_u8(false,x)
+                                                        data = crate::parsing::Tipe::_u8(x)
                                                     } else if let serde_json::Value::Number(n) = &o["nilai"][i]["nilai"] {
                                                         let x = vec![Some( n.as_u64().unwrap() as u8 )];
-                                                        data = crate::parsing::Tipe::_u8(false,x);
+                                                        data = crate::parsing::Tipe::_u8(x);
                                                     } else {
                                                         panic!()
                                                     }
@@ -381,7 +381,7 @@ pub fn parse_2(
                                                 }
                                             }
                                             match &nama.1.1 {
-                                                Tipe::_u8(vec,_t) =>{
+                                                Tipe::_u8(_t) =>{
                                                     /*
                                                     if let Some(k) = _data_var.get_mut(nama.0) {
                                                         if k.3 {

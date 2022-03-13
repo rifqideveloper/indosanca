@@ -1567,7 +1567,7 @@ pub fn parse(
     //let mut buf = terima.recv().expect("");
     let mut dalam_fn = false;
     let mut jika_br = false;
-    let mut perintah_terakhir = perintah::selesai;
+    let mut perintah_terakhir = perintah::selesai(String::new());
     terima.iter().for_each(|buff| {
         if !buff.is_empty() {
             if buff[0] != "duplikat" {
@@ -1583,7 +1583,7 @@ pub fn parse(
                 duplikat(&terima, &kirim, buff[1].parse::<u64>().unwrap());
             }
         } else {
-            kirim.send(perintah::selesai).expect("parse gagal selesai");
+            kirim.send(perintah::selesai(String::new())).expect("parse gagal selesai");
             return;
         }
     });

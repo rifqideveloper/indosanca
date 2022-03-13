@@ -9,19 +9,19 @@ pub enum Str{
     None,
 }
 
-#[derive(Debug,Clone)]
-#[derive(Serialize, Deserialize )]
+//#[derive(Debug,Clone,Copy)]
+#[derive(Serialize, Deserialize ,Debug)]
 pub enum Tipe{
     _string(Str),
     nomer(String),
-    _i8(bool,Vec<Option<i8>>),
-    _u8(bool,Vec<Option<u8>>),
-    _i16(bool,Vec<Option<i16>>),
-    _u16(bool,Vec<Option<u16>>),
-    _i32(bool,Vec<Option<i32>>),
-    _u32(bool,Vec<Option<u32>>),
-    _i64(bool,Vec<Option<i64>>),
-    _u64(bool,Vec<Option<u64>>),
+    _i8(Vec<Option<i8>>),
+    _u8(Vec<Option<u8>>),
+    _i16(Vec<Option<i16>>),
+    _u16(Vec<Option<u16>>),
+    _i32(Vec<Option<i32>>),
+    _u32(Vec<Option<u32>>),
+    _i64(Vec<Option<i64>>),
+    _u64(Vec<Option<u64>>),
     /*
     _u8_ar(usize,Vec<String>),
     _i8_ar(usize,Vec<String>),
@@ -35,6 +35,11 @@ pub enum Tipe{
     penujuk_(String,Option<u64>),
     minta(String,Option<u64>),
     None,
+}
+impl Clone for Tipe {
+    fn clone(&self) -> Tipe {
+         self.clone()
+    }
 }
 #[allow(non_camel_case_types)]
 pub enum perintah {
@@ -105,10 +110,13 @@ pub enum perintah {
     kali,
     modus,
     lanjut,
-    selesai
+    selesai(String),
 }
-pub mod lexer;
-pub mod parse;
+//pub mod lexer;
+//pub mod parse;
 pub mod parse_2;
 pub mod parse_3;
+pub mod lexer_2;
+pub mod parse_1;
+pub mod parse_3_1;
 

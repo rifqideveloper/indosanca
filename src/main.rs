@@ -1,5 +1,3 @@
-#![feature(with_options)]
-#![feature(io_read_to_string)]
 use std::sync::mpsc::channel;
 extern crate wat;
 mod codeart;
@@ -9,7 +7,6 @@ mod konversi;
 mod parsing;
 mod error;
 mod jalankan;
-use std::fs::File;
 #[macro_use]
 extern crate lazy_static;
 

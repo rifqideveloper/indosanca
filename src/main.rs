@@ -300,7 +300,7 @@ fn main() -> Result<(),u64> {
     if unsafe{ ARGS.len() != 1 } {
         kopilasi(unsafe{&ARGS})
     } else {
-        //crate::codeart::gui()
+        crate::codeart::gui()
     }
 }
 #[allow(unused_imports)]

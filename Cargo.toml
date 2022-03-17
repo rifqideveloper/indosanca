@@ -21,7 +21,7 @@ wat = "1.0.38"
 meval = "0.2"
 lazy_static = "1.4.0"
 druid = "0.7.0"
-rust-embed = "5.9.0"
+rust-embed = "6.3.0"
 bincode = "1.3.3"
 ansi_term = "0.12"
 

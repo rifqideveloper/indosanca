@@ -129,7 +129,9 @@ pub fn parse(
                         //panggil fungsi
                         panic!()
                     }
-                    _ => {}
+                    _ => {
+                        //panic!()
+                    }
                 }
             }
         }

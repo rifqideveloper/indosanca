@@ -11,8 +11,8 @@ pub enum Nilai {
 }
 #[derive(Clone)]
 pub struct let_ {
-    id: u64,
-    tipe: Tipe,
+    pub id: u64,
+    pub tipe: Tipe,
     mut_: bool,
     sudah_dibaca: bool,
     sudah_ditulis: bool,
@@ -99,7 +99,7 @@ macro_rules! kirim {
                         }
                     } else if !i.1.sudah_dibaca {
                         println!("{} {}:{}:0\nvariabel tidak pernah dibaca ? varibel tidak akan dialokasikan\n",Yellow.paint("peringatan!"),i.1.nama_file,i.1.nomer_baris);
-                    } 
+                    }
 
                 );
                 $b.send($z).unwrap();
@@ -257,6 +257,102 @@ pub fn parse(
                                 id += 1;
                             }
                             "cetak" => {
+                                let mut hasil: Vec<Nilai> = Vec::with_capacity(2);
+                                let mut x = 0;
+                                loop {
+                                    if let Some(tipe) = json["nilai"][i]["nilai"][x].as_str() {
+                                        match tipe {
+                                            "var" => {
+                                                x += 1;
+                                                if let Some(nama) =
+                                                    json["nilai"][i]["nilai"][x].as_str()
+                                                {
+                                                    if let Some(var) = allokasi.get_mut(nama) {
+                                                        if true {
+                                                            match &var.tipe {
+                                                                crate::parsing::Tipe::_u8(u) => {
+                                                                    if u.len() == 1 {
+                                                                        hasil.push(
+                                                                            Nilai::langsung_int(
+                                                                                u[0].unwrap()
+                                                                                    as u64,
+                                                                            ),
+                                                                        );
+                                                                    }
+                                                                }
+                                                                _ => {}
+                                                            }
+                                                        }
+                                                        var.sudah_dibaca = true;
+                                                    } else {
+                                                        use ansi_term::Colour::Red;
+                                                        kirim_json
+                                                            .send((
+                                                                [
+                                                                    "".to_string(),
+                                                                    "".to_string(),
+                                                                    "".to_string(),
+                                                                ],
+                                                                true,
+                                                            ))
+                                                            .unwrap();
+                                                        kirim!(
+                                                            kom,
+                                                            kirim_pwa,
+                                                            Pohon::kopilasi_error /**/
+                                                        );
+                                                        println!(
+                                                            "{} {}:{}:0\nvarabel '{}' tidak ditemukan ?\n",
+                                                            Red.paint("Error!"),
+                                                            json["nilai"][i]["nama_file"]
+                                                                .as_str()
+                                                                .unwrap(),
+                                                            json["nilai"][i]["nomer_baris"]
+                                                                .as_u64()
+                                                                .unwrap(),
+                                                            nama
+                                                        );
+                                                        return;
+                                                    }
+                                                } else {
+                                                    panic!()
+                                                }
+                                            }
+                                            _ => {
+                                                panic!()
+                                            }
+                                        }
+                                    } else {
+                                        break;
+                                    }
+                                    x += 1;
+                                }
+                                if hasil.len() == 0 {
+                                    kirim!(kom, kirim_pwa, Pohon::cetak(Nilai::None) /**/);
+                                }
+                                if let Nilai::langsung_str(str_) = &hasil[0] {
+                                    if hasil.len() == 1 {
+                                        kirim!(
+                                            kom,
+                                            kirim_pwa,
+                                            Pohon::cetak(Nilai::langsung_str(str_.clone())) /**/
+                                        );
+                                    } else {
+                                        for i in 1..hasil.len() {}
+                                    }
+                                } else {
+                                    for i in hasil {
+                                        match i {
+                                            Nilai::None => {
+                                                panic!()
+                                            }
+                                            _ => {
+                                                kirim!(kom, kirim_pwa, Pohon::cetak(i) /**/);
+                                            }
+                                        }
+                                    }
+                                }
+                                /*
                                 let mut hasil: Vec<Nilai> = Vec::with_capacity(1);
                                 let mut x = 0;
                                 let mut cek_format: Option<(
@@ -274,7 +370,6 @@ pub fn parse(
                                                         .unwrap()
                                                         .to_string(),
                                                 ) {
-                                                    
                                                     var.sudah_dibaca = true
                                                 } else {
                                                     use ansi_term::Colour::Red;
@@ -309,7 +404,7 @@ pub fn parse(
                                     }
                                     x += 2
                                 }
-
+                                */
                                 //panic!();
                             }
                             "blok" => {

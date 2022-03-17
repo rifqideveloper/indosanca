@@ -4,7 +4,7 @@ use rust_embed::RustEmbed;
 #[prefix = "prefix/"]
 pub struct Asset;
 pub fn bantuan(){
-    let beranda : std::borrow::Cow<[u8]> = Asset::get("prefix/bantuan.txt").unwrap();
+    let beranda : std::borrow::Cow<[u8]> = Asset::get("prefix/bantuan.txt").unwrap().data;
     println!("{}", std::str::from_utf8(beranda.as_ref()).unwrap());
     let (input,mut line) = (std::io::stdin(),String::with_capacity(10));
     loop{

@@ -57,36 +57,6 @@ fn kopilasi(ARGS:&'static Vec<String>) -> Result<(),u64> {
     let (perpus, kompilasi, versi, nama_app, turbo, pola,kom) =
         file_management::seting::seting(&mut BUFF.lock().unwrap(), &PROYEK, &ARGS.to_vec());
     if pola.0 {
-        /*
-        **versi lama 0.1.0**
-        let (kirim_lex,lex) = channel();
-        let (ke_lex_f,lex_f) = channel();
-        let (lanjut_token,tunggu_lexer) = channel();
-        let (kirim_ke_parser,token) = channel();
-        let (ke_pohon,terima_pohon) = channel();
-        //let proyek = args[PROYEK].clone();
-        std::thread::Builder::new().name("con_read".to_string()).spawn(move ||
-            con_read::baca(ARGS[PROYEK].to_string(), kirim_lex)
-        ).expect("");
-        std::thread::Builder::new().name("lexer".to_string()).spawn(move || {
-            lexer::lexer( lex, ke_lex_f);
-            //lexerjson::lexer(lex, ke_lex_f);
-        }).expect("");
-        std::thread::Builder::new().name("con_write".to_string()).spawn(move || {
-            con_write::tuliskan(lex_f, ARGS[PROYEK].to_string(), lanjut_token)
-        }).expect("");
-        std::thread::Builder::new().name("token_read".to_string()).spawn(move || {
-            token_read::baca(ARGS[PROYEK].to_string(), kirim_ke_parser , tunggu_lexer)
-        }).expect("");
-        std::thread::Builder::new().name("parse".to_string()).spawn(move || {
-            parser::parser(token, ke_pohon)
-        }).expect("");
-        std::thread::Builder::new().name("pohon".to_string()).spawn(move || {
-            pohon::tulis(ARGS[PROYEK].to_string(), terima_pohon)
-        }).expect("").join().expect("");
-        */
-        //gabung_kode::kode(&ARGS[PROYEK]);
-
         let (test1, test2) = channel();
         let (a, b) = channel();
         //let (c,d) = channel();
@@ -97,16 +67,10 @@ fn kopilasi(ARGS:&'static Vec<String>) -> Result<(),u64> {
         static mut POHON: std::vec::Vec<crate::parsing::parse_3::Pohon> = Vec::new();
         unsafe { POHON.reserve(10); }
         
-        //let (tunggu_pohon,t) = channel();
-        //let (tunggu_pohon_2,t_2) = channel();
         let (kirim_pwa,terima_pwa) = channel();
-        //let (Pohon,akar) = std::sync::mpsc::sync_channel(bound: usize);
-        //
-        //let (mulai,tunggu) = channel();
-        //let (mulai2,tunggu2) = channel();
         tread! {join ->
             //kode error 10
-            {file_management::kode_2::baca(&mut BUFF.lock().unwrap(),&ARGS[PROYEK], test1)},"test".to_string(),test1,
+            {file_management::kode_2::baca(&mut String::with_capacity(100),&ARGS[PROYEK], test1)},"test".to_string(),test1,
             //kode error 11
             {
                 parsing::lexer_2::baca(test2, a)
@@ -166,7 +130,7 @@ fn kopilasi(ARGS:&'static Vec<String>) -> Result<(),u64> {
                     //t_2.recv().unwrap();
                     //let nama_app = nama_app.clone();
                     //konversi::pwa::app(unsafe { &POHON }, &ARGS[PROYEK], nama_app.clone());
-                    konversi::pwa_op::konversi(terima_pwa);
+                    konversi::pwa_op::konversi(terima_pwa,&ARGS[PROYEK]);
                     println!(
                         "[ pwa selesai : {}/detik ]",
                         waktu.elapsed().as_secs_f32()
@@ -176,120 +140,10 @@ fn kopilasi(ARGS:&'static Vec<String>) -> Result<(),u64> {
         };
         
     }
-    /*
-    if pola.2 {
-        // versi lama 0.8.1
-        #[cfg(debug_assertions)]
-        println!("[pohon]\n{:#?}", unsafe { &POHON });
-        let mut tread : Vec<std::thread::JoinHandle<(crate::error::ErrorKode,&str)>>  = Vec::with_capacity(1);
-        let mut kom = (false, false, false, false);
-        kompilasi.iter().for_each(|i| match i.as_str() {
-            "wasm" => {
-                if !kom.0 {
-                    //crate::error::error_konversi("wasm", 1);
-                    tread.push(
-                        std::thread::Builder::new()
-                            .name("wasm".to_string())
-                            .spawn(|| {
-                                (crate::error::ErrorKode::Error("\tfitur sedang bermasalah\n".to_string()),"wasm")
-                                //(konversi::web_2::app_3(unsafe { &POHON }, &ARGS[PROYEK]),"wasm")
-                            })
-                            .unwrap(),
-                    );
-                    kom.0 = true
-                }
-            }
-            "win64" => {
-                if !kom.1 {
-                    kom.1 = true
-                }
-            }
-            "interperetasi" => unsafe {
-                if !kom.2 {
-                    let nama_app = nama_app.clone();
-                    tread.push(
-                        std::thread::Builder::new()
-                            .name("interperetasi".to_string())
-                            .spawn(move || {
-                                bincode::serialize_into(
-                                    std::io::BufWriter::with_capacity(
-                                        1000,
-                                        if let Ok(o) = File::create(format!(
-                                            "{}/target/inter/{}.bin",
-                                            &ARGS[PROYEK], nama_app
-                                        )) {
-                                            o
-                                        } else {
-                                            let mut v = format!("{}/target/inter", &ARGS[PROYEK]);
-                                            std::fs::create_dir_all(&v).unwrap();
-                                            v.push_str("/");
-                                            v.push_str(&nama_app);
-                                            v.push_str(".bin");
-                                            File::create(v).unwrap()
-                                        },
-                                    ),
-                                    &POHON,
-                                )
-                                .unwrap();
-                                (crate::error::ErrorKode::Oke,"interperetasi")
-                            })
-                            .unwrap(),
-                    );
-                    kom.2 = true;
-                }
-            },
-            "pwa" => {
-                if !kom.3 {
-                    let nama_app = nama_app.clone();
-                    tread.push(
-                        std::thread::Builder::new()
-                            .name("PWA kompilasi".to_string())
-                            .spawn(move || {
-                                (konversi::pwa::app(unsafe { &POHON }, &ARGS[PROYEK], nama_app),"pwa")
-                            })
-                            .unwrap(),
-                    );
-                    kom.3 = true;
-                }
-            }
-            "pwa-node" =>{
-                let nama_app = nama_app.clone();
-                tread.push(
-                    std::thread::Builder::new()
-                    .name("PWA - node kompilasi".to_string())
-                    .spawn(move || {
-                        (crate::konversi::pwanode::node(unsafe { &POHON }, &ARGS[PROYEK], nama_app),"PWA - node")
-                    }).unwrap()
-                )
-            }
-            _ => {
-                panic!()
-            }
-        });
-        tread.into_iter().for_each(|i|match i.join() {
-            Ok(ok)=>{
-                crate::error::error_konversi(ok.1,ok.0)
-            }
-            Err(_)=>{
-
-            }
-        });
-    }
-    */
     println!("[ selesai : {}/detik ]", waktu.elapsed().as_secs_f32());
     Ok(())
 }
 fn main() -> Result<(),u64> {
-    /*
-    //global seting
-    let seting : (bool)= if let Ok(o) = std::fs::read_to_string(".\\seting.bin") {
-        bincode::deserialize(&o.as_bytes()).unwrap()
-    } else {
-        const SET_BAWAAN : (bool) = (true);
-        std::fs::write(".\\seting.bin", bincode::serialize(&SET_BAWAAN).unwrap() ).unwrap();
-        SET_BAWAAN
-    };
-    */
     static mut ARGS: Vec<String> = Vec::new();
     unsafe {
         ARGS = std::env::args().collect::<Vec<String>>();
@@ -305,6 +159,14 @@ use std::process::Command;
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn buat_variabel() {
+        static mut ARGS: Vec<String> = Vec::new();
+        unsafe {
+            ARGS = ["".to_string(),"konversi".to_string(),"testing/buat_variabel".to_string()].to_vec();
+        }
+        kopilasi(unsafe{&ARGS}).unwrap();
+    }
     #[test]
     fn manual_test() {
         static mut ARGS: Vec<String> = Vec::new();

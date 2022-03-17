@@ -39,7 +39,12 @@ pub fn konversi(
     let mut manifes :Option<Manifest> = None;
     let mut buf = Vec::with_capacity(100);
     let mut v = terima.recv().unwrap();
-    let mut js = std::fs::File::create(format!("{}\\parsing\\pwa\\main.html", path)).unwrap();
+    let mut js = if let Ok(ok) = std::fs::File::create(format!("{}\\parsing\\pwa\\main.html", path)){
+        ok
+    } else{
+        std::fs::create_dir_all(format!("{}\\parsing\\pwa", path)).unwrap();
+        std::fs::File::create(format!("{}\\parsing\\pwa\\main.html", path)).unwrap()
+    };
     let mut wat = std::fs::File::create(format!("{}\\parsing\\pwa\\main.wat", path)).unwrap();
     let mut data = std::fs::File::create(format!("{}\\parsing\\pwa\\data", path)).unwrap();
     let mut instruksi =
@@ -184,7 +189,12 @@ pub fn konversi(
     drop(wat);
     std::io::copy(
         &mut std::fs::File::open(format!("{}\\parsing\\pwa\\main.html", path)).unwrap(),
-        &mut std::fs::File::create(format!("{}\\target\\debug\\pwa\\index.html", path)).unwrap(),
+        &mut if let Ok(ok) = std::fs::File::create(format!("{}\\target\\debug\\pwa\\index.html", path)){
+            ok
+        }else{
+            std::fs::create_dir_all(format!("{}\\target\\debug\\pwa", path)).unwrap();
+            std::fs::File::create(format!("{}\\target\\debug\\pwa\\index.html", path)).unwrap()
+        },
     )
     .unwrap();
     //kompilasi wat ke wasm
@@ -202,7 +212,7 @@ pub fn konversi(
     } else {
         //manifes bawaan
         std::fs::write(
-            format!("{}target\\debug\\pwa\\manifest.json", path),
+            format!("{}\\target\\debug\\pwa\\manifest.json", path),
             b"{\"name\":\"app\",\"short-name\":\"app\",\"start_url\":\"./\",\"scope\":\".\",\"display\":\"standalone\",\"background_color\":\"#000000\",\"theme_color\":\"#000000\",\"description\":\"app saya\",\"icons\":\"{{\"src\":\"aset/icon192.png\",\"type\"\"image/png\",\"size\":\"192x192\"}{\"src\":\"aset/icon192.png\",\"type\"\"image/png\",\"size\":\"512x512\"}}\"}"
         ).unwrap();
         //icon
@@ -210,7 +220,7 @@ pub fn konversi(
             format!("{}\\aset\\sancaicon192.png", path),
             Asset::get("prefix/sancaicon192.png").unwrap().data
         ) {
-            std::fs::create_dir_all(format!("{}\\aset\\sancaicon192.png", path),).unwrap();
+            std::fs::create_dir_all(format!("{}\\aset", path),).unwrap();
             std::fs::write(
                 format!("{}\\aset\\sancaicon192.png", path),
                 Asset::get("prefix/sancaicon192.png").unwrap().data

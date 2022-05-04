@@ -1,3 +1,4 @@
+use crate::parsing::args::*;
 use crate::parsing::perintah;
 use crate::parsing::Tipe;
 
@@ -63,14 +64,373 @@ pub fn parse(
 ) {
     let mut fn_ = [false, false];
     //let mut blok = 0;
+    let mut _blok_: Vec<bool> = Vec::with_capacity(5);
     let mut lewati_jika = (false, 0);
+    let mut buf = String::with_capacity(200);
+    //let mut lapisan :Vec<bool>= Vec::with_capacity(4);
+    let mut putar = false;
     'l0: loop {
         let perintah_masuk = baris.recv().unwrap();
         let nomer_baris = perintah_masuk.0;
         let nama_file = perintah_masuk.1;
+        let mut comma = false;
+        /*if let Some(b) = _blok_.last_mut() {
+            if *b {
+                buf.push(',')
+            } else {
+                *b = true
+            }
+            fn_[1] = true;
+        } else if fn_[1] {
+            buf.push(',')
+        } else {
+            fn_[1] = true;
+        }
+        */
         match perintah_masuk.2 {
             //perintah::konst(_,_)|perintah::glob_var(_,_,_)=>{}
             //perintah::_i32_konst(_)=>{}
+            perintah::jika(logika) => {
+                if let Some(coma) = _blok_.last_mut() {
+                    if *coma {
+                        buf.push(',')
+                    } else {
+                        *coma = true
+                    }
+                } else if fn_[1] && !putar {
+                    buf.push(',')
+                } else {
+                    fn_[1] = true
+                }
+                buf.push_str("{\"nomer_baris\":");
+                buf.push_str(&format!("{}", nomer_baris));
+                buf.push_str(",\"nama_file\":\"");
+                buf.push_str(&nama_file);
+                buf.push_str("\",\"tipe\":\"jika\",\"nilai\":[");
+                for i in 0..logika.len() {
+                    if i != 0 {
+                        buf.push(',')
+                    }
+                    buf.push_str(&logika[i]);
+                }
+                buf.push_str("]}");
+                kirim.send(buf.clone()).unwrap();
+            }
+            perintah::_let(nama, mut_, tipe) => {
+                if let Some(coma) = _blok_.last_mut() {
+                    if *coma {
+                        buf.push(',')
+                    } else {
+                        *coma = true
+                    }
+                } else if fn_[1] && !putar {
+                    buf.push(',')
+                } else {
+                    fn_[1] = true
+                }
+                buf.push_str("{\"nomer_baris\":");
+                buf.push_str(&format!("{}", nomer_baris));
+                buf.push_str(",\"nama_file\":\"");
+                buf.push_str(&nama_file);
+                buf.push_str("\",\"tipe\":\"var\",\"nama\":\"");
+                buf.push_str(&nama);
+                buf.push_str("\",\"mut\":\"");
+                match mut_ {
+                    crate::parsing::mem_mode::imutabel => buf.push_str("i"),
+                    crate::parsing::mem_mode::mutabel => buf.push_str("m"),
+                    crate::parsing::mem_mode::statik => buf.push_str("s"),
+                }
+                buf.push_str("\",\"mem\":{\"");
+                match tipe {
+                    crate::parsing::Tipe::int(unsigh, uint) => {
+                        //let nilai;
+                        match unsigh {
+                            crate::parsing::mem_tipe::unint(v) => {
+                                //nilai = v.unwrap().len(). ;
+                                buf.push_str("uint\":");
+                                buf.push_str(&format!("{}", uint));
+                                buf.push_str("},\"nilai\":[");
+                                if let Some(v) = v {
+                                    buf.push_str(&format!("{}", v.len()));
+                                    v.into_iter().for_each(|i| {
+                                        buf.push(',');
+                                        if let Some(t) = i {
+                                            buf.push_str(&format!("{}", t));
+                                        } else {
+                                            buf.push_str("none");
+                                        }
+                                    });
+                                } else {
+                                    panic!()
+                                }
+                            }
+                            crate::parsing::mem_tipe::int(v) => {
+                                //nilai = v.unwrap().len() ;buf.push_str("int\":");
+                                buf.push_str(&format!("{}", uint));
+                                buf.push_str("},\"nilai\":[");
+                                if let Some(v) = v {
+                                    buf.push_str(&format!("{}", v.len()));
+                                    v.into_iter().for_each(|i| {
+                                        buf.push(',');
+                                        if let Some(t) = i {
+                                            buf.push_str(&format!("{}", t));
+                                        } else {
+                                            buf.push_str("none");
+                                        }
+                                    });
+                                } else {
+                                    panic!()
+                                }
+                            }
+                            crate::parsing::mem_tipe::float(v) => {
+                                //nilai = v.unwrap().len() ;
+                                buf.push_str("float\":");
+                                buf.push_str(&format!("{}", uint));
+                                buf.push_str("},\"nilai\":[");
+                                if let Some(v) = v {
+                                    buf.push_str(&format!("{}", v.len()));
+                                    v.into_iter().for_each(|i| {
+                                        buf.push(',');
+                                        if let Some(t) = i {
+                                            buf.push_str(&format!("{}", t));
+                                        } else {
+                                            buf.push_str("none");
+                                        }
+                                    });
+                                } else {
+                                    panic!()
+                                }
+                            }
+                        }
+                    }
+                    _ => panic!(),
+                }
+
+                //buf.push_str("},\"nilai\":[");
+                buf.push_str("]}");
+                kirim.send(buf.clone()).unwrap();
+            }
+            perintah::blok(nama) => {
+                if putar {
+                    putar = false;
+                    continue;
+                }
+                if let Some(coma) = _blok_.last_mut() {
+                    if *coma {
+                        buf.push(',')
+                    } else {
+                        *coma = true
+                    }
+                } else if fn_[1] {
+                    buf.push(',')
+                } else {
+                    fn_[1] = true
+                }
+                _blok_.push(false);
+                buf.push_str("{\"nomer_baris\":");
+                buf.push_str(&format!("{}", nomer_baris));
+                buf.push_str(",\"nama_file\":\"");
+                buf.push_str(&nama_file);
+                buf.push_str("\",\"tipe\":\"blok\",\"nama\":\"");
+                buf.push_str(&nama);
+                buf.push_str("\",\"nilai\":[");
+                kirim.send(buf.clone()).unwrap();
+            }
+            perintah::blok_ => {
+                _blok_.pop();
+                buf.push_str("]}");
+                kirim.send(buf.clone()).unwrap();
+            }
+            perintah::cetak(data) => {
+                if let Some(coma) = _blok_.last_mut() {
+                    if *coma {
+                        buf.push(',')
+                    } else {
+                        *coma = true
+                    }
+                } else if fn_[1] {
+                    buf.push(',')
+                } else {
+                    fn_[1] = true
+                }
+                buf.push_str("{\"nomer_baris\":");
+                buf.push_str(&format!("{}", nomer_baris));
+                buf.push_str(",\"nama_file\":\"");
+                buf.push_str(&nama_file);
+                buf.push_str("\",\"tipe\":\"cetak\",\"nilai\":[");
+                for i in 0..data.len() {
+                    if i != 0 {
+                        buf.push(',')
+                    }
+                    if data[i].starts_with("\"") {
+                        buf.push_str("\"langsung\",");
+                        buf.push_str(&data[i]);
+                    } else {
+                        buf.push_str("\"var\",\"");
+                        buf.push_str(&data[i]);
+                        buf.push('\"');
+                    }
+                }
+                buf.push_str("]}");
+                kirim.send(buf.clone()).unwrap();
+            }
+            perintah::cpu(nama, publik, args, kembali) => {
+                if fn_[0] {
+                    buf.push_str("]},");
+                } else {
+                    fn_[0] = true
+                }
+                buf.push_str("{\"nomer_baris\":");
+                buf.push_str(&format!("{}", nomer_baris));
+                buf.push_str(",\"nama_file\":\"");
+                buf.push_str(&nama_file);
+                buf.push_str("{\",\"fn\":\"");
+                buf.push_str(&nama);
+                buf.push_str("\",\"publik\":");
+                buf.push_str(if publik { "true" } else { "false" });
+                buf.push_str(",\"nilai\":[");
+                kirim.send(buf.clone()).unwrap();
+            }
+            perintah::modul_masuk(nama) => {
+                kirim
+                    .send(format!(
+                        "{{\"nomer_baris\":{},\"nama_file\":\"{}\",\"mod\":\"{}\",\"nilai\":[",
+                        nomer_baris, nama_file, nama
+                    ))
+                    .unwrap();
+            }
+            perintah::modul_keluar => {
+                /*
+                if fn_[0]{
+                    buf.push_str("]}")
+                }
+                */
+                kirim.send("]}]}\n".to_string()).unwrap();
+                fn_ = [false, false]
+            }
+            perintah::tidur(arg) => {
+                kirim
+                    .send(format!(
+                        "{}{{\"tipe\":\"tidur\",\"tidur\":{} }}",
+                        if let Some(coma) = _blok_.last_mut() {
+                            if *coma {
+                                ','
+                            } else {
+                                *coma = true;
+                                ' '
+                            }
+                        } else if fn_[1] && !putar {
+                            ','
+                        } else {
+                            fn_[1] = true;
+                            ' '
+                        },
+                        match arg {
+                            Int(_, _, _, _, _, _) => {
+                                panic!()
+                            }
+                            Str_Lansung(_) => {
+                                panic!()
+                            }
+                            Str_int(I) => format!("{}", I),
+                            penunjuk(_) => {
+                                panic!()
+                            }
+                            null =>{
+                                panic!()
+                            }
+                        }
+                    ))
+                    .unwrap();
+            }
+            perintah::putar(v) => {
+                putar = true;
+                kirim
+                    .send(format!(
+                        "{}{{\"tipe\":\"putar\",\"arg\":[",
+                        if let Some(coma) = _blok_.last_mut() {
+                            if *coma {
+                                ','
+                            } else {
+                                *coma = true;
+                                ' '
+                            }
+                        } else if fn_[1]
+                        /*&& !putar*/
+                        {
+                            ','
+                        } else {
+                            fn_[1] = true;
+                            ' '
+                        }
+                    ))
+                    .unwrap();
+                let mut comma = false;
+                for v in v {
+                    match v {
+                        Int(_, _, _, _, _, _) => {
+                            panic!()
+                        }
+                        Str_Lansung(_) => {
+                            panic!()
+                        }
+                        Str_int(int) => {
+                            kirim
+                                .send(format!(
+                                    "{}{}",
+                                    int,
+                                    if comma {
+                                        ","
+                                    } else {
+                                        comma = true;
+                                        ""
+                                    }
+                                ))
+                                .unwrap();
+                        }
+                        penunjuk(_) => {
+                            panic!()
+                        }
+                        null=>{
+                            panic!()
+                        }
+                    }
+                }
+                kirim.send("],\"nilai\":[".to_string()).unwrap();
+                _blok_.push(false);
+                continue;
+            }
+            perintah::tulis(nama_var, arg) => {
+                kirim
+                    .send(format!(
+                        "{}{{\"tipe\":\"tulis\",\"nama\":\"{}\",\"nilai\":[",
+                        if let Some(coma) = _blok_.last_mut() {
+                            if *coma {
+                                ','
+                            } else {
+                                *coma = true;
+                                ' '
+                            }
+                        } else if fn_[1] {
+                            ','
+                        } else {
+                            fn_[1] = true;
+                            ' '
+                        },
+                        nama_var,
+                    ))
+                    .unwrap();
+                for i in 0..arg.len() {
+                    if i != 0 {kirim.send(",".to_string()).unwrap();}
+                    if let Ok(angka) = arg[i].parse::<isize>() {
+                        kirim.send(format!("{}", angka)).unwrap()
+                    } else {
+                        kirim.send(format!("\"{}\"", arg[i])).unwrap()
+                    }
+                }
+                kirim.send("]}".to_string()).unwrap();
+            }
+            /* versi lama jangan di hapus
             perintah::_let(nama, _mut, tipe) => {
                 //panic!();
                 kirim
@@ -106,415 +466,8 @@ pub fn parse(
                                     }
                                     //panic!()
                                 }
-                                /*
-                                if o.len() > 1 {
-                                    v.push_str("\"nilai\":");
-                                    if o.len() == 1 {
-                                        v.push_str(&format!("{}", o[0].unwrap()))
-                                    } else {
-                                        v.push_str("[");
-                                        let mut i = 0;
-                                        loop {
-                                            if let Some(o) = o[i] {
-                                                v.push_str(&format!("{:?}", o))
-                                            } else {
-                                                v.push_str("None")
-                                            }
-                                            i += 1;
-                                            if i >= o.len() {
-                                                break;
-                                            }
-                                            v.push_str(",")
-                                        }
-                                        v.push_str("]");
-                                    }
-                                } else if o.len() == 0 {
-                                    v.push_str(&format!("\"cap\":{},\"nilai\":[]", o.capacity()));
-                                } else {
-                                    if let Some(s) = o[0] {
-                                        v.push_str(&format!("\"cap\":{},\"nilai\":[", s));
-                                        let mut i = 0;
-                                        loop {
-                                            if let Some(o) = o[i] {
-                                                v.push_str(&format!("{}", o))
-                                            } else {
-                                                break;
-                                                //v.push_str("None")
-                                            }
-                                            i += 1;
-                                            if i >= o.len() {
-                                                break;
-                                            }
-                                            v.push_str(",")
-                                        }
-                                        v.push(']');
-                                        println!("{}",v)
-                                    } else {
-                                        panic!()
-                                    }
-                                }
-                                */
-                                /*
-                                v.push_str("u8_\",\"len\":\"");
-                                // v.push_str(&format!("{}\",", o.len()));
-                                if !vec {
-                                    v.push_str("\"nilai\":");
-                                    if o.len() == 1 {
-                                        v.push_str(&format!("{}", o[0].unwrap()))
-                                    } else {
-                                        v.push_str("[");
-                                        let mut i = 0;
-                                        loop {
-                                            if let Some(o) = o[i] {
-                                                v.push_str(&format!("{:?}", o))
-                                            } else {
-                                                v.push_str("None")
-                                            }
-                                            i += 1;
-                                            if i >= o.len() {
-                                                break;
-                                            }
-                                            v.push_str(",")
-                                        }
-                                        v.push_str("]");
-                                    }
-                                } else {
-                                    v.push_str(format!("\"cap\":{},\"nilai\":[", o.capacity()));
-                                    /*
-                                    let mut i = 0;
-                                    loop {
-                                        if let Some(o) = o[i] {
-                                            v.push_str(&format!("{}", o))
-                                        } else {
-                                            break
-                                            //v.push_str("None")
-                                        }
-                                        i += 1;
-                                        if i >= o.len() {
-                                            break;
-                                        }
-                                        v.push_str(",")
-                                    }
-                                    v.push(']');
-                                    */
-                                }
-                                */
-                                /*
-                                if !vec {
-                                    v.push_str("u8_\",\"len\":\"");
-                                    v.push_str(&format!("{}\",\"nilai\":", o.len()));
-                                    if o.len() == 1 {
-                                        if let Some(o) = o[0] {
-                                            v.push_str(&format!("{:?}", o))
-                                        }
-                                    } else {
-                                        v.push_str("[");
-                                        let mut i = 0;
-                                        loop {
-                                            if let Some(o) = o[i] {
-                                                v.push_str(&format!("{:?}", o))
-                                            } else {
-                                                v.push_str("None")
-                                            }
-                                            i += 1;
-                                            if i >= o.len() {
-                                                break;
-                                            }
-                                            v.push_str(",")
-                                        }
-
-                                        v.push_str("]");
-                                        //v.push_str(&format!("{:?}",o))
-                                    }
-                                } else {
-                                    v.push_str(&format!("u8_\",\"len\":\"{}\",\"cap\":{},\"nilai\":",o.len(),o.capacity()));
-                                    //panic!();
-                                    //v.push_str("u8_\",\"len\":\"");
-                                }
-                                */
-                                //v.push_str(&format!("{:?}",if o.len() == 1 {o[0]} else {o}));
                                 v
                             }
-                            /*
-                            Tipe::_i8(o)=>{
-                                /*
-                                if o.len() == 1 {
-                                    if let Some() = o[0] {
-                                        format!("i8_\",\"nilai\":\"{}\"",o)
-                                    } else {
-                                        "i8\"".to_string()
-                                    }
-                                } else {
-                                    if let Some(o) = o[0] {
-                                        format!("i8_\",\"nilai\":\"{}\"",o)
-                                    } else {
-                                        "i8\"".to_string()
-                                    }
-                                }
-                                */
-
-                                format!("i8_\",\"len\":\"{}\",\"nilai\":{}",o.len(),
-                                    if o.len() == 1 {
-                                        if let Some(o) = o[0] {
-                                            format!("\"{}\"",o)
-                                            //"\"" + o.to_string()
-                                        } else {
-                                            "\"\"".to_string()
-                                        }
-                                    } else if let Some(k) = o[0] {
-                                        panic!();
-                                        let mut v = "[".to_string();
-                                        v.push_str(k.to_string().as_str());
-                                        for i in 1..o.len(){
-                                            v.push(',');
-                                            v.push_str(o[i].unwrap().to_string().as_str())
-                                        }
-                                        v.push(']');
-                                        v
-                                    } else {
-                                        "".to_string()
-                                    }
-                                )
-
-                            }
-                            Tipe::_u8(o)=>{
-                                format!("u8_\",\"len\":\"{}\",\"nilai\":{}",o.len(),
-                                    if o.len() == 1 {
-                                        if let Some(o) = o[0] {
-                                            format!("\"{}\"",o)
-                                            //"\"" + o.to_string()
-                                        } else {
-                                            "\"\"".to_string()
-                                        }
-                                    } else if let Some(k) = o[0] {
-                                        panic!();
-                                        let mut v = "[".to_string();
-                                        v.push_str(k.to_string().as_str());
-                                        for i in 1..o.len(){
-                                            v.push(',');
-                                            v.push_str(o[i].unwrap().to_string().as_str())
-                                        }
-                                        v.push(']');
-                                        v
-                                    } else {
-                                        "".to_string()
-                                    }
-                                )
-                                /*
-                                if let Some(o) = o {
-                                    format!("u8_\",\"nilai\":\"{}\"",o)
-                                } else {
-                                    "u8\"".to_string()
-                                }
-                                */
-                            }
-                            Tipe::_i16(o)=>{
-                                format!("i16_\",\"len\":\"{}\",\"nilai\":\"{}\"",o.len(),
-                                    if o.len() == 1 {
-                                        if let Some(o) = o[0] {
-                                            format!("\"{}\"",o)
-                                            //"\"" + o.to_string()
-                                        } else {
-                                            "\"\"".to_string()
-                                        }
-                                    } else if let Some(k) = o[0] {
-                                        let mut v = "[".to_string();
-                                        v.push_str(k.to_string().as_str());
-                                        for i in 1..o.len(){
-                                            v.push(',');
-                                            v.push_str(o[i].unwrap().to_string().as_str())
-                                        }
-                                        v.push(']');
-                                        v
-                                    } else {
-                                        "".to_string()
-                                    }
-                                )
-                                /*
-                                if let Some(o) = o {
-                                    format!("i16_\",\"nilai\":\"{}\"",o)
-                                } else {
-                                    "i16\"".to_string()
-                                }*/
-                            }
-                            Tipe::_u16(o)=>{
-                                format!("u16_\",\"len\":\"{}\",\"nilai\":\"{}\"",o.len(),
-                                    if o.len() == 1 {
-                                        if let Some(o) = o[0] {
-                                            format!("\"{}\"",o)
-                                            //"\"" + o.to_string()
-                                        } else {
-                                            "\"\"".to_string()
-                                        }
-                                    } else if let Some(k) = o[0] {
-                                        let mut v = "[".to_string();
-                                        v.push_str(k.to_string().as_str());
-                                        for i in 1..o.len(){
-                                            v.push(',');
-                                            v.push_str(o[i].unwrap().to_string().as_str())
-                                        }
-                                        v.push(']');
-                                        v
-                                    } else {
-                                        "".to_string()
-                                    }
-                                )
-                                /*
-                                if let Some(o) = o {
-                                    format!("u16_\",\"nilai\":\"{}\"",o)
-                                } else {
-                                    "u16\"".to_string()
-                                }
-                                */
-                            }
-                            Tipe::_i32(o)=>{
-                                format!("i32_\",\"len\":\"{}\",\"nilai\":\"{}\"",o.len(),
-                                    if o.len() == 1 {
-                                        if let Some(o) = o[0] {
-                                            format!("\"{}\"",o)
-                                            //"\"" + o.to_string()
-                                        } else {
-                                            "\"\"".to_string()
-                                        }
-                                    } else if let Some(k) = o[0] {
-                                        let mut v = "[".to_string();
-                                        v.push_str(k.to_string().as_str());
-                                        for i in 1..o.len(){
-                                            v.push(',');
-                                            v.push_str(o[i].unwrap().to_string().as_str())
-                                        }
-                                        v.push(']');
-                                        v
-                                    } else {
-                                        "".to_string()
-                                    }
-                                )
-                                /*
-                                if let Some(o) = o {
-                                    format!("i32_\",\"nilai\":\"{}\"",o)
-                                } else {
-                                    "i32\"".to_string()
-                                }
-                                */
-                            }
-                            Tipe::_u32(o)=>{
-                                format!("u32_\",\"len\":\"{}\",\"nilai\":\"{}\"",o.len(),
-                                    if o.len() == 1 {
-                                        if let Some(o) = o[0] {
-                                            format!("\"{}\"",o)
-                                            //"\"" + o.to_string()
-                                        } else {
-                                            "\"\"".to_string()
-                                        }
-                                    } else if let Some(k) = o[0] {
-                                        let mut v = "[".to_string();
-                                        v.push_str(k.to_string().as_str());
-                                        for i in 1..o.len(){
-                                            v.push(',');
-                                            v.push_str(o[i].unwrap().to_string().as_str())
-                                        }
-                                        v.push(']');
-                                        v
-                                    } else {
-                                        "".to_string()
-                                    }
-                                )
-                                /*
-                                if let Some(o) = o {
-                                    format!("u32_\",\"nilai\":\"{}\"",o)
-                                } else {
-                                    "u32\"".to_string()
-                                }
-                                */
-                            }
-                            Tipe::_i64(o)=>{
-                                format!("i64_\",\"len\":\"{}\",\"nilai\":\"{}\"",o.len(),
-                                    if o.len() == 1 {
-                                        if let Some(o) = o[0] {
-                                            format!("\"{}\"",o)
-                                            //"\"" + o.to_string()
-                                        } else {
-                                            "\"\"".to_string()
-                                        }
-                                    } else if let Some(k) = o[0] {
-                                        let mut v = "[".to_string();
-                                        v.push_str(k.to_string().as_str());
-                                        for i in 1..o.len(){
-                                            v.push(',');
-                                            v.push_str(o[i].unwrap().to_string().as_str())
-                                        }
-                                        v.push(']');
-                                        v
-                                    } else {
-                                        "".to_string()
-                                    }
-                                )
-                                /*
-                                if let Some(o) = o {
-                                    format!("i64_\",\"nilai\":\"{}\"",o)
-                                } else {
-                                    "i64\"".to_string()
-                                }
-                                */
-                            }
-                            Tipe::_u64(o)=>{
-                                format!("u64_\",\"len\":\"{}\",\"nilai\":\"{}\"",o.len(),
-                                    if o.len() == 1 {
-                                        if let Some(o) = o[0] {
-                                            format!("\"{}\"",o)
-                                            //"\"" + o.to_string()
-                                        } else {
-                                            "\"\"".to_string()
-                                        }
-                                    } else if let Some(k) = o[0] {
-                                        let mut v = "[".to_string();
-                                        v.push_str(k.to_string().as_str());
-                                        for i in 1..o.len(){
-                                            v.push(',');
-                                            v.push_str(o[i].unwrap().to_string().as_str())
-                                        }
-                                        v.push(']');
-                                        v
-                                    } else {
-                                        "".to_string()
-                                    }
-                                )
-
-                                /*
-                                if let Some(o) = o {
-                                    format!("u64_\",\"nilai\":\"{}\"",o)
-                                } else {
-                                    "u64\"".to_string()
-                                }
-                                */
-                            }
-                            */
-                            /*
-                            Tipe::_u8_ar(len, v) => {
-                                format!("\"u8_ar\",\"nilai\":[{},{:?}]", len, v)
-                            }
-                            Tipe::_i8_ar(len, v) => {
-                                format!("\"i8_ar\",\"nilai\":[{},{:?}]", len, v)
-                            }
-                            Tipe::_u16_ar(len, v) => {
-                                format!("\"u16_ar\",\"nilai\":[{},{:?}]", len, v)
-                            }
-                            Tipe::_i16_ar(len, v) => {
-                                format!("\"i16_ar\",\"nilai\":[{},{:?}]", len, v)
-                            }
-                            Tipe::_u32_ar(len, v) => {
-                                format!("\"u32_ar\",\"nilai\":[{},{:?}]", len, v)
-                            }
-                            Tipe::_i32_ar(len, v) => {
-                                format!("\"i32_ar\",\"nilai\":[{},{:?}]", len, v)
-                            }
-                            Tipe::_u64_ar(len, v) => {
-                                format!("\"u64_ar\",\"nilai\":[{},{:?}]", len, v)
-                            }
-                            Tipe::_i64_ar(len, v) => {
-                                format!("\"i64_ar\",\"nilai\":[{},{:?}]", len, v)
-                            }
-                            */
                             Tipe::penujuk_(o, index) => {
                                 format!(
                                     "penujuk_\",\"nilai\":\"{}\"{}",
@@ -549,55 +502,6 @@ pub fn parse(
                     ))
                     .unwrap()
             }
-            /*
-            perintah::konst(l,o)=>{
-                //println!("konstan !!!");
-                kirim.send(
-                    format!("{}{{\"tipe\":\"konst\",\"nilai\":\"{}\",\"nama\":\"{}\"}}",
-                    if fn_[1] {","} else { fn_[1] = true ; "" },
-                    match o {
-                        Tipe::_string(o)=>{
-
-                            let mut v = o.clone();
-                            v.remove(0);
-                            v.pop();
-                            v.push_str("str");
-                            v
-                        },
-                        Tipe::nomer(o)=>{
-                            let mut v = o;
-                            v.push_str("nomer");
-                            v
-                        }
-                        //sementara
-                        _=>{panic!()}
-                    },
-                    l
-                    )
-                ).unwrap()
-            }
-            perintah::glob_var(nama,_mut,tipe)=>{
-                kirim.send(
-                    format!("{}{{\"tipe\":\"glob\",\"tipe\":\"{}\",\"nama\":\"{}\",\"mut\":{}}}",
-                        if fn_[1] {","} else { fn_[1] = true ; "" },
-                        match tipe {
-                            Tipe::_string(_)=>{"string"}
-                            Tipe::nomer(_)=>{"nomer"}
-                            Tipe::_i8(o)=>{"i8"}
-                            Tipe::_u8(o)=>{"u8"}
-                            Tipe::_i16(o)=>{"i16"}
-                            Tipe::_u16(o)=>{"u16"}
-                            Tipe::_i32(o)=>{"i32"}
-                            Tipe::_u32(o)=>{"u32"}
-                            Tipe::_i64(o)=>{"i64"}
-                            Tipe::_u64(o)=>{"u64"}
-                        },
-                        nama,
-                        _mut
-                    )
-                ).unwrap()
-            }
-            */
             perintah::putar => kirim
                 .send(format!(
                     "{}{{\"nomer_baris\":{},\"nama_file\":\"{}\",tipe\":\"putar\"}}",
@@ -668,7 +572,7 @@ pub fn parse(
             perintah::cetak(_nilai) => {
                 let mut v = format!(
                     "{}{{\"nomer_baris\":{},\"nama_file\":\"{}\",\"tipe\":\"cetak\",\"nilai\":[",
-                    if fn_[1] { "," } else { "" },
+                    if fn_[1] { "," } else { fn_[1] = true ; "" },
                     nomer_baris,
                     nama_file
                 );
@@ -685,6 +589,7 @@ pub fn parse(
                         }
                         _nilai_.push_str(&f[1..f.len() - 1]);
                     } else if f == "[" {
+
                     } else if let Ok(_) = f.parse::<u64>() {
                         if !_tipe_.is_empty() {
                             panic!()
@@ -701,6 +606,7 @@ pub fn parse(
                         _tipe_.push_str("var");
                         _nilai_.push_str(&f);
                     } else {
+                        println!("{:?}",_nilai);
                         panic!()
                     }
                 });
@@ -1130,15 +1036,56 @@ pub fn parse(
                     b
                 ))
                 .unwrap(),
-            perintah::cpu(nama, publik) => kirim
+            perintah::cpu(nama, publik,args,kembali) => kirim
                 .send(format!(
-                    "{}{{\"nomer_baris\":{},\"nama_file\":\"{}\",\"fn\":\"{}\",\"publik\":{},\"nilai\":[",
+                    "{}{{\"args\":{:?},\"kembali\":{:?},\"nomer_baris\":{},\"nama_file\":\"{}\",\"fn\":\"{}\",\"publik\":{},\"nilai\":[",
                     if fn_[0] {
                         fn_[1] = false;
                         "]},"
                     } else {
                         fn_[0] = true;
                         ""
+                    },
+                    {
+                        let mut v :Vec<String>= Vec::new();
+                        args.into_iter().for_each(|i|{
+                            match i {
+                                crate::parsing::args::u8_(pointer, _mut_, nama)=>{
+                                    v.push(nama);
+                                    v.push("u8_".to_string());
+                                    v.push(if pointer {"true"} else {"false"} .to_string());
+                                    v.push(if _mut_ {"true"} else {"false"} .to_string());
+
+                                }
+                                crate::parsing::args::u8_ar(_, _, _, _) =>{
+
+                                }
+                                crate::parsing::args::u8_vec(_, _, _) =>{
+
+                                }
+                            }
+                        });
+                        v
+                    },
+                    {
+                        let mut v :Vec<String>= Vec::new();
+                        kembali.into_iter().for_each(|i|{
+                            match i {
+                                crate::parsing::args::u8_(pointer, _mut_, _)=>{
+                                    v.push("u8_".to_string());
+                                    v.push(if pointer {"true"} else {"false"} .to_string());
+                                    v.push(if _mut_ {"true"} else {"false"} .to_string());
+
+                                }
+                                crate::parsing::args::u8_ar(_, _, _, _) =>{
+
+                                }
+                                crate::parsing::args::u8_vec(_, _, _) =>{
+
+                                }
+                            }
+                        });
+                        v
                     },
                     nomer_baris,
                     nama_file,
@@ -1168,7 +1115,7 @@ pub fn parse(
                 ))
                 .unwrap(),
             perintah::modul_masuk(nama) => kirim
-                .send(format!("{{\"nomer_baris\":{},\"nama_file\":\"{}\",\"mod\":\"{}\",\"nilai\":[", 
+                .send(format!("{{\"nomer_baris\":{},\"nama_file\":\"{}\",\"mod\":\"{}\",\"nilai\":[",
                 nomer_baris,
                     nama_file,
                 nama))
@@ -1240,6 +1187,7 @@ pub fn parse(
                     nama_file
                 ))
                 .unwrap(),
+            */
             perintah::selesai(error) => {
                 if !error.is_empty() {
                     kirim.send("".to_string()).unwrap();
@@ -1248,11 +1196,17 @@ pub fn parse(
                     kirim.send("".to_string()).unwrap();
                 }
                 break;
-            } /*
-              _ =>{
-                  panic!()
-              }
-              */
+            }
+
+            _ => {
+                //panic!()
+            }
         }
+        if putar {
+            kirim.send("]}".to_string()).unwrap();
+            putar = false;
+        }
+
+        buf.clear()
     }
 }

@@ -1,3 +1,7 @@
+#![feature(with_options)]
+#![feature(mutex_unlock)]
+#![feature(const_fn_trait_bound)]
+
 use std::sync::mpsc::channel;
 extern crate wat;
 mod codeart;
@@ -9,10 +13,11 @@ mod error;
 mod jalankan;
 #[macro_use]
 extern crate lazy_static;
-
+use std::collections::HashMap;
 use std::sync::Mutex;
 lazy_static! {
     static ref BUFF: Mutex<String> = std::sync::Mutex::new(String::with_capacity(100));
+    //static ref variabel:Mutex<HashMap<String,Vec<Box<crate::parsing::Let_>>>> =  Mutex::new( HashMap::new() );
     //static ref ARGS: Vec<String> = std::env::args().collect::<Vec<String>>();//
     //static ref BUF: String = String::with_capacity(100);
 }
@@ -40,6 +45,7 @@ macro_rules! tread {
 }
 
 fn kopilasi(ARGS:&'static Vec<String>) -> Result<(),u64> {
+    std::env::set_var("RUST_BACKTRACE", "1");
     /*
         setiap untaiyan(thread) memiliki tugas masing2 dan akan saling
     berkomunikasi melalui kanal dibawah.
@@ -64,10 +70,13 @@ fn kopilasi(ARGS:&'static Vec<String>) -> Result<(),u64> {
         let (x, y) = channel();
         let (m, p) = channel();
         let (k, r) = channel();
-        static mut POHON: std::vec::Vec<crate::parsing::parse_3::Pohon> = Vec::new();
-        unsafe { POHON.reserve(10); }
+        //static mut POHON: std::vec::Vec<crate::parsing::parse_3::Pohon> = Vec::new();
+        //unsafe { POHON.reserve(10); }
         
         let (kirim_pwa,terima_pwa) = channel();
+        let (kirim_x86,terima_x86) = channel();
+        static mut variabel : crate::parsing::Arrmap <String,Vec<crate::parsing::Let_>> = crate::parsing::Arrmap::new();
+        //let mut variabel:Mutex<HashMap<String,Vec<Box<crate::parsing::Let_>>>> =  Mutex::new( HashMap::new() );
         tread! {join ->
             //kode error 10
             {file_management::kode_2::baca(&mut String::with_capacity(100),&ARGS[PROYEK], test1)},"test".to_string(),test1,
@@ -94,7 +103,11 @@ fn kopilasi(ARGS:&'static Vec<String>) -> Result<(),u64> {
              //kode error 18
             {
                 //parsing::parse_3::parse_2(m,r,&ARGS[PROYEK],unsafe{ &mut POHON });
-                parsing::parse_3_1::parse(r,kirim_pwa,m,kom);
+                
+                
+                parsing::parse_3_2::parse(
+                    unsafe{&mut variabel},
+                    r,kirim_pwa,m,kom);
                 println!(
                     "parsing selesai : {}/detik\n]\n",
                     waktu.elapsed().as_secs_f32()
@@ -119,8 +132,9 @@ fn kopilasi(ARGS:&'static Vec<String>) -> Result<(),u64> {
             {
                 if kom.0  {
                     //t.recv().unwrap();
+                    crate::konversi::x86_64::x86_64(terima_x86,&ARGS[PROYEK]);
                     println!(
-                        "[ was selesai : {}/detik ]",
+                        "[ x86_64 selesai : {}/detik ]",
                         waktu.elapsed().as_secs_f32()
                     );
                 }
@@ -129,8 +143,8 @@ fn kopilasi(ARGS:&'static Vec<String>) -> Result<(),u64> {
                 if kom.1   {
                     //t_2.recv().unwrap();
                     //let nama_app = nama_app.clone();
-                    //konversi::pwa::app(unsafe { &POHON }, &ARGS[PROYEK], nama_app.clone());
-                    konversi::pwa_op::konversi(terima_pwa,&ARGS[PROYEK]);
+                   // konversi::pwa_2::app(unsafe { &POHON }, &ARGS[PROYEK], nama_app.clone());
+                    konversi::pwa_op_2::konversi(unsafe{&variabel},terima_pwa,&ARGS[PROYEK]);
                     println!(
                         "[ pwa selesai : {}/detik ]",
                         waktu.elapsed().as_secs_f32()
@@ -159,6 +173,14 @@ use std::process::Command;
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn halo_dunia() {
+        static mut ARGS: Vec<String> = Vec::new();
+        unsafe {
+            ARGS = ["".to_string(),"konversi".to_string(),"testing/halo_dunia".to_string()].to_vec();
+        }
+        kopilasi(unsafe{&ARGS}).unwrap();
+    }
     #[test]
     fn buat_variabel() {
         static mut ARGS: Vec<String> = Vec::new();

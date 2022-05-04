@@ -1,0 +1,9 @@
+fn main
+    jika benar 
+    {
+        cetak "benar"
+    }
+    jika salah
+    {
+        cetak "salah"
+    }

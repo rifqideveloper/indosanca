@@ -29,9 +29,9 @@ fn buat_seting_file(f:& String){
             if let Err(_) = o.write_all(b"\
             [seting]\
             \nnama_app = \"app\"\
-            \nversi = \"0.1.0\"\
+            \nversi = \"0.0.0\"\
             \npembuat = [\"?\"]\
-            \nkompilasi = [\"wasm\"]\
+            \nkompilasi = [\"pwa\"]\
             \nturbo = false\
             \n[dep]\
             ") {
@@ -101,12 +101,25 @@ pub fn seting(buf:&mut String,proyek:&usize ,args:&Vec<String>) -> (Vec<String>,
             (true,true,true)
         },
         "inter" =>{
+            panic!();
+            /*
             let bin :std::vec::Vec<crate::parsing::parse_3::Pohon> = 
                 bincode::deserialize_from(
                     std::fs::OpenOptions::new().read(true).open(&args[*proyek]).unwrap()
                     //std::fs::File::open(&args[*proyek]).unwrap()
             ).unwrap();
             crate::konversi::interperetasi::kode(bin);
+            std::process::exit(0);
+            */
+        }
+        "wasm" =>{
+            let wat = format!("{}", args[*proyek ].as_str());
+            let was = format!("{}", args[*proyek + 1].as_str());
+            std::fs::write(
+                was,
+                wat::parse_file(wat).unwrap(),
+            )
+            .unwrap();
             std::process::exit(0);
         }
         "bangun" => (false,true,true),
@@ -157,11 +170,11 @@ pub fn seting(buf:&mut String,proyek:&usize ,args:&Vec<String>) -> (Vec<String>,
         //sementara
         let mut kom = (false, false);
         kompilasi.iter().for_each(|i| match i.as_str() {
-            "wasm"=>{
-                kom.0 = true;
-            }
             "pwa"=>{
                 kom.1 = true;
+            }
+            "x86_64" =>{
+                kom.0 = true;
             }
             _=>{panic!()}
         });

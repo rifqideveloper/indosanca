@@ -1,16 +1,16 @@
 #![feature(with_options)]
 #![feature(mutex_unlock)]
 #![feature(const_fn_trait_bound)]
-
+//#![feature(let_chains)]
 use std::sync::mpsc::channel;
 extern crate wat;
 mod codeart;
 mod dok;
+mod error;
 mod file_management;
+mod jalankan;
 mod konversi;
 mod parsing;
-mod error;
-mod jalankan;
 #[macro_use]
 extern crate lazy_static;
 use std::collections::HashMap;
@@ -44,14 +44,13 @@ macro_rules! tread {
     }
 }
 
-fn kopilasi(ARGS:&'static Vec<String>) -> Result<(),u64> {
+fn kopilasi(ARGS: &'static Vec<String>) -> Result<(), u64> {
     std::env::set_var("RUST_BACKTRACE", "1");
     /*
         setiap untaiyan(thread) memiliki tugas masing2 dan akan saling
     berkomunikasi melalui kanal dibawah.
     guna ataupun memodifikasi dengan bebas aplikasi in semau anda tanpa batasan
     untuk lebih jelas lihat di license aplikasi di https://github.com/rifqideveloper/indosanca/blob/master/LICENSE
-    
     */
     const PROYEK: usize = 2;
     //tahapan kopilasi hanya berlanjut jika _ERROR = false
@@ -60,7 +59,7 @@ fn kopilasi(ARGS:&'static Vec<String>) -> Result<(),u64> {
     //let foo = Arc::new(String::with_capacity(100));
     //kode error 1
     #[allow(unused_variables)]
-    let (perpus, kompilasi, versi, nama_app, turbo, pola,kom) =
+    let (perpus, kompilasi, versi, nama_app, turbo, pola, kom) =
         file_management::seting::seting(&mut BUFF.lock().unwrap(), &PROYEK, &ARGS.to_vec());
     if pola.0 {
         let (test1, test2) = channel();
@@ -72,10 +71,11 @@ fn kopilasi(ARGS:&'static Vec<String>) -> Result<(),u64> {
         let (k, r) = channel();
         //static mut POHON: std::vec::Vec<crate::parsing::parse_3::Pohon> = Vec::new();
         //unsafe { POHON.reserve(10); }
-        
-        let (kirim_pwa,terima_pwa) = channel();
-        let (kirim_x86,terima_x86) = channel();
-        static mut variabel : crate::parsing::Arrmap <String,Vec<crate::parsing::Let_>> = crate::parsing::Arrmap::new();
+
+        let (kirim_pwa, terima_pwa) = channel();
+        let (kirim_x86, terima_x86) = channel();
+        static mut variabel: crate::parsing::Arrmap<String, Vec<crate::parsing::Let_>> =
+            crate::parsing::Arrmap::new();
         //let mut variabel:Mutex<HashMap<String,Vec<Box<crate::parsing::Let_>>>> =  Mutex::new( HashMap::new() );
         tread! {join ->
             //kode error 10
@@ -87,7 +87,7 @@ fn kopilasi(ARGS:&'static Vec<String>) -> Result<(),u64> {
             },"test2".to_string(),test2,
             //{ parsing::lexer::baca(&mut BUFF.lock().unwrap(),&ARGS[PROYEK], a) },"lexer".to_string(),lex,
             //kode error 12
-            { 
+            {
                 parsing::parse_1::parse(b , file_ind)
             //    parsing::parse::parse( b , file_ind )
             },"parse".to_string(),parse,
@@ -103,30 +103,23 @@ fn kopilasi(ARGS:&'static Vec<String>) -> Result<(),u64> {
              //kode error 18
             {
                 //parsing::parse_3::parse_2(m,r,&ARGS[PROYEK],unsafe{ &mut POHON });
-                
-                
-                parsing::parse_3_2::parse(
+                if 
+                    parsing::parse_3_2::parse(
                     unsafe{&mut variabel},
-                    r,kirim_pwa,m,kom);
-                println!(
-                    "parsing selesai : {}/detik\n]\n",
-                    waktu.elapsed().as_secs_f32()
-                );
-                //#[cfg(debug_assertions)]
-                //println!("[pohon]\n{:#?}", unsafe { &POHON });
-                /*
-                if pola.1 {
-                    //kode error 20
+                    r,kirim_pwa,m,kom)
+                {
                     println!(
-                        "[ optimalisasi selesai : {}/detik ]",
+                        "[ parsing selesai : {}/detik ]",
+                        waktu.elapsed().as_secs_f32()
+                    );
+                } else {
+                    println!(
+                        "[ parsing gagal : {}/detik ]",
                         waktu.elapsed().as_secs_f32()
                     );
                 }
-                */
-                //if kom.0 { tunggu_pohon.send(()).unwrap();}
-                //if kom.1 { tunggu_pohon_2.send(()).unwrap();}
 
-                //parsing::parse_3::parse(m,r,&ARGS[PROYEK],unsafe{ &mut POHON })
+                
             },"tulis_parse_3".to_string(),tulis_parse_2,
             //{},"pohon".to_string(),pohon
             {
@@ -140,30 +133,34 @@ fn kopilasi(ARGS:&'static Vec<String>) -> Result<(),u64> {
                 }
             },"was_".to_string(),was_,
             {
-                if kom.1   {
                     //t_2.recv().unwrap();
                     //let nama_app = nama_app.clone();
                    // konversi::pwa_2::app(unsafe { &POHON }, &ARGS[PROYEK], nama_app.clone());
-                    konversi::pwa_op_2::konversi(unsafe{&variabel},terima_pwa,&ARGS[PROYEK]);
-                    println!(
-                        "[ pwa selesai : {}/detik ]",
-                        waktu.elapsed().as_secs_f32()
-                    );
-                }
+                    if !kom.1 {} else
+                    if konversi::pwa_op_2::konversi(unsafe{&variabel},terima_pwa,&ARGS[PROYEK]) {
+                        println!(
+                            "[ pwa selesai : {}/detik ]",
+                            waktu.elapsed().as_secs_f32()
+                        );
+                    } else {
+                        println!(
+                            "[ pwa gagal : {}/detik ]",
+                            waktu.elapsed().as_secs_f32()
+                        );
+                    }
             },"pwa_".to_string(),pwa_,
         };
-        
     }
     println!("[ selesai : {}/detik ]", waktu.elapsed().as_secs_f32());
     Ok(())
 }
-fn main() -> Result<(),u64> {
+fn main() -> Result<(), u64> {
     static mut ARGS: Vec<String> = Vec::new();
     unsafe {
         ARGS = std::env::args().collect::<Vec<String>>();
     }
-    if unsafe{ ARGS.len() != 1 } {
-        kopilasi(unsafe{&ARGS})
+    if unsafe { ARGS.len() != 1 } {
+        kopilasi(unsafe { &ARGS })
     } else {
         crate::codeart::gui()
     }
@@ -177,24 +174,39 @@ mod tests {
     fn halo_dunia() {
         static mut ARGS: Vec<String> = Vec::new();
         unsafe {
-            ARGS = ["".to_string(),"konversi".to_string(),"testing/halo_dunia".to_string()].to_vec();
+            ARGS = [
+                "".to_string(),
+                "konversi".to_string(),
+                "testing/halo_dunia".to_string(),
+            ]
+            .to_vec();
         }
-        kopilasi(unsafe{&ARGS}).unwrap();
+        kopilasi(unsafe { &ARGS }).unwrap();
     }
     #[test]
     fn buat_variabel() {
         static mut ARGS: Vec<String> = Vec::new();
         unsafe {
-            ARGS = ["".to_string(),"konversi".to_string(),"testing/buat_variabel".to_string()].to_vec();
+            ARGS = [
+                "".to_string(),
+                "konversi".to_string(),
+                "testing/buat_variabel".to_string(),
+            ]
+            .to_vec();
         }
-        kopilasi(unsafe{&ARGS}).unwrap();
+        kopilasi(unsafe { &ARGS }).unwrap();
     }
     #[test]
     fn manual_test() {
         static mut ARGS: Vec<String> = Vec::new();
         unsafe {
-            ARGS = ["".to_string(),"konversi".to_string(),"testing/testing".to_string()].to_vec();
+            ARGS = [
+                "".to_string(),
+                "konversi".to_string(),
+                "testing/testing".to_string(),
+            ]
+            .to_vec();
         }
-        kopilasi(unsafe{&ARGS}).unwrap();
+        kopilasi(unsafe { &ARGS }).unwrap();
     }
 }

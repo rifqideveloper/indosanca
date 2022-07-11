@@ -336,7 +336,13 @@ pub fn parse(
                             penunjuk(_) => {
                                 panic!()
                             }
+                            penunjuk_nama(_) =>{
+                                panic!()
+                            }
                             null =>{
+                                panic!()
+                            }
+                            internar_memory(_)=>{
                                 panic!()
                             }
                         }
@@ -365,9 +371,9 @@ pub fn parse(
                         }
                     ))
                     .unwrap();
-                let mut comma = false;
-                for v in v {
-                    match v {
+                //let mut comma = false;
+                if !v.is_empty() {
+                    match &v[0] {
                         Int(_, _, _, _, _, _) => {
                             panic!()
                         }
@@ -377,25 +383,29 @@ pub fn parse(
                         Str_int(int) => {
                             kirim
                                 .send(format!(
-                                    "{}{}",
-                                    int,
-                                    if comma {
-                                        ","
-                                    } else {
-                                        comma = true;
-                                        ""
-                                    }
+                                    "{}{}", int,""
                                 ))
                                 .unwrap();
                         }
                         penunjuk(_) => {
                             panic!()
                         }
+                        penunjuk_nama(nama_variabel_loop) => {
+                            match &v[1] {
+                                Str_int(int) => {
+                                    kirim.send(format!("\"iter\",\"{}\",{}",nama_variabel_loop,int)).unwrap();
+                                }
+                                _=>{panic!()}
+                            }
+                        }
                         null=>{
                             panic!()
                         }
+                        internar_memory(_)=>{
+                            panic!()
+                        }
                     }
-                }
+                } 
                 kirim.send("],\"nilai\":[".to_string()).unwrap();
                 _blok_.push(false);
                 continue;

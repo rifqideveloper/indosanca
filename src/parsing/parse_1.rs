@@ -268,19 +268,77 @@ pub fn parse(
             }
             PUTAR =>{
                 let mut nilai :Vec<crate::parsing::args>= Vec::with_capacity(5);
+                v = terima.recv().unwrap();
+                if let Ok(int) = v.2.parse::<i128>() {
+                    nilai.push(
+                        crate::parsing::args::Str_int(
+                            int
+                        )
+                    );
+                    loop {
+                        v = terima.recv().unwrap();
+                        if v.2 == ";" || v.2 == "}" {
+                            break
+                        }
+                    }
+                } else if !(v.2 == ";" || v.2 == "}") {
+                    nilai.push(
+                        crate::parsing::args::penunjuk_nama(
+                            v.2.clone()
+                        )
+                    );
+                    loop {
+                        v = terima.recv().unwrap();
+                        if v.2 == ";" || v.2 == "}" {
+                            break
+                        } else if v.2 == "di" {
+                            v = terima.recv().unwrap();
+                            if let Ok(int) = v.2.parse::<i128>() {
+                                nilai.push(
+                                    crate::parsing::args::Str_int(
+                                        int
+                                    )
+                                );
+                            } else {
+                                panic!()
+                            }
+                            break
+                        }
+                    }
+                } else {
+                    panic!()
+                }
+                /*
+                let mut x = 0;
                 loop{
                     v = terima.recv().unwrap();
                     if v.2 == ";" || v.2 == "}"{
                         break
-                    }
-                    if let Ok(int) = v.2.parse::<i128>() {
-                        nilai.push(
-                            crate::parsing::args::Str_int(
-                                int
-                            )
-                        )
+                    } else if x == 0 {
+                        if let Ok(int) = v.2.parse::<i128>() {
+                            nilai.push(
+                                crate::parsing::args::Str_int(
+                                    int
+                                )
+                            );
+                            x = 10
+                        } else {
+                            nilai.push(
+                                crate::parsing::args::penunjuk_nama(
+                                    v.2.clone()
+                                )
+                            );
+                            x += 1;
+                        }
+                    } else if x == 1 && v.2 == "di" {
+                        x += 1;
+                    } else if x == 2 {
+
+                    } else {
+                        panic!()
                     }
                 }
+                */
                 kirim
                     .send((v.0, v.1, crate::parsing::perintah::putar(nilai)))
                     .unwrap();

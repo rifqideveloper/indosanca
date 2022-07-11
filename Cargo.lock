@@ -756,7 +756,7 @@ dependencies = [
 
 [[package]]
 name = "indosanca"
-version = "0.9.0"
+version = "0.9.1"
 dependencies = [
  "ansi_term",
  "bincode",

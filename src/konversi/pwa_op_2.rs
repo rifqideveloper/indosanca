@@ -272,8 +272,23 @@ impl App {
                     .write_all(self.buf.as_bytes())
                     .unwrap();
             }
+            crate::parsing::args::penunjuk_nama(_) => {
+                panic!()
+            }
             crate::parsing::args::null => {
                 panic!()
+            }
+            crate::parsing::args::internar_memory(nama) => {
+                self.buf.push_str("local.get $");
+                self.buf.push_str(&nama);
+                self.buf.push_str("\ncall $log\n");
+                self.instruksi
+                    .last_mut()
+                    .unwrap()
+                    .0
+                    .write_all(self.buf.as_bytes())
+                    .unwrap();
+                self.perpus.cetak_angka = true;
             }
         }
     }
@@ -310,8 +325,71 @@ impl App {
             .write_all(self.buf.as_bytes())
             .unwrap();
     }
-    fn blok(&mut self, nama: &crate::parsing::eterator) {
+    fn blok(&mut self, iter_: &crate::parsing::eterator) {
         self.buf.clear();
+        match iter_ {
+            crate::parsing::eterator::Blok(nama) => {
+                self.buf.push_str("block $");
+                self.buf.push_str(&nama);
+                self.buf.push_str("\n");
+            }
+            crate::parsing::eterator::Putar(nama) => {
+                self.buf.push_str("loop $");
+                self.buf.push_str(&nama);
+                self.buf.push_str("\n");
+            }
+            crate::parsing::eterator::Iter(nama, min, max) => match (max, min) {
+                (
+                    crate::parsing::args::Str_int(maximum),
+                    crate::parsing::args::Str_int(minimum),
+                ) => {
+                    panic!()
+                }
+                (crate::parsing::args::null, crate::parsing::args::Str_int(putarkan)) => {
+                    if putarkan <= &0 {
+                        self.buf.push_str("loop $");
+                        self.buf.push_str(&nama);
+                        self.buf.push_str("\ni32.const 0\nbr_if 1\n");
+                    } else if let Some(t) = self
+                        .instruksi
+                        .last_mut()
+                        .unwrap()
+                        .2
+                        .get_all_mut(&(false, 32))
+                    {
+                        t.0 .0 = true;
+                        self.buf.push_str("i32.const ");
+                        self.buf.push_str(&format!("{}\n", putarkan));
+                        self.buf.push_str("local.set $");
+                        self.buf.push_str(&format!("{}\n", t.1[0]));
+                        self.buf.push_str("loop $");
+                        self.buf.push_str(&nama[1..]);
+                        self.buf.push_str("\n");
+                        self.buf
+                                .push_str(&format!("local.get ${0}\ni32.eqz\nbr_if 1\nlocal.get ${0}\ni32.const 1\ni32.sub\nlocal.set ${0}\n", t.1[0]));
+                    } else {
+                        self.buf.push_str("i32.const ");
+                        self.buf.push_str(&format!("{}\n", putarkan));
+                        self.buf.push_str("local.set $");
+                        self.buf.push_str(&format!("{}\n", nama));
+                        self.buf.push_str("loop $");
+                        self.buf.push_str(&nama[1..]);
+                        self.buf.push_str("\n");
+                        self.instruksi
+                            .last_mut()
+                            .unwrap()
+                            .2
+                            .insert((true, 32), vec![format!("{}", nama)]);
+                        self.buf
+                                .push_str(&format!("local.get ${0}\ni32.eqz\nbr_if 1\nlocal.get ${0}\ni32.const 1\ni32.sub\nlocal.set ${0}\n", nama));
+                    }
+                }
+                _ => {
+                    panic!()
+                }
+            },
+        }
+        /*
         match nama {
             crate::parsing::eterator::Blok(nama) => {
                 self.buf.push_str("block $");
@@ -323,11 +401,14 @@ impl App {
                 self.buf.push_str(&nama);
                 self.buf.push_str("\n");
             }
-            crate::parsing::eterator::Iter(nama, min, max, alias) => match max {
+            crate::parsing::eterator::Iter(nama, min, max) => match max {
                 crate::parsing::args::Int(..) => {
                     panic!()
                 }
                 crate::parsing::args::penunjuk(..) => {
+                    panic!()
+                }
+                crate::parsing::args::penunjuk_nama(_) =>{
                     panic!()
                 }
                 crate::parsing::args::Str_int(maximum) => {
@@ -338,16 +419,16 @@ impl App {
                                 panic!()
                             } else if !(minimum <= &0 || minimum <= maximum) {
                                 self.buf.push_str(&format!(
-                                    "i32.const {}\nlocal.set $i{}\n",
+                                    "i32.const {}\nlocal.set ${}\n",
                                     minimum, nama
                                 ));
                                 self.buf.push_str("loop $");
                                 self.buf.push_str(&nama);
                                 self.buf.push_str(&format!(
-                                    "\nlocal.get $i{0}\ni32.const {1}\ni32.eq\ni32.br_if 1\nlocal.get $i{0}\n",nama,maximum
+                                    "\nlocal.get ${0}\ni32.const {1}\ni32.eq\ni32.br_if 1\nlocal.get ${0}\n",nama,maximum
                                 ));
                                 //penghitum putaran harus ditambah diakhir loop
-                                x.2.insert((true, 32), vec![format!("i{}", nama)]);
+                                x.2.insert((true, 32), vec![format!("{}", nama)]);
                             } else {
                                 self.buf.push_str("loop $");
                                 self.buf.push_str(&nama);
@@ -364,6 +445,9 @@ impl App {
                         panic!()
                     }
                     crate::parsing::args::penunjuk(..) => {
+                        panic!()
+                    }
+                    crate::parsing::args::penunjuk_nama(_) =>{
                         panic!()
                     }
                     crate::parsing::args::Str_int(putarkan) => {
@@ -384,18 +468,18 @@ impl App {
                                 self.buf.push_str(&nama);
                                 self.buf.push_str("\n");
                                 self.buf
-                                            .push_str(&format!("local.get ${0}\ni32.eqz\nbr_if 1\nlocal.get ${0}\ni32.const 1\ni32.sub\nlocal.set ${0}\n", t.1[0]));
+                                        .push_str(&format!("local.get ${0}\ni32.eqz\nbr_if 1\nlocal.get ${0}\ni32.const 1\ni32.sub\nlocal.set ${0}\n", t.1[0]));
                             } else {
                                 self.buf.push_str(&format!(
-                                    "i32.const {}\nlocal.set $i{}\n",
+                                    "i32.const {}\nlocal.set ${}\n",
                                     putarkan, nama
                                 ));
                                 self.buf.push_str("loop $");
                                 self.buf.push_str(&nama);
                                 self.buf.push_str("\n");
-                                x.2.insert((true, 32), vec![format!("i{}", nama)]);
+                                x.2.insert((true, 32), vec![format!("{}", nama)]);
                                 self.buf
-                                            .push_str(&format!("local.get $i{0}\ni32.eqz\nbr_if 1\nlocal.get $i{0}\ni32.const 1\ni32.sub\nlocal.set $i{0}\n", nama));
+                                            .push_str(&format!("local.get ${0}\ni32.eqz\nbr_if 1\nlocal.get ${0}\ni32.const 1\ni32.sub\nlocal.set ${0}\n", nama));
                             }
                         }
                     }
@@ -405,12 +489,19 @@ impl App {
                     crate::parsing::args::null => {
                         panic!()
                     }
+                    crate::parsing::args::internar_memory(nama) =>{
+                        panic!()
+                    }
                 },
                 crate::parsing::args::Str_Lansung(..) => {
                     panic!()
                 }
+                crate::parsing::args::internar_memory(nama) =>{
+                    panic!()
+                }
             },
         }
+        */
         self.instruksi
             .last_mut()
             .unwrap()
@@ -687,7 +778,7 @@ pub fn konversi(
     _var: &crate::parsing::Arrmap<String, Vec<crate::parsing::Let_>>,
     terima: std::sync::mpsc::Receiver<crate::parsing::Pohon>,
     path: &String,
-) {
+) -> bool {
     let mut app: App = App::baru(path);
     loop {
         match terima.recv().unwrap() {
@@ -700,10 +791,13 @@ pub fn konversi(
             crate::parsing::Pohon::blok(nama) => app.blok(&nama),
             crate::parsing::Pohon::blok_ => app.blok_(),
             crate::parsing::Pohon::br(nama) => app.br(&nama),
-            crate::parsing::Pohon::Error => return,
+            crate::parsing::Pohon::Error => {
+                return false
+            },
             crate::parsing::Pohon::panic(pesan) => app.error(pesan),
             crate::parsing::Pohon::Selesai => break,
         }
     }
-    app.drop(path)
+    app.drop(path);
+    true
 }

@@ -69,6 +69,8 @@ pub enum args {
     Str_Lansung(String),
     Str_int(i128),
     penunjuk(u64),//penunjuk
+    penunjuk_nama(String),
+    internar_memory(String),//memory yang hanya dapat diakses kompiler
     null
 
 }
@@ -77,7 +79,7 @@ pub enum args {
 pub enum eterator {
     Putar(String),
     Blok(String),
-    Iter(String,args,args,String)
+    Iter(String,args,args)
 }
 #[derive(Clone)]
 #[allow(non_camel_case_types)]
@@ -213,6 +215,9 @@ impl<Key: std::cmp::PartialEq + Clone, Value: Clone> Arrmap<Key, Value> {
     }
     pub fn iter_mut(&mut self) ->&mut std::vec::Vec<(Key, Value)>{
         &mut self.map
+    }
+    pub fn clear(&mut self) {
+        self.map.clear();
     }
 
 }

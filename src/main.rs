@@ -62,7 +62,7 @@ fn kopilasi(ARGS: &'static Vec<String>) -> Result<(), u64> {
     let (perpus, kompilasi, versi, nama_app, turbo, pola, kom) =
         file_management::seting::seting(&mut BUFF.lock().unwrap(), &PROYEK, &ARGS.to_vec());
     if pola.0 {
-        let (test1, test2) = channel();
+        let (nama_file, kirim_alamat) = channel();
         let (a, b) = channel();
         //let (c,d) = channel();
         let (file_ind, index) = channel();
@@ -79,16 +79,28 @@ fn kopilasi(ARGS: &'static Vec<String>) -> Result<(), u64> {
         //let mut variabel:Mutex<HashMap<String,Vec<Box<crate::parsing::Let_>>>> =  Mutex::new( HashMap::new() );
         tread! {join ->
             //kode error 10
-            {file_management::kode_2::baca(&mut String::with_capacity(100),&ARGS[PROYEK], test1)},"test".to_string(),test1,
+            {
+                file_management::kode_3::baca(&ARGS[PROYEK], nama_file)
+                //file_management::kode_2::baca(&mut String::with_capacity(100),&ARGS[PROYEK], test1)
+            },"kode".to_string(),kode,
             //kode error 11
             {
-                parsing::lexer_2::baca(test2, a)
+                parsing::lexer_3::lexer(kirim_alamat, a);
+                println!(
+                    "[ lexer   : {}/detik ]",
+                    waktu.elapsed().as_secs_f32()
+                );
+                //parsing::lexer_2::baca(test2, a)
                 //parsing::lexer::baca_2(test2, a)
-            },"test2".to_string(),test2,
+            },"lexer".to_string(),lexer,
             //{ parsing::lexer::baca(&mut BUFF.lock().unwrap(),&ARGS[PROYEK], a) },"lexer".to_string(),lex,
             //kode error 12
             {
-                parsing::parse_1::parse(b , file_ind)
+                parsing::parse_1::parse(b , file_ind);
+                println!(
+                    "[ parse 1 : {}/detik ]",
+                    waktu.elapsed().as_secs_f32()
+                );
             //    parsing::parse::parse( b , file_ind )
             },"parse".to_string(),parse,
             //kode error 13
@@ -96,10 +108,22 @@ fn kopilasi(ARGS: &'static Vec<String>) -> Result<(), u64> {
             //kode error 14
             //{file_management::baca::file(tunggu,&mut BUFF.lock().unwrap(),file_ind,format!("{}\\parsing\\parse",&ARGS[PROYEK]))},"parse_f_1".to_string(),parse_f_1,
             //kode error 15
-            {parsing::parse_2::parse(index,x)},"parse_2_".to_string(),parse_2_,
+            {
+                parsing::parse_2::parse(index,x);
+                println!(
+                    "[ parse 2 : {}/detik ]",
+                    waktu.elapsed().as_secs_f32()
+                );
+            },"parse_2_".to_string(),parse_2_,
             //kode error 16
             //kode error 17
-            {file_management::index_2::baca(&mut BUFF.lock().unwrap(), y, &ARGS[PROYEK], p, k,turbo)},"inx2".to_string(),inx2,
+            {
+                file_management::index_2::baca(&mut BUFF.lock().unwrap(), y, &ARGS[PROYEK], p, k,turbo);
+                println!(
+                    "[ index : {}/detik ]",
+                    waktu.elapsed().as_secs_f32()
+                );
+            },"inx2".to_string(),inx2,
              //kode error 18
             {
                 //parsing::parse_3::parse_2(m,r,&ARGS[PROYEK],unsafe{ &mut POHON });
@@ -162,7 +186,8 @@ fn main() -> Result<(), u64> {
     if unsafe { ARGS.len() != 1 } {
         kopilasi(unsafe { &ARGS })
     } else {
-        crate::codeart::gui()
+        //crate::codeart::gui()
+        Ok(())
     }
 }
 #[allow(unused_imports)]

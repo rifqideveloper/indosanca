@@ -1,7 +1,31 @@
+use std::fs::OpenOptions;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use serde_json::{Value};
 use serde_json::json;
+use std::io::Write;
+use std::io::SeekFrom;
+use std::io::Seek;
+use std::io::Read;
+struct file_iter {
+    nama:File,
+    buf_:[u8;1],
+}
+impl file_iter {
+    fn next(&mut self,buf:&mut String) -> usize {
+        let mut _len = self.nama.read(&mut self.buf_).unwrap();
+        while self.buf_ != "\n".as_bytes() {
+            buf.push_str(
+                std::str::from_utf8(&self.buf_).unwrap()
+            );
+            _len += self.nama.read(&mut self.buf_).unwrap();
+        }
+        _len
+    }
+    fn reset(&mut self){
+        self.nama.rewind().unwrap();
+    }
+}
 pub fn baca(
     buf:&mut String,
     terima:std::sync::mpsc::Receiver<std::string::String>,
@@ -9,7 +33,32 @@ pub fn baca(
     terima_parse_3:std::sync::mpsc::Receiver<([String; 3],bool)>,
     kirim_parse_3:std::sync::mpsc::Sender<std::option::Option<serde_json::Value>>,
     turbo:bool,
-){
+){  
+
+    let mut file = OpenOptions::new().read(true).write(true).open(format!("{}\\parsing\\parse_2",path)).unwrap();
+    for x in terima.into_iter() {
+        file.write_all(x.as_bytes()).unwrap();
+    }
+    file.rewind().unwrap();
+    let mut file = file_iter {nama:file,buf_:[0u8]};
+    'main:for data in terima_parse_3.iter() {
+        if data.0 == ["".to_string(),"".to_string(),"".to_string()] {break}
+        while file.next(buf) != 0 {
+            let v :Value = serde_json::from_str(&buf).unwrap();
+            if v["mod"] == data.0[0] {
+                for i in 0.. { 
+                    if v["nilai"][i]["fn"] == data.0[1] {
+                        kirim_parse_3.send(Some(v["nilai"][i].clone())).expect("msg: &str");
+                        continue 'main
+                    } else if v["nilai"][i]["fn"] == json!(null) {
+                        panic!()
+                    }
+                }
+            }
+        }
+        panic!();
+    }
+    /*
     use std::io::Write;
     if !turbo{
         let mut file = match std::fs::File::create(format!("{}\\parsing\\parse_2",path)){
@@ -126,4 +175,5 @@ pub fn baca(
         }
         //panic!();
     } 
+    */
 }

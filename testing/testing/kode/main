@@ -1,5 +1,5 @@
 fn main
-    let test uint<8> = 0
+    let statik test uint < 8 > = 0
     putar x di 2
     {
         cetak "baris"

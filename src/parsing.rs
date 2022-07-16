@@ -285,7 +285,8 @@ pub enum Pohon {
 //pub mod parse;
 pub mod parse_2;
 //pub mod parse_3;
-pub mod lexer_2;
+//pub mod lexer_2;
 pub mod parse_1;
 //pub mod parse_3_1;
 pub mod parse_3_2;
+pub mod lexer_3;

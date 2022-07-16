@@ -1,7 +1,7 @@
-fn tipe_(terima: &std::sync::mpsc::Receiver<(u64, String, String)>) -> crate::parsing::Tipe {
+fn tipe_(terima: &std::sync::mpsc::Receiver<(usize, String, String)>) -> crate::parsing::Tipe {
     fn nilai<T: std::str::FromStr>(
         v: &mut std::vec::Vec<std::option::Option<T>>,
-        terima: &std::sync::mpsc::Receiver<(u64, String, String)>,
+        terima: &std::sync::mpsc::Receiver<(usize, String, String)>,
     ) {
         let mut x = terima.recv().unwrap();
         //println!("{:?}",x);
@@ -142,8 +142,8 @@ fn tipe_(terima: &std::sync::mpsc::Receiver<(u64, String, String)>) -> crate::pa
     }
 }
 pub fn parse(
-    terima: std::sync::mpsc::Receiver<(u64, String, String)>,
-    kirim: std::sync::mpsc::Sender<(u64, String, crate::parsing::perintah)>,
+    terima: std::sync::mpsc::Receiver<(usize, String, String)>,
+    kirim: std::sync::mpsc::Sender<(usize, String, crate::parsing::perintah)>,
 ) {
     //lokalisasi
     const JIKA: &str = if cfg!(international) { "if" } else { "jika" };

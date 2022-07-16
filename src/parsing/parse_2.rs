@@ -59,7 +59,7 @@ macro_rules! operasi_logika_aritmatik {
     };
 }
 pub fn parse(
-    baris: std::sync::mpsc::Receiver<(u64, String, perintah)>,
+    baris: std::sync::mpsc::Receiver<(usize, String, perintah)>,
     kirim: std::sync::mpsc::Sender<String>,
 ) {
     let mut fn_ = [false, false];

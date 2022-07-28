@@ -4,7 +4,7 @@
 //#![feature(let_chains)]
 use std::sync::mpsc::channel;
 extern crate wat;
-mod codeart;
+//mod codeart;
 mod dok;
 mod error;
 mod file_management;
@@ -74,6 +74,8 @@ fn kopilasi(ARGS: &'static Vec<String>) -> Result<(), u64> {
 
         let (kirim_pwa, terima_pwa) = channel();
         let (kirim_x86, terima_x86) = channel();
+        let (kirim_cpp, terima_cpp) = channel();
+
         static mut variabel: crate::parsing::Arrmap<String, Vec<crate::parsing::Let_>> =
             crate::parsing::Arrmap::new();
         //let mut variabel:Mutex<HashMap<String,Vec<Box<crate::parsing::Let_>>>> =  Mutex::new( HashMap::new() );
@@ -130,7 +132,10 @@ fn kopilasi(ARGS: &'static Vec<String>) -> Result<(), u64> {
                 if 
                     parsing::parse_3_2::parse(
                     unsafe{&mut variabel},
-                    r,kirim_pwa,m,kom)
+                    r,
+                    kirim_pwa,
+                    kirim_cpp,
+                    m,kom)
                 {
                     println!(
                         "[ parsing selesai : {}/detik ]",
@@ -173,6 +178,17 @@ fn kopilasi(ARGS: &'static Vec<String>) -> Result<(), u64> {
                         );
                     }
             },"pwa_".to_string(),pwa_,
+            {
+                if konversi::cpp::konversi(
+                    unsafe{&variabel},
+                    terima_cpp,
+                    &ARGS[PROYEK]
+                ) {
+                    if true {
+                        
+                    }
+                }
+            },"cpp".to_string(),cpp,
         };
     }
     println!("[ selesai : {}/detik ]", waktu.elapsed().as_secs_f32());

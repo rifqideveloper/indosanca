@@ -93,7 +93,7 @@ async fn bangun_proyek(f:& String){
     println!("[bangun proyek]");
 } 
 
-pub fn seting(buf:&mut String,proyek:&usize ,args:&Vec<String>) -> (Vec<String>, Vec<String>, String, String,bool ,(bool,bool,bool),(bool,bool)){
+pub fn seting(buf:&mut String,proyek:&usize ,args:&Vec<String>) -> (Vec<String>, Vec<String>, String, String,bool ,(bool,bool,bool),(bool,bool,bool)){
     let pola = match args[*proyek - 1].as_str() {
         "parsing" => (true,false,false),
         "proyek" => {
@@ -168,13 +168,16 @@ pub fn seting(buf:&mut String,proyek:&usize ,args:&Vec<String>) -> (Vec<String>,
         
         //(seting["version"].as_str(), Some("0.1.0"));
         //sementara
-        let mut kom = (false, false);
+        let mut kom = (false, false,false);
         kompilasi.iter().for_each(|i| match i.as_str() {
             "pwa"=>{
                 kom.1 = true;
             }
             "x86_64" =>{
                 kom.0 = true;
+            }
+            "cpp"|"c++" => {
+                kom.2 = true
             }
             _=>{panic!()}
         });

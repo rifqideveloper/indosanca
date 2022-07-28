@@ -17,15 +17,19 @@ struct App {
     id: u64,
     terima: std::sync::mpsc::Receiver<std::option::Option<serde_json::Value>>,
     kirim_pwa: std::sync::mpsc::Sender<crate::parsing::Pohon>,
+    kirim_cpp: std::sync::mpsc::Sender<crate::parsing::Pohon>,
     kirim_json: std::sync::mpsc::Sender<([String; 3], bool)>,
-    kom: (bool, bool),
+    kom: (bool, bool,bool),
     blok_id: u64,
 }
 impl App {
     fn kirim(&mut self, nilai: crate::parsing::Pohon) {
-        if self.kom.0 {}
+        if self.kom.0 {panic!()}
         if self.kom.1 {
-            self.kirim_pwa.send(nilai).unwrap();
+            self.kirim_pwa.send(nilai.clone()).unwrap();
+        }
+        if self.kom.2 {
+            self.kirim_cpp.send(nilai).unwrap();
         }
     }
     fn var(
@@ -527,8 +531,9 @@ pub fn parse(
     _var: &mut crate::parsing::Arrmap<String, Vec<crate::parsing::Let_>>,
     terima: std::sync::mpsc::Receiver<std::option::Option<serde_json::Value>>,
     kirim_pwa: std::sync::mpsc::Sender<crate::parsing::Pohon>,
+    kirim_cpp: std::sync::mpsc::Sender<crate::parsing::Pohon>,
     kirim_json: std::sync::mpsc::Sender<([String; 3], bool)>,
-    kom: (bool, bool),
+    kom: (bool, bool,bool),
 ) -> bool {
     let app: App = App {
         fungsi: vec![(
@@ -538,6 +543,7 @@ pub fn parse(
         id: 0,
         terima,
         kirim_pwa,
+        kirim_cpp,
         kirim_json,
         kom,
         blok_id: 0,

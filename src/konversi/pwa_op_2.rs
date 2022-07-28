@@ -525,7 +525,7 @@ impl App {
         //    buf.pop();
         //});
         let mut buf = format! {"{}\\parsing\\pwa\\instruksi\\main",path};
-        let mut instruksi = std::fs::File::with_options()
+        let mut instruksi = std::fs::File::options()
             .create(true)
             .truncate(true)
             .read(true)
@@ -534,7 +534,7 @@ impl App {
             .unwrap();
         buf.truncate(buf.len() - 14);
         buf.push_str("alokasi\\main");
-        let alokasi = std::fs::File::with_options()
+        let alokasi = std::fs::File::options()
             .create(true)
             .truncate(true)
             .read(true)

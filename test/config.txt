@@ -1,0 +1,9 @@
+[package]
+name = "app"
+version = "0.0.1"
+
+[target]
+windows = ["x86_64"]
+linux = ["x86_64"]
+wasm = false
+[dependencies]

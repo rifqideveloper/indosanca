@@ -1,7 +1,0 @@
-[seting]
-nama_app = "app"
-versi = "0.1.0"
-pembuat = ["?"]
-kompilasi = ["cpp"]
-turbo = false
-[dep]

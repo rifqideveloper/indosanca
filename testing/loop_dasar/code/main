@@ -1,6 +1,0 @@
-fn main
-    let statik test uint<8> = 0
-    putar 2
-    {
-        cetak test
-    }

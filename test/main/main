@@ -1,0 +1,31 @@
+$void drop value : ?
+
+$bool breaker 
+	let h = "it breaker \n"
+	print h
+	return false
+$void testing
+	let ft = "ft\n"
+	print ft
+$void main
+	let cases = "case 1\n"
+	let cases2 string = "case 2\n"
+	let ha = "ha"
+	let ha2 = "ha"
+	Switch ( )
+		case true
+			print cases
+			break
+		case true
+			print cases2
+			break
+	Switch_
+	loop x < 5
+		@ testing
+	mut cc = "cc"
+	& cc = "cp"
+	print cc
+	loop
+		@ breaker
+	
+	@ drop cc

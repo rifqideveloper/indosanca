@@ -1,7 +1,0 @@
-fn main
-    let statik test uint < 8 > = 0
-    putar x di 2
-    {
-        cetak "baris"
-        cetak x
-    }
